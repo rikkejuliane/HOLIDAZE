@@ -1,0 +1,14 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+Display:ital,wght@0,100..900;1,100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap");
+@import "tailwindcss";
+
+@theme {
+  /* Custom colors */
+  --color-background: #1f2125;
+  --color-primary: #fcfeff;
+  --color-secondary: #282a2e;
+  --color-imperialRed: #e63946;
+
+  /* Fonts */
+  --font-noto: "Noto Serif Display", serif;
+  --font-jakarta: "Plus Jakarta Sans", sans-serif;
+}
