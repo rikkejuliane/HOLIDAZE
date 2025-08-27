@@ -7,7 +7,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="fixed inset-x-0 z-50 bg-transparent px-10px lg:px-[74px]">
+    <header className="absolute top-0 left-0 right-0 z-50 bg-transparent px-10px lg:px-[74px]">
       <div className="mx-auto grid grid-cols-1 lg:grid-cols-3 items-center h-[70px] pt-[40px] sm:pt-0 text-primary font-jakarta text-lg font-bold">
         {/* LEFT GRID */}
         <div className="hidden lg:block">
