@@ -44,8 +44,8 @@ export default function Footer() {
                     <path
                       d="M1 16L9 8.5L1 1"
                       stroke="#FCFEFF"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                   </svg>
                 </button>
