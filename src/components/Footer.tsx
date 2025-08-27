@@ -19,7 +19,7 @@ export default function Footer() {
               Sign up for our <strong>Newsletter</strong>
             </h3>
             <form method="post">
-              <label htmlFor="email" class="sr-only">
+              <label htmlFor="email" className="sr-only">
                 Newsletter
               </label>
               <div className="relative">
