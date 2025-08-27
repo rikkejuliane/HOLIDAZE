@@ -2,7 +2,6 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <main>
-    </main>
+    <section className="pt-[70px]"></section>
   );
 }
