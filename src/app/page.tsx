@@ -1,7 +1,9 @@
-import Image from "next/image";
+import HeroHome from "@/components/hero/HeroHome";
 
 export default function Home() {
   return (
-    <section className="pt-[70px]"></section>
+    <section>
+      <HeroHome/>
+    </section>
   );
 }
