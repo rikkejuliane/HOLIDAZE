@@ -14,3 +14,32 @@
 }
 
 
+.imageWrap {
+  position: relative;
+  width: 292px;
+  height: 230px;
+  border-top-left-radius: 25px;
+  border-top-right-radius: 25px;
+  overflow: hidden;              /* keep overlay + image clipped */
+}
+
+/* the overlay that sits ON TOP of the image */
+.imageWrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+
+  /* your exact figma gradient */
+  background: linear-gradient(
+    180deg,
+    rgba(40, 42, 46, 0) 84.6%,
+    #282A2E 99.84%
+  );
+
+  /* tiny softness at the seam */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
