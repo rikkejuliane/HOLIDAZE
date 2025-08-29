@@ -15,10 +15,11 @@ export default function ListingCard({ venue, onClick }: Props) {
     <article
       className="relative w-[292px] h-80 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)]"
       aria-label={venue.name}
-      onClick={() => onClick?.(venue.id)}
-    >
+      onClick={() => onClick?.(venue.id)}>
       {/* IMAGE AREA (top 14rem) */}
-      <div className="relative w-[292px] h-[230px] overflow-hidden rounded-tl-3xl rounded-tr-3xl">        {img ? (
+      <div className="relative w-[292px] h-[230px] overflow-hidden rounded-tl-3xl rounded-tr-3xl">
+        {" "}
+        {img ? (
           <Image
             src={img}
             alt={venue.media?.[0]?.alt || venue.name}
@@ -28,20 +29,19 @@ export default function ListingCard({ venue, onClick }: Props) {
             unoptimized
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-neutral-900 text-white/60 text-xs">
+          <div className="flex h-full w-full items-center justify-center bg-secondary text-primary/60 text-xs">
             No image
           </div>
         )}
-
-        {/* gradient overlay from figma */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-zinc-800/0 to-zinc-800" />
+        
+       
       </div>
 
       {/* BOTTOM PANEL (blurred, rounded as in figma) */}
-      <div className="w-[292px] h-24 left-0 top-[230px] absolute bg-zinc-800 rounded-bl-[35px] rounded-br-3xl backdrop-blur-[50px]" />
+      <div className="w-[292px] h-[104px] left-0 top-[230px] absolute bg-zinc-800 rounded-bl-[35px] rounded-br-3xl backdrop-blur-[50px]" />
 
       {/* TITLE */}
-      <div className="left-[19px] top-[237px] absolute text-white text-xl font-bold font-['Noto_Serif_Display'] leading-tight">
+      <div className="left-[19px] top-[237px] absolute text-white text-xl font-bold font-noto leading-tight">
         {/* <h2>{venue.name}</h2> */}
         {venue.name}
       </div>
@@ -50,7 +50,9 @@ export default function ListingCard({ venue, onClick }: Props) {
       <div className="w-52 left-[19px] top-[258px] absolute text-white/60 text-sm font-light font-['Plus_Jakarta_Sans'] leading-tight flex items-center gap-2">
         {/* venue.location?.city, venue.location?.country */}
         <span className="truncate">
-          {[venue.location?.city, venue.location?.country].filter(Boolean).join(", ") || "—"}
+          {[venue.location?.city, venue.location?.country]
+            .filter(Boolean)
+            .join(", ") || "—"}
         </span>
 
         {/* separator */}
@@ -70,8 +72,7 @@ export default function ListingCard({ venue, onClick }: Props) {
             viewBox="0 0 12 11"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            aria-hidden
-          >
+            aria-hidden>
             <path
               d="M2.295 11L3.27 6.93289L0 4.19737L4.32 3.83553L6 0L7.68 3.83553L12 4.19737L8.73 6.93289L9.705 11L6 8.84342L2.295 11Z"
               fill="#FCFEFF"
@@ -79,7 +80,9 @@ export default function ListingCard({ venue, onClick }: Props) {
             />
           </svg>
           {/* {venue.rating.toFixed(1)} */}
-          <span>{typeof venue.rating === "number" ? venue.rating.toFixed(1) : "—"}</span>
+          <span>
+            {typeof venue.rating === "number" ? venue.rating.toFixed(1) : "—"}
+          </span>
         </span>
       </div>
 
@@ -88,7 +91,8 @@ export default function ListingCard({ venue, onClick }: Props) {
 
       {/* PRICE */}
       <div className="left-[19px] top-[294px] absolute text-white text-sm font-light font-['Plus_Jakarta_Sans'] leading-tight">
-        {/* {formatPrice(venue.price)} */} {formatPrice(venue.price)} / per night
+        {/* {formatPrice(venue.price)} */} {formatPrice(venue.price)} / per
+        night
       </div>
 
       {/* CTA (text-only per figma; swap for a real button/link later) */}
@@ -100,9 +104,13 @@ export default function ListingCard({ venue, onClick }: Props) {
           viewBox="0 0 7 12"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          aria-hidden
-        >
-          <path d="M1 11L6 6L1 1" stroke="#FCFEFF" strokeLinecap="round" strokeLinejoin="round" />
+          aria-hidden>
+          <path
+            d="M1 11L6 6L1 1"
+            stroke="#FCFEFF"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </div>
 
