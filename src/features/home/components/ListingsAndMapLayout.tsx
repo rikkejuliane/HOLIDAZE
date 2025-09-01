@@ -26,19 +26,16 @@ export default function ListingsAndMapLayout({
       <div style={{ height: "var(--header-h)" }} aria-hidden />
 
       {/* 2-col grid on xl+, stack on smaller */}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_480px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_500px]">
         {/* Left column: listings grid + pagination */}
         <div className="min-w-0">{left}</div>
 
-        {/* Right column: sticky map */}
+        {/* Right column: sticky map (500px wide) */}
         <aside
           className="hidden xl:block"
           aria-label="Map showing listing locations"
         >
-          <div
-            className="sticky top-[var(--header-h)]"
-            style={{ height: "calc(100dvh - var(--header-h))" }}
-          >
+          <div className="sticky top-5">
             {right}
           </div>
         </aside>

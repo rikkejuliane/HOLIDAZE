@@ -41,7 +41,7 @@ export default function HomeListingsSection() {
           />
         </>
       }
-      right={<MapPanel />}
+      right={<MapPanel items={items} />}
     />
   );
 }
