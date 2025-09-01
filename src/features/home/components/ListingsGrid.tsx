@@ -10,6 +10,7 @@ export default function ListingsGrid({ items }: { items: Venue[] }) {
   if (!clean.length) return <p>No venues found.</p>;
 
   return (
+    <div>
     <ul className="grid grid-cols-1 gap-5 xl:grid-cols-2">
       {clean.map((v) => (
         <li key={v.id}>
@@ -17,5 +18,6 @@ export default function ListingsGrid({ items }: { items: Venue[] }) {
         </li>
       ))}
     </ul>
+    </div>
   );
 }
