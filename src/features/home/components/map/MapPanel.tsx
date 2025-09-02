@@ -1,9 +1,10 @@
+// src/features/home/components/MapPanel.tsx
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Venue } from "@/types/venue";
 import mapboxgl from "mapbox-gl";
-import { createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import MapVenuePopupCard from "@/features/home/components/map/MapVenuePopupCard";
@@ -11,42 +12,47 @@ import {
   extractCoordsFromVenue,
   extractCityCountry,
   geocodeToLngLat,
-  makePlaceKey,
 } from "@/features/home/components/map/utils";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 const STYLE_URL =
   process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL || "mapbox://styles/mapbox/dark-v11";
-
 const GEOCODE_LIMIT_PER_PAGE = 8;
 const VENUE_BASE_PATH = "/venues";
 
 type Props = { items?: Venue[] };
-
 type Point = {
   id: string;
   name: string;
   img: string;
-  coords: [number, number]; // [lng, lat]
+  coords: [number, number];
   city?: string;
   country?: string;
   price?: number | null;
 };
+type Bundle = { marker: mapboxgl.Marker; popup: mapboxgl.Popup; root: Root };
+
+function scheduleUnmount(root: Root) {
+  setTimeout(() => {
+    try {
+      root.unmount();
+    } catch {}
+  }, 0);
+}
 
 export default function MapPanel({ items = [] }: Props) {
   const mapNode = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const bundlesRef = useRef<Bundle[]>([]);
   const geocodeCacheRef = useRef<Map<string, [number, number]>>(new Map());
 
-  // ready (has coords)
   const readyPoints = useMemo<Point[]>(() => {
-    const pts: Point[] = [];
+    const out: Point[] = [];
     for (const v of items ?? []) {
       const coords = extractCoordsFromVenue(v);
       if (!coords) continue;
       const { city, country } = extractCityCountry(v);
-      pts.push({
+      out.push({
         id: v.id,
         name: v.name ?? "Untitled",
         img: v.media?.[0]?.url ?? "",
@@ -56,33 +62,43 @@ export default function MapPanel({ items = [] }: Props) {
         price: typeof v.price === "number" ? v.price : null,
       });
     }
-    return pts;
+    return out;
   }, [items]);
 
-  // missing coords → geocode by city,country
   const geocodeTargets = useMemo(() => {
     const already = new Set(readyPoints.map((p) => p.id));
     return (items ?? [])
       .filter((v) => !already.has(v.id))
       .map((v) => {
-        const { key, city, country } = makePlaceKey(v);
-        return key
-          ? {
-              id: v.id,
-              name: v.name ?? "Untitled",
-              img: v.media?.[0]?.url ?? "",
-              key,
-              city,
-              country,
-              price: typeof v.price === "number" ? v.price : null,
-            }
-          : null;
+        const { city, country } = extractCityCountry(v);
+        const c = (city ?? "").trim();
+        const co = (country ?? "").trim();
+
+        const keys: string[] = [];
+        if (c && co) {
+          if (c.toLowerCase() === co.toLowerCase()) keys.push(c, co);
+          else keys.push(`${c}, ${co}`, c, co);
+        } else if (c) keys.push(c);
+        else if (co) keys.push(co);
+
+        const uniq = Array.from(new Set(keys)).filter(Boolean);
+        if (!uniq.length) return null;
+
+        return {
+          id: v.id,
+          name: v.name ?? "Untitled",
+          img: v.media?.[0]?.url ?? "",
+          keys: uniq,
+          city: c || undefined,
+          country: co || undefined,
+          price: typeof v.price === "number" ? v.price : null,
+        };
       })
       .filter(Boolean) as Array<{
       id: string;
       name: string;
       img: string;
-      key: string;
+      keys: string[];
       city?: string;
       country?: string;
       price?: number | null;
@@ -100,11 +116,15 @@ export default function MapPanel({ items = [] }: Props) {
       const toFetch = geocodeTargets.slice(0, GEOCODE_LIMIT_PER_PAGE);
       const results = await Promise.all(
         toFetch.map(async (t) => {
-          const coords = await geocodeToLngLat(
-            t.key,
-            geocodeCacheRef.current,
-            mapboxgl.accessToken as string
-          );
+          let coords: [number, number] | null = null;
+          for (const q of t.keys) {
+            coords = await geocodeToLngLat(
+              q,
+              geocodeCacheRef.current,
+              mapboxgl.accessToken as string
+            );
+            if (coords) break;
+          }
           return coords
             ? ({
                 id: t.id,
@@ -140,25 +160,6 @@ export default function MapPanel({ items = [] }: Props) {
     return merged;
   }, [readyPoints, geoPoints]);
 
-  // remove tip + white background (once)
-  useEffect(() => {
-    if (document.getElementById("mapbox-popup-style")) return;
-    const tag = document.createElement("style");
-    tag.id = "mapbox-popup-style";
-    tag.textContent = `
-      .mapboxgl-popup.no-tip .mapboxgl-popup-tip { display: none !important; }
-      .mapboxgl-popup.no-tip { padding-bottom: 0 !important; }
-      .mapboxgl-popup.clean .mapboxgl-popup-content {
-        background: transparent !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        border: none !important;
-      }
-    `;
-    document.head.appendChild(tag);
-  }, []);
-
-  // init map
   useEffect(() => {
     if (!mapNode.current || mapRef.current || !mapboxgl.accessToken) return;
     const map = new mapboxgl.Map({
@@ -174,35 +175,41 @@ export default function MapPanel({ items = [] }: Props) {
     );
     mapRef.current = map;
     return () => {
-      // clear markers + popups
-      markersRef.current.forEach((m) => {
-        m.getPopup()?.remove();
-        m.remove();
+      bundlesRef.current.forEach(({ popup, marker, root }) => {
+        try {
+          popup.remove();
+        } catch {}
+        try {
+          marker.remove();
+        } catch {}
+        scheduleUnmount(root);
       });
-      markersRef.current = [];
+      bundlesRef.current = [];
       map.remove();
       mapRef.current = null;
     };
   }, []);
 
-  // markers + React popups
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    // clear old markers/popups
-    markersRef.current.forEach((m) => {
-      m.getPopup()?.remove();
-      m.remove();
+    bundlesRef.current.forEach(({ popup, marker, root }) => {
+      try {
+        popup.remove();
+      } catch {}
+      try {
+        marker.remove();
+      } catch {}
+      scheduleUnmount(root);
     });
-    markersRef.current = [];
+    bundlesRef.current = [];
 
     if (!points.length) return;
 
     const bounds = new mapboxgl.LngLatBounds();
 
     points.forEach((p) => {
-      // red dot
       const el = document.createElement("div");
       el.className = "w-3 h-3 rounded-full ring-2 ring-white/50";
       (el.style as CSSStyleDeclaration).backgroundColor =
@@ -213,18 +220,17 @@ export default function MapPanel({ items = [] }: Props) {
         .setLngLat(p.coords)
         .addTo(map);
 
-      // React popup content
       const container = document.createElement("div");
       const root = createRoot(container);
 
-      // Create popup first so we can reference it in onClose
       const popup = new mapboxgl.Popup({
         offset: 18,
         anchor: "bottom",
         closeButton: false,
         closeOnClick: true,
-        className: "no-tip clean", // transparent; no speech-bubble tip
-      });
+        className: "no-tip clean",
+        focusAfterOpen: false,
+      } as mapboxgl.PopupOptions).setDOMContent(container);
 
       root.render(
         <MapVenuePopupCard
@@ -235,16 +241,13 @@ export default function MapPanel({ items = [] }: Props) {
           country={p.country}
           price={p.price ?? undefined}
           basePath={VENUE_BASE_PATH}
-          onClose={() => popup.remove()} // 👈 close from the X button
+          onClose={() => popup.remove()}
         />
       );
 
-      popup.setDOMContent(container);
-
-      // center map when popup opens
       popup.on("open", () => {
         const h = container.offsetHeight || 220;
-        const offsetY = Math.min(Math.round(h / 2 + 24), 200);
+        const offsetY = Math.min(Math.round(h / 2 + 24), 220);
         map.easeTo({
           center: p.coords,
           offset: [0, offsetY],
@@ -253,14 +256,9 @@ export default function MapPanel({ items = [] }: Props) {
         });
       });
 
-      // defer unmount to avoid React warning
-      popup.on("close", () => {
-        setTimeout(() => root.unmount(), 0);
-      });
-
       marker.setPopup(popup);
 
-      markersRef.current.push(marker);
+      bundlesRef.current.push({ marker, popup, root });
       bounds.extend(p.coords);
     });
 
@@ -273,9 +271,8 @@ export default function MapPanel({ items = [] }: Props) {
     }
   }, [points]);
 
-  // size from grid column (500w) and fixed 636h per your Figma
   return (
-    <div className="h-[636px] w-full overflow-hidden">
+    <div className="h-[636px] w-full overflow-hidden overscroll-contain">
       <div ref={mapNode} className="h-full w-full" />
     </div>
   );

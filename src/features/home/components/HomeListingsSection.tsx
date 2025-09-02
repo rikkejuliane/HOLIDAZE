@@ -4,7 +4,7 @@
 import ListingsAndMapLayout from "@/features/home/components/ListingsAndMapLayout";
 import ListingsGrid from "@/features/home/components/ListingsGrid";
 import ListingsPagination from "@/features/home/components/ListingsPagination";
-import MapPanel from "@/features/home/components/MapPanel";
+import MapPanel from "@/features/home/components/map/MapPanel";
 import { useVenuesQuery } from "@/features/home/hooks/useVenuesQuery";
 
 export default function HomeListingsSection() {
