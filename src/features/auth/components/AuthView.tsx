@@ -1,4 +1,3 @@
-// src/features/auth/components/AuthView.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -11,14 +10,12 @@ export default function AuthView() {
   const [mode, setMode] = useState<Mode>("signin");
   const [notice, setNotice] = useState("");
 
-  // auto-hide toast after 5s
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(""), 5000);
     return () => clearTimeout(timer);
   }, [notice]);
 
-  // Login form hook
   const {
     email: loginEmail,
     setEmail: setLoginEmail,
@@ -29,7 +26,6 @@ export default function AuthView() {
     submit: handleLogin,
   } = useLoginForm(setNotice);
 
-  // Register form hook
   const {
     name: regName,
     setName: setRegName,
@@ -129,16 +125,14 @@ export default function AuthView() {
             {(regErrors.regPasswordConfirm || isMismatch) && (
               <p
                 id="password-confirm-error"
-                className="input-error w-52 self-center text-left text-imperialRed text-sm mt-0 md:mt-2"
-              >
+                className="input-error w-52 self-center text-left text-imperialRed text-sm mt-0 md:mt-2">
                 {regErrors.regPasswordConfirm || "Passwords must match."}
               </p>
             )}
 
             <div
               id="spinner-container-register"
-              className="flex justify-center h-6 mt-2"
-            >
+              className="flex justify-center h-6 mt-2">
               {isRegistering && (
                 <span
                   className="animate-spin inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full"
@@ -151,8 +145,7 @@ export default function AuthView() {
               id="sign-up-button"
               type="submit"
               className="text-primary text-[15px] font-jakarta font-bold flex flex-row items-center gap-1.5"
-              disabled={isRegistering || isMismatch}
-            >
+              disabled={isRegistering || isMismatch}>
               {isRegistering ? "…" : "REGISTER"}
               {!isRegistering && (
                 <svg
@@ -161,8 +154,7 @@ export default function AuthView() {
                   viewBox="0 0 7 12"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="ml-0.5"
-                >
+                  className="ml-0.5">
                   <path
                     d="M1 11L6 6L1 1"
                     stroke="currentColor"
@@ -213,8 +205,7 @@ export default function AuthView() {
 
             <div
               id="spinner-container-login"
-              className="flex justify-center h-6 mt-2"
-            >
+              className="flex justify-center h-6 mt-2">
               {isLoggingIn && (
                 <span
                   className="animate-spin inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full"
@@ -226,8 +217,7 @@ export default function AuthView() {
               id="sign-in-button"
               type="submit"
               className="text-primary text-[15px] font-jakarta font-bold flex flex-row items-center gap-1.5"
-              disabled={isLoggingIn}
-            >
+              disabled={isLoggingIn}>
               {isLoggingIn ? "…" : "LOG IN"}
               {!isLoggingIn && (
                 <svg
@@ -235,8 +225,7 @@ export default function AuthView() {
                   height="12"
                   viewBox="0 0 7 12"
                   fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
+                  xmlns="http://www.w3.org/2000/svg">
                   <path
                     d="M1 11L6 6L1 1"
                     stroke="currentColor"
@@ -263,16 +252,14 @@ export default function AuthView() {
                 id="signIn"
                 type="button"
                 className="text-primary text-[15px] font-jakarta font-bold flex flex-row items-center gap-1.5"
-                onClick={() => setMode("signin")}
-              >
+                onClick={() => setMode("signin")}>
                 LOG IN
                 <svg
                   width="7"
                   height="12"
                   viewBox="0 0 7 12"
                   fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
+                  xmlns="http://www.w3.org/2000/svg">
                   <path
                     d="M1 11L6 6L1 1"
                     stroke="#FCFEFF"
@@ -293,16 +280,14 @@ export default function AuthView() {
                 id="signUp"
                 type="button"
                 className="text-primary text-[15px] font-jakarta font-bold flex flex-row items-center gap-1.5"
-                onClick={() => setMode("signup")}
-              >
+                onClick={() => setMode("signup")}>
                 REGISTER
                 <svg
                   width="7"
                   height="12"
                   viewBox="0 0 7 12"
                   fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
+                  xmlns="http://www.w3.org/2000/svg">
                   <path
                     d="M1 11L6 6L1 1"
                     stroke="#FCFEFF"
@@ -315,7 +300,6 @@ export default function AuthView() {
           </div>
         </div>
       </div>
-
       {notice && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 bg-secondary text-primary text-jakarta px-4 py-2 rounded z-50">
           {notice}
