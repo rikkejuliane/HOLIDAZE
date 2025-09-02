@@ -14,8 +14,12 @@
 }
 
 /* MAP */
-.mapboxgl-popup.no-tip .mapboxgl-popup-tip { display: none !important; }
-.mapboxgl-popup.no-tip { padding-bottom: 0 !important; }
+.mapboxgl-popup.no-tip .mapboxgl-popup-tip {
+  display: none !important;
+}
+.mapboxgl-popup.no-tip {
+  padding-bottom: 0 !important;
+}
 .mapboxgl-popup.clean .mapboxgl-popup-content {
   background: transparent !important;
   padding: 0 !important;
@@ -23,12 +27,10 @@
   border: none !important;
 }
 
-
-
 /* Login and Register */
 #register-form,
 #login-form {
-  background-color: #ffffff;
+  background-color: #333539;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -39,7 +41,7 @@
 }
 
 .container {
-  background-color: #fff;
+  background-color: #333539;
   border-radius: 10px;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
   position: relative;
@@ -110,11 +112,11 @@
 }
 
 .overlay {
-  background: #282A2E;
+  background: #282a2e;
   background-repeat: no-repeat;
   background-size: cover;
   background-position: 0 0;
-  color: #FCFEFF;
+  color: #fcfeff;
   position: relative;
   left: -100%;
   height: 100%;
@@ -164,7 +166,12 @@
     flex-direction: column-reverse;
     width: 90%;
     height: auto;
-    min-height: 600px;
+    min-height: 620px;
+  }
+
+  #register-form,
+  #login-form {
+    padding: 0 0px;
   }
 
   .form-container {
