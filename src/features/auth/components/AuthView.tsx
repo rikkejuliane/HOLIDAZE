@@ -62,6 +62,7 @@ export default function AuthView() {
               id="name-register"
               name="name"
               placeholder="Username"
+              autoComplete="username"
               className="w-52 h-7 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] placeholder:text-primary px-2 placeholder:font-jakarta placeholder:text-sm"
               value={regName}
               onChange={(e) => setRegName(e.target.value)}
@@ -80,6 +81,7 @@ export default function AuthView() {
               type="email"
               name="email"
               placeholder="Email"
+              autoComplete="email"
               className="w-52 h-7 px-2 mt-[13px] bg-white/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
               value={regEmail}
               onChange={(e) => setRegEmail(e.target.value)}
@@ -98,6 +100,7 @@ export default function AuthView() {
               type="password"
               name="password"
               placeholder="Password"
+              autoComplete="new-password"
               className="w-52 h-7 px-2 mt-[13px] bg-white/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
               value={regPassword}
               onChange={(e) => setRegPassword(e.target.value)}
@@ -112,6 +115,7 @@ export default function AuthView() {
               type="password"
               name="passwordConfirm"
               placeholder="Confirm password"
+              autoComplete="new-password"
               className="w-52 h-7 px-2 mt-[13px] bg-white/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
               value={regPasswordConfirm}
               onChange={(e) => setRegPasswordConfirm(e.target.value)}
@@ -179,6 +183,7 @@ export default function AuthView() {
               type="email"
               name="email"
               placeholder="Email"
+              autoComplete="email"
               className="w-52 h-7 px-2 mt-[13px] bg-white/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
@@ -198,6 +203,7 @@ export default function AuthView() {
               type="password"
               name="password"
               placeholder="Password"
+              autoComplete="current-password"
               className="w-52 h-7 px-2 mt-[13px] bg-white/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
               value={loginPassword}
               onChange={(e) => setLoginPassword(e.target.value)}
