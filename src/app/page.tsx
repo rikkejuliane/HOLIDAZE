@@ -1,5 +1,6 @@
 import HeroHome from "@/features/home/components/HeroHome";
 import RefinedFiltering from "@/features/home/components/RefinedFiltering";
+import HomeListingsSection from "@/features/home/components/HomeListingsSection";
 
 export default function Home() {
   return (
@@ -9,6 +10,10 @@ export default function Home() {
     </section>
 
       <RefinedFiltering/>
+
+      <HomeListingsSection />
+
+
     </>
   );
 }

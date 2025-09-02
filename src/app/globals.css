@@ -12,3 +12,16 @@
   --font-noto: "Noto Serif Display", serif;
   --font-jakarta: "Plus Jakarta Sans", sans-serif;
 }
+
+/* MAP */
+.mapboxgl-popup.no-tip .mapboxgl-popup-tip { display: none !important; }
+.mapboxgl-popup.no-tip { padding-bottom: 0 !important; }
+.mapboxgl-popup.clean .mapboxgl-popup-content {
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+
+
