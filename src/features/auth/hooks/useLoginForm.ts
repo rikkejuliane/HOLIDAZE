@@ -3,8 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/utils/api/auth";
-import { extractAuthFields } from "../utils/authResponse";
-import { validateLoginFields, type LoginErrors } from "../utils/validation";
+import { extractAuthFields } from "../../../utils/auth/authResponse";
+import {
+  validateLoginFields,
+  type LoginErrors,
+} from "../../../utils/auth/validation";
+import { setTokenCookie } from "@/utils/auth/session"; // 👈 import helper
 
 export function useLoginForm(onNotice: (msg: string) => void) {
   const [email, setEmail] = useState("");
@@ -21,22 +25,36 @@ export function useLoginForm(onNotice: (msg: string) => void) {
 
     setSubmitting(true);
     try {
-      const res = await login({ email: email.trim(), password: password.trim() });
+      const res = await login({
+        email: email.trim(),
+        password: password.trim(),
+      });
       const { token, name } = extractAuthFields(res);
-      if (token) localStorage.setItem("token", token);
-      if (name) localStorage.setItem("username", name);
+
+      if (token) {
+        localStorage.setItem("token", token);
+        setTokenCookie(token);
+      }
+      if (name) {
+        localStorage.setItem("username", name);
+      }
+
       onNotice("Login successful! Redirecting…");
       router.push("/profile");
     } catch (err) {
-      onNotice(err instanceof Error ? err.message : "Login failed. Please try again.");
+      onNotice(
+        err instanceof Error ? err.message : "Login failed. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
   return {
-    email, setEmail,
-    password, setPassword,
+    email,
+    setEmail,
+    password,
+    setPassword,
     errors,
     isSubmitting,
     submit,
