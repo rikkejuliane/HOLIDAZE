@@ -5,7 +5,6 @@ export default async function ProfilePage() {
   const token = cookies().get("token")?.value;
 
   if (!token) {
-    // No token → bounce back to /auth
     redirect("/auth");
   }
 

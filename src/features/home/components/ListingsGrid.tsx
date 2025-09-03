@@ -3,14 +3,39 @@
 import type { Venue } from "@/types/venue";
 import { filterJunkVenues } from "@/utils/venues";
 import ListingCard from "./ListingCard";
+import ListingCardSkeleton from "@/components/SkeletonLoader/ListingCardSkeleton";
 
-export default function ListingsGrid({ items }: { items: Venue[] }) {
-  const clean = filterJunkVenues(items);
+type Props = {
+  items?: Venue[];
+  isLoading?: boolean;
+  skeletonCount?: number;
+};
 
+export default function ListingsGrid({
+  items,
+  isLoading,
+  skeletonCount = 6,
+}: Props) {
+  if (isLoading) {
+    return (
+      <ul
+        className="grid grid-cols-1 gap-5 xl:grid-cols-2"
+        aria-busy="true"
+        aria-live="polite">
+        {Array.from({ length: skeletonCount }).map((_, i) => (
+          <li key={`s-${i}`}>
+            <ListingCardSkeleton />
+          </li>
+        ))}
+        <span className="sr-only">Laster inn steder…</span>
+      </ul>
+    );
+  }
+
+  const clean = filterJunkVenues(items ?? []);
   if (!clean.length) return <p>No venues found.</p>;
 
   return (
-    <div>
     <ul className="grid grid-cols-1 gap-5 xl:grid-cols-2">
       {clean.map((v) => (
         <li key={v.id}>
@@ -18,6 +43,5 @@ export default function ListingsGrid({ items }: { items: Venue[] }) {
         </li>
       ))}
     </ul>
-    </div>
   );
 }
