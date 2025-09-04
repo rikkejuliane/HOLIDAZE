@@ -1,7 +1,6 @@
 import type { Venue } from "@/types/venue";
 
 const JUNK_RE = /(test|zzz|yyy|www|ttt)/i;
-
 export const MIN_VENUE_NAME_LEN = 5;
 
 export function filterJunkVenues(venues: Venue[]) {

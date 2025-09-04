@@ -28,14 +28,16 @@ export default function ListingsPagination({
   return (
     <nav
       aria-label="Pagination"
-      className="mt-6 flex items-center justify-center gap-4 font-jakarta text-[15px] font-semibold text-primary">
-      {/* Prev (SVG) */}
+      className="mt-6 flex items-center justify-center gap-4 font-jakarta text-[15px] font-semibold text-primary"
+    >
+      {/* Prev */}
       <button
         type="button"
         onClick={() => go(meta.previousPage ?? Math.max(1, currentPage - 1))}
         aria-label="Previous page"
         disabled={isLoading || isFirstPage}
-        className="px-1 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded">
+        className="w-8 h-8 inline-flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      >
         <svg
           width="8"
           height="13"
@@ -43,7 +45,8 @@ export default function ListingsPagination({
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           aria-hidden="true"
-          className="shrink-0">
+          className="shrink-0 pointer-events-none"
+        >
           <path
             d="M7 1L1 6.5L7 12"
             stroke="#FCFEFF"
@@ -54,10 +57,14 @@ export default function ListingsPagination({
       </button>
 
       {/* Number row with ellipses */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {pages.map((p, i) =>
           p === "…" ? (
-            <span key={`dots-${i}`} aria-hidden className="opacity-70">
+            <span
+              key={`dots-${i}`}
+              aria-hidden
+              className="px-2 opacity-70 select-none cursor-default"
+            >
               …
             </span>
           ) : (
@@ -66,27 +73,32 @@ export default function ListingsPagination({
               type="button"
               onClick={() => go(p)}
               aria-current={p === currentPage ? "page" : undefined}
-              className="relative grid place-items-center px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded">
+              className="relative w-8 h-8 inline-flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              disabled={isLoading || p === currentPage}
+            >
               {/* circle under the selected number */}
               {p === currentPage && (
                 <span
                   aria-hidden
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white/10 rounded-full border border-white/0 backdrop-blur-[5.10px]"
+                  className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white/10 rounded-full border border-white/0 backdrop-blur-[5.10px]"
                 />
               )}
-              <span className="relative leading-none">{p}</span>
+              <span className="relative leading-none pointer-events-none">
+                {p}
+              </span>
             </button>
           )
         )}
       </div>
 
-      {/* Next (SVG) */}
+      {/* Next */}
       <button
         type="button"
         onClick={() => go(meta.nextPage ?? currentPage + 1)}
         aria-label="Next page"
         disabled={isLoading || isLastPage}
-        className="px-1 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded">
+        className="w-8 h-8 inline-flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      >
         <svg
           width="8"
           height="13"
@@ -94,7 +106,8 @@ export default function ListingsPagination({
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           aria-hidden="true"
-          className="shrink-0">
+          className="shrink-0 pointer-events-none"
+        >
           <path
             d="M1 12L7 6.5L1 1"
             stroke="#FCFEFF"
