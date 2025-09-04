@@ -7,6 +7,7 @@ import type { Venue, ListResponse, ListMeta } from "@/types/venue";
 import { useSearchParams, useRouter } from "next/navigation";
 import { filterJunkVenues } from "@/utils/venues/filter";
 import { isVenueAvailable } from "@/utils/venues/availability";
+import { filterByPriceRange } from "@/utils/venues/pricing";
 import { searchVenuesRaw } from "@/utils/api/venues";
 
 function withSort(
@@ -15,36 +16,21 @@ function withSort(
   sortOrder: "asc" | "desc" = "desc"
 ) {
   const sep = url.includes("?") ? "&" : "?";
-  return `${url}${sep}sort=${encodeURIComponent(
-    sort
-  )}&sortOrder=${encodeURIComponent(sortOrder)}`;
+  return `${url}${sep}sort=${encodeURIComponent(sort)}&sortOrder=${encodeURIComponent(sortOrder)}`;
 }
 
-/** Build a ListMeta object for client-side (search) pagination. */
 function buildSearchMeta(total: number, currentPage: number, limit: number): ListMeta {
   const pageCount = Math.max(1, Math.ceil(total / limit));
   const cur = Math.min(Math.max(1, currentPage), pageCount);
-  const previousPage = cur > 1 ? cur - 1 : null;
-  const nextPage = cur < pageCount ? cur + 1 : null;
-
   return {
     currentPage: cur,
     pageCount,
     totalCount: total,
     isFirstPage: cur === 1,
     isLastPage: cur === pageCount,
-    previousPage,
-    nextPage,
+    previousPage: cur > 1 ? cur - 1 : null,
+    nextPage: cur < pageCount ? cur + 1 : null,
   };
-}
-
-// Narrow type used only for feature detection
-type BookingLike = { dateFrom: string; dateTo: string };
-type VenueWithBookings = Venue & { bookings?: BookingLike[] };
-
-function hasBookings(v: Venue | VenueWithBookings): v is VenueWithBookings {
-  const bk = (v as { bookings?: unknown }).bookings;
-  return Array.isArray(bk);
 }
 
 export function useVenuesQuery() {
@@ -57,8 +43,14 @@ export function useVenuesQuery() {
 
   const startStr = searchParams.get("start");
   const endStr = searchParams.get("end");
+  const priceMinStr = searchParams.get("priceMin");
+  const priceMaxStr = searchParams.get("priceMax");
+
   const hasDates = Boolean(startStr && endStr);
-  const dateKey = `${startStr ?? ""}|${endStr ?? ""}`; // stable key
+  const priceMin = priceMinStr ? Number(priceMinStr) : undefined;
+  const priceMax = priceMaxStr ? Number(priceMaxStr) : undefined;
+
+  const filterKey = `${startStr ?? ""}|${endStr ?? ""}|${priceMin ?? ""}|${priceMax ?? ""}`;
 
   const baseUrl = useMemo(() => {
     const base = venuesListURL({ page, limit, bookings: hasDates });
@@ -70,14 +62,12 @@ export function useVenuesQuery() {
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
 
-  // constant-length dependency tuple
-  const deps: readonly [string, string, string] = [baseUrl, q, dateKey];
+  const deps: readonly [string, string, string] = [baseUrl, q, filterKey];
 
   useEffect(() => {
     const abort = new AbortController();
     let alive = true;
 
-    // Parse dates inside effect so Date objects aren't deps
     const start = startStr ? new Date(startStr) : undefined;
     const end = endStr ? new Date(endStr) : undefined;
 
@@ -91,12 +81,10 @@ export function useVenuesQuery() {
           const raw = await searchVenuesRaw(q);
           let collected: Venue[] = filterJunkVenues(raw);
 
-          // Soft availability filter in search mode (only if bookings already present on the item)
           if (hasDates && start && end) {
-            collected = collected.filter((v) =>
-              hasBookings(v) ? isVenueAvailable(v, start, end) : true
-            );
+            collected = collected.filter((v) => isVenueAvailable(v, start, end));
           }
+          collected = filterByPriceRange(collected, priceMin, priceMax);
 
           const total = collected.length;
           const virtualMeta = buildSearchMeta(total, page, limit);
@@ -105,14 +93,12 @@ export function useVenuesQuery() {
 
           if (!alive) return;
           setItems(pageItems);
-          setMeta(virtualMeta); // show pagination for search too
+          setMeta(virtualMeta);
           return;
         }
 
         // --- LIST MODE (server pagination) ---
-        const first = await apiFetch<ListResponse<Venue>>(baseUrl, {
-          signal: abort.signal,
-        });
+        const first = await apiFetch<ListResponse<Venue>>(baseUrl, { signal: abort.signal });
 
         const originalMeta = first.meta;
         const collected: Venue[] = filterJunkVenues(first.data);
@@ -120,36 +106,27 @@ export function useVenuesQuery() {
         let nextPage = originalMeta.nextPage ?? originalMeta.currentPage + 1;
         let safety = 0;
 
-        // Top-up to ensure we fill 'limit' with non-junk venues
         while (
           collected.length < limit &&
           nextPage &&
           !originalMeta.isLastPage &&
           safety < 10
         ) {
-          const nextUrl = withSort(
-            venuesListURL({ page: nextPage, limit, bookings: hasDates }),
-            "created",
-            "desc"
-          );
-
-          const nextRes = await apiFetch<ListResponse<Venue>>(nextUrl, {
-            signal: abort.signal,
-          });
-
+          const nextUrl = withSort(venuesListURL({ page: nextPage, limit, bookings: hasDates }), "created", "desc");
+          const nextRes = await apiFetch<ListResponse<Venue>>(nextUrl, { signal: abort.signal });
           const filteredNext = filterJunkVenues(nextRes.data);
           collected.push(...filteredNext);
 
           if (nextRes.meta.isLastPage || nextRes.meta.nextPage == null) break;
-
           nextPage = nextRes.meta.nextPage;
           safety += 1;
         }
 
         let final = collected;
         if (hasDates && start && end) {
-          final = collected.filter((v) => isVenueAvailable(v, start, end));
+          final = final.filter((v) => isVenueAvailable(v, start, end));
         }
+        final = filterByPriceRange(final, priceMin, priceMax);
 
         if (!alive) return;
         setItems(final.slice(0, limit));
@@ -165,13 +142,12 @@ export function useVenuesQuery() {
     }
 
     load();
-
     return () => {
       alive = false;
       abort.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps); // constant length/order: [baseUrl, q, dateKey]
+  }, deps);
 
   function setPage(nextPage: number) {
     const sp = new URLSearchParams(searchParams.toString());
@@ -179,13 +155,5 @@ export function useVenuesQuery() {
     router.push(`?${sp.toString()}`, { scroll: false });
   }
 
-  return {
-    items,
-    meta,
-    page,
-    limit,
-    isLoading,
-    error,
-    setPage,
-  };
+  return { items, meta, page, limit, isLoading, error, setPage };
 }

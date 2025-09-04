@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import DateRangePopover from "./date/DateRangePopover";
+import PricePopover from "./price/PricePopover";
 
 type Range = { start?: Date; end?: Date };
 
@@ -12,17 +13,28 @@ function formatRange(r: Range) {
   if (r.start && !r.end) return r.start.toLocaleDateString(undefined, fmt);
   if (r.start && r.end) {
     const a = r.start.toLocaleDateString(undefined, fmt);
-    const b = r.end.toLocaleDateString(undefined, fmt); // always include month on both
+    const b = r.end.toLocaleDateString(undefined, fmt);
     return `${a} – ${b}`;
   }
   return "Add dates";
 }
-
 function toISODate(d: Date) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+function fmtPriceUSD(n?: number) {
+  if (typeof n !== "number" || isNaN(n)) return undefined;
+  return `$${new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 0,
+  }).format(n)}`;
+}
+function formatPriceInput(min?: number, max?: number, cap = 10000) {
+  if (min == null && max == null) return "Maximum Budget";
+  const left = min == null ? "$0" : fmtPriceUSD(min);
+  const right = max == null ? `${cap / 1000}k+ $` : fmtPriceUSD(max);
+  return `${left} – ${right}`;
 }
 
 export default function HeroFilters() {
@@ -32,14 +44,26 @@ export default function HeroFilters() {
   const q = searchParams.get("q") ?? "";
   const startStr = searchParams.get("start");
   const endStr = searchParams.get("end");
+  const priceMinStr = searchParams.get("priceMin");
+  const priceMaxStr = searchParams.get("priceMax");
 
-  // hydrate range from URL if present
+  // Dates (hydrate from URL)
   const [range, setRange] = useState<Range>(() => ({
     start: startStr ? new Date(startStr) : undefined,
     end: endStr ? new Date(endStr) : undefined,
   }));
   const [openCal, setOpenCal] = useState(false);
   const datesWrapRef = useRef<HTMLDivElement>(null);
+
+  // Price (hydrate from URL)
+  const [priceOpen, setPriceOpen] = useState(false);
+  const priceWrapRef = useRef<HTMLDivElement>(null);
+  const [priceMin, setPriceMin] = useState<number | undefined>(
+    priceMinStr ? Number(priceMinStr) : undefined
+  );
+  const [priceMax, setPriceMax] = useState<number | undefined>(
+    priceMaxStr ? Number(priceMaxStr) : undefined
+  );
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -59,27 +83,38 @@ export default function HeroFilters() {
       sp.delete("end");
     }
 
-    // Always reset pagination when searching/applying dates
-    sp.set("page", "1");
+    if (typeof priceMin === "number" && !isNaN(priceMin) && priceMin > 0) {
+      sp.set("priceMin", String(priceMin));
+    } else {
+      sp.delete("priceMin");
+    }
+    if (typeof priceMax === "number" && !isNaN(priceMax)) {
+      sp.set("priceMax", String(priceMax));
+    } else {
+      sp.delete("priceMax"); // undefined => no upper bound
+    }
 
+    sp.set("page", "1");
     router.push(`?${sp.toString()}`, { scroll: false });
   }
 
   const dateDisplay = useMemo(() => formatRange(range), [range]);
+  const priceDisplay = useMemo(
+    () => formatPriceInput(priceMin, priceMax, 10000),
+    [priceMin, priceMax]
+  );
 
   return (
     <form
       onSubmit={onSubmit}
-      className="w-[1290px] h-20 bg-white/10 rounded-[10px] border border-white/0 backdrop-blur-[5.10px] flex flex-row justify-between items-center text-primary px-[39px] cursor-pointer"
-    >
+      className="w-[1290px] h-20 bg-white/10 rounded-[10px] border border-white/0 backdrop-blur-[5.10px] flex flex-row justify-between items-center text-primary px-[39px] cursor-pointer">
       {/* Search */}
       <div className="flex flex-col">
         <fieldset>
           <legend className="sr-only">Search</legend>
           <label
             htmlFor="search"
-            className="font-jakarta text-[15px] font-bold pb-[15px]"
-          >
+            className="font-jakarta text-[15px] font-bold pb-[15px]">
             WHERE TO?
           </label>
           <div className="flex flex-row relative mt-2">
@@ -97,8 +132,7 @@ export default function HeroFilters() {
               height="7"
               viewBox="0 0 12 7"
               fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+              xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M1 1L6 6L11 1"
                 stroke="#FCFEFF"
@@ -116,8 +150,7 @@ export default function HeroFilters() {
           <legend className="sr-only">Dates</legend>
           <label
             htmlFor="dates"
-            className="font-jakarta text-[15px] font-bold pb-[15px]"
-          >
+            className="font-jakarta text-[15px] font-bold pb-[15px]">
             DATE
           </label>
           <div className="flex flex-row relative mt-2">
@@ -137,8 +170,7 @@ export default function HeroFilters() {
               height="7"
               viewBox="0 0 12 7"
               fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+              xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M1 1L6 6L11 1"
                 stroke="#FCFEFF"
@@ -149,7 +181,6 @@ export default function HeroFilters() {
           </div>
         </fieldset>
 
-        {/* Popover ABOVE the bar */}
         {openCal && (
           <div className="absolute left-0 bottom-[450px]">
             <DateRangePopover
@@ -163,13 +194,12 @@ export default function HeroFilters() {
       </div>
 
       {/* Price */}
-      <div className="flex flex-col">
+      <div className="flex flex-col relative" ref={priceWrapRef}>
         <fieldset>
           <legend className="sr-only">Price</legend>
           <label
             htmlFor="price"
-            className="font-jakarta text-[15px] font-bold pb-[15px]"
-          >
+            className="font-jakarta text-[15px] font-bold pb-[15px]">
             PRICE
           </label>
           <div className="flex flex-row relative mt-2">
@@ -179,7 +209,9 @@ export default function HeroFilters() {
               type="text"
               placeholder="Maximum Budget"
               readOnly
-              className="w-48 border-0 border-b border-primary bg-transparent focus:outline-none placeholder:text-primary"
+              onClick={() => setPriceOpen((v) => !v)}
+              value={priceDisplay}
+              className="w-48 border-0 border-b border-primary bg-transparent focus:outline-none placeholder:text-primary cursor-pointer"
             />
             <svg
               className="absolute right-0 top-1/2 -translate-y-1/2"
@@ -187,8 +219,7 @@ export default function HeroFilters() {
               height="7"
               viewBox="0 0 12 7"
               fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+              xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M1 1L6 6L11 1"
                 stroke="#FCFEFF"
@@ -198,6 +229,23 @@ export default function HeroFilters() {
             </svg>
           </div>
         </fieldset>
+
+        {priceOpen && (
+          <div className="absolute left-0 bottom-[150px]">
+            <PricePopover
+              minValue={priceMin}
+              maxValue={priceMax}
+              onChange={(lo, hi) => {
+                setPriceMin(lo);
+                setPriceMax(hi);
+              }}
+              onClose={() => setPriceOpen(false)}
+              min={0}
+              max={10000}
+              step={50}
+            />
+          </div>
+        )}
       </div>
 
       {/* Guests */}
@@ -206,8 +254,7 @@ export default function HeroFilters() {
           <legend className="sr-only">Guests</legend>
           <label
             htmlFor="guests"
-            className="font-jakarta text-[15px] font-bold pb-[15px]"
-          >
+            className="font-jakarta text-[15px] font-bold pb-[15px]">
             GUESTS
           </label>
           <div className="flex flex-row relative mt-2">
@@ -225,8 +272,7 @@ export default function HeroFilters() {
               height="7"
               viewBox="0 0 12 7"
               fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+              xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M1 1L6 6L11 1"
                 stroke="#FCFEFF"
@@ -242,16 +288,14 @@ export default function HeroFilters() {
       <div>
         <button
           type="submit"
-          className="font-jakarta font-jakarta text-[15px] font-bold flex flex-row items-center gap-1.5 cursor-pointer"
-        >
+          className="font-jakarta text-[15px] font-bold flex flex-row items-center gap-1.5 cursor-pointer">
           GO
           <svg
             width="7"
             height="12"
             viewBox="0 0 7 12"
             fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+            xmlns="http://www.w3.org/2000/svg">
             <path
               d="M1 11L6 6L1 1"
               stroke="#FCFEFF"
