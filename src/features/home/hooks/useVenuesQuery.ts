@@ -8,8 +8,10 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { filterJunkVenues } from "@/utils/venues/filter";
 import { isVenueAvailable } from "@/utils/venues/availability";
 import { filterByPriceRange } from "@/utils/venues/pricing";
-
-const UI_PAGE_SIZE = 8;
+import { filterByGuests } from "@/utils/venues/guests";
+import { UI_PAGE_SIZE, buildMeta } from "@/utils/venues/pagination";
+import { matchesQuery } from "@/utils/venues/search";
+import { fetchAllVenues } from "@/utils/venues/FetchAll";
 
 function withSort(
   url: string,
@@ -20,30 +22,6 @@ function withSort(
   return `${url}${sep}sort=${encodeURIComponent(
     sort
   )}&sortOrder=${encodeURIComponent(sortOrder)}`;
-}
-
-function buildMeta(
-  total: number,
-  currentPage: number,
-  pageSize: number
-): ListMeta {
-  const pageCount = Math.max(1, Math.ceil(total / pageSize));
-  const cur = Math.min(Math.max(1, currentPage), pageCount);
-  return {
-    currentPage: cur,
-    pageCount,
-    totalCount: total,
-    isFirstPage: cur === 1,
-    isLastPage: cur === pageCount,
-    previousPage: cur > 1 ? cur - 1 : null,
-    nextPage: cur < pageCount ? cur + 1 : null,
-  };
-}
-
-function matchesQuery(v: Venue, q: string): boolean {
-  if (!q) return true;
-  const hay = `${v.name ?? ""} ${v.description ?? ""}`.toLowerCase();
-  return hay.includes(q.toLowerCase());
 }
 
 export function useVenuesQuery() {
@@ -57,12 +35,16 @@ export function useVenuesQuery() {
   const endStr = searchParams.get("end");
   const priceMinStr = searchParams.get("priceMin");
   const priceMaxStr = searchParams.get("priceMax");
+  const guestsStr = searchParams.get("guests");
 
   const hasDates = Boolean(startStr && endStr);
   const priceMin = priceMinStr ? Number(priceMinStr) : undefined;
   const priceMax = priceMaxStr ? Number(priceMaxStr) : undefined;
+  const guests = guestsStr ? Number(guestsStr) : undefined;
 
-  const hasClientFilters = Boolean(q || hasDates || priceMinStr || priceMaxStr);
+  const hasClientFilters = Boolean(
+    q || hasDates || priceMinStr || priceMaxStr || guestsStr
+  );
 
   // Server-paginated list (used only when no client filters)
   const baseUrl = useMemo(() => {
@@ -73,7 +55,7 @@ export function useVenuesQuery() {
   // Stable key for filtered mode
   const filterKey = `${q}|${startStr ?? ""}|${endStr ?? ""}|${priceMin ?? ""}|${
     priceMax ?? ""
-  }`;
+  }|${guests ?? ""}`;
 
   const [items, setItems] = useState<Venue[]>([]);
   const [meta, setMeta] = useState<ListMeta | null>(null);
@@ -90,43 +72,18 @@ export function useVenuesQuery() {
     const start = startStr ? new Date(startStr) : undefined;
     const end = endStr ? new Date(endStr) : undefined;
 
-    async function fetchAllVenues(includeBookings: boolean): Promise<Venue[]> {
-      const collected: Venue[] = [];
-      let nextPage = 1;
-      const LIMIT = 100; // large chunks to reduce round-trips
-      const MAX_PAGES = 500; // safety
-
-      while (nextPage && nextPage <= MAX_PAGES) {
-        const url = withSort(
-          venuesListURL({
-            page: nextPage,
-            limit: LIMIT,
-            bookings: includeBookings,
-          }),
-          "created",
-          "desc"
-        );
-        const res = await apiFetch<ListResponse<Venue>>(url, {
-          signal: abort.signal,
-        });
-        collected.push(...res.data);
-        if (res.meta.isLastPage || !res.meta.nextPage) break;
-        nextPage = res.meta.nextPage;
-      }
-      return collected;
-    }
-
     async function loadFiltered() {
       setLoading(true);
       setError(null);
       try {
-        const all = await fetchAllVenues(hasDates);
+        const all = await fetchAllVenues(hasDates, abort.signal);
         let filtered = filterJunkVenues(all);
 
         if (q) filtered = filtered.filter((v) => matchesQuery(v, q));
         if (hasDates && start && end)
           filtered = filtered.filter((v) => isVenueAvailable(v, start, end));
         filtered = filterByPriceRange(filtered, priceMin, priceMax);
+        filtered = filterByGuests(filtered, guests);
 
         const m = buildMeta(filtered.length, page, UI_PAGE_SIZE);
         const startIdx = (m.currentPage - 1) * UI_PAGE_SIZE;
@@ -137,9 +94,8 @@ export function useVenuesQuery() {
         setMeta(m);
       } catch (e: unknown) {
         if (!alive) return;
-        if (e instanceof Error && e.name !== "AbortError") {
+        if (e instanceof Error && e.name !== "AbortError")
           setError(e as ApiError);
-        }
       } finally {
         if (alive) setLoading(false);
       }
@@ -153,7 +109,7 @@ export function useVenuesQuery() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterKey, page, hasClientFilters]);
 
-  // UNFILTERED MODE: use server pagination directly (fast)
+  // UNFILTERED MODE: use server pagination and TOP-UP to ensure 8 visible items
   useEffect(() => {
     if (hasClientFilters) return;
 
@@ -164,19 +120,50 @@ export function useVenuesQuery() {
       setLoading(true);
       setError(null);
       try {
-        const res = await apiFetch<ListResponse<Venue>>(baseUrl, {
+        const first = await apiFetch<ListResponse<Venue>>(baseUrl, {
           signal: abort.signal,
         });
-        const pageItems = filterJunkVenues(res.data);
+        const originalMeta = first.meta;
+
+        const collected: Venue[] = filterJunkVenues(first.data);
+
+        // Top-up: fetch subsequent pages until we have 8 clean items or hit the end
+        let nextPage = originalMeta.nextPage ?? originalMeta.currentPage + 1;
+        let safety = 0;
+
+        while (
+          collected.length < UI_PAGE_SIZE &&
+          nextPage &&
+          !originalMeta.isLastPage &&
+          safety < 25
+        ) {
+          const nextUrl = withSort(
+            venuesListURL({
+              page: nextPage,
+              limit: UI_PAGE_SIZE,
+              bookings: false,
+            }),
+            "created",
+            "desc"
+          );
+          const nextRes = await apiFetch<ListResponse<Venue>>(nextUrl, {
+            signal: abort.signal,
+          });
+          const filteredNext = filterJunkVenues(nextRes.data);
+          collected.push(...filteredNext);
+
+          if (nextRes.meta.isLastPage || nextRes.meta.nextPage == null) break;
+          nextPage = nextRes.meta.nextPage;
+          safety += 1;
+        }
 
         if (!alive) return;
-        setItems(pageItems);
-        setMeta(res.meta);
+        setItems(collected.slice(0, UI_PAGE_SIZE));
+        setMeta(originalMeta);
       } catch (e: unknown) {
         if (!alive) return;
-        if (e instanceof Error && e.name !== "AbortError") {
+        if (e instanceof Error && e.name !== "AbortError")
           setError(e as ApiError);
-        }
       } finally {
         if (alive) setLoading(false);
       }

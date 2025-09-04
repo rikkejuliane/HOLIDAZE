@@ -173,7 +173,7 @@ export default function PricePopover({
   return (
     <div
       ref={wrapRef}
-      className="absolute z-50 w-[310px] rounded-xl border border-white/10 bg-background/80 backdrop-blur-xl p-4 text-primary shadow-lg"
+      className="absolute z-50 w-[260px] rounded-xl border border-white/10 bg-background/80 backdrop-blur-xl p-4 text-primary shadow-lg"
       role="dialog"
       aria-label="Select price range"
     >

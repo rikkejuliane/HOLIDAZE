@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import DateRangePopover from "./date/DateRangePopover";
 import PricePopover from "./price/PricePopover";
+import GuestsPopover from "./guests/GuestsPopover";
 
 type Range = { start?: Date; end?: Date };
 
@@ -46,23 +47,28 @@ export default function HeroFilters() {
   const endStr = searchParams.get("end");
   const priceMinStr = searchParams.get("priceMin");
   const priceMaxStr = searchParams.get("priceMax");
+  const guestsStr = searchParams.get("guests");
 
-  // Dates (hydrate from URL)
+  // Dates
   const [range, setRange] = useState<Range>(() => ({
     start: startStr ? new Date(startStr) : undefined,
     end: endStr ? new Date(endStr) : undefined,
   }));
   const [openCal, setOpenCal] = useState(false);
-  const datesWrapRef = useRef<HTMLDivElement>(null);
 
-  // Price (hydrate from URL)
+  // Price
   const [priceOpen, setPriceOpen] = useState(false);
-  const priceWrapRef = useRef<HTMLDivElement>(null);
   const [priceMin, setPriceMin] = useState<number | undefined>(
     priceMinStr ? Number(priceMinStr) : undefined
   );
   const [priceMax, setPriceMax] = useState<number | undefined>(
     priceMaxStr ? Number(priceMaxStr) : undefined
+  );
+
+  // Guests
+  const [guestsOpen, setGuestsOpen] = useState(false);
+  const [guests, setGuests] = useState<number | undefined>(
+    guestsStr ? Number(guestsStr) : undefined
   );
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -85,14 +91,15 @@ export default function HeroFilters() {
 
     if (typeof priceMin === "number" && !isNaN(priceMin) && priceMin > 0) {
       sp.set("priceMin", String(priceMin));
-    } else {
-      sp.delete("priceMin");
-    }
+    } else sp.delete("priceMin");
+
     if (typeof priceMax === "number" && !isNaN(priceMax)) {
       sp.set("priceMax", String(priceMax));
-    } else {
-      sp.delete("priceMax"); // undefined => no upper bound
-    }
+    } else sp.delete("priceMax");
+
+    if (typeof guests === "number" && guests > 0) {
+      sp.set("guests", String(guests));
+    } else sp.delete("guests");
 
     sp.set("page", "1");
     router.push(`?${sp.toString()}#listings-grid`, { scroll: true });
@@ -103,6 +110,7 @@ export default function HeroFilters() {
     () => formatPriceInput(priceMin, priceMax, 10000),
     [priceMin, priceMax]
   );
+  const guestsDisplay = guests != null ? String(guests) : "";
 
   return (
     <form
@@ -145,7 +153,7 @@ export default function HeroFilters() {
       </div>
 
       {/* Dates */}
-      <div className="flex flex-col relative" ref={datesWrapRef}>
+      <div className="flex flex-col relative">
         <fieldset>
           <legend className="sr-only">Dates</legend>
           <label
@@ -194,7 +202,7 @@ export default function HeroFilters() {
       </div>
 
       {/* Price */}
-      <div className="flex flex-col relative" ref={priceWrapRef}>
+      <div className="flex flex-col relative">
         <fieldset>
           <legend className="sr-only">Price</legend>
           <label
@@ -249,7 +257,7 @@ export default function HeroFilters() {
       </div>
 
       {/* Guests */}
-      <div className="flex flex-col">
+      <div className="flex flex-col relative">
         <fieldset>
           <legend className="sr-only">Guests</legend>
           <label
@@ -264,7 +272,9 @@ export default function HeroFilters() {
               type="text"
               placeholder="Number of guests"
               readOnly
-              className="w-48 border-0 border-b border-primary bg-transparent focus:outline-none placeholder:text-primary"
+              onClick={() => setGuestsOpen((v) => !v)}
+              value={guestsDisplay}
+              className="w-48 border-0 border-b border-primary bg-transparent focus:outline-none placeholder:text-primary cursor-pointer"
             />
             <svg
               className="absolute right-0 top-1/2 -translate-y-1/2"
@@ -282,6 +292,18 @@ export default function HeroFilters() {
             </svg>
           </div>
         </fieldset>
+
+        {guestsOpen && (
+          <div className="absolute left-0 bottom-[135px]">
+            <GuestsPopover
+              value={guests}
+              onChange={setGuests}
+              onClose={() => setGuestsOpen(false)}
+              min={1}
+              max={20}
+            />
+          </div>
+        )}
       </div>
 
       {/* CTA Button */}
