@@ -95,7 +95,7 @@ export default function HeroFilters() {
     }
 
     sp.set("page", "1");
-    router.push(`?${sp.toString()}`, { scroll: false });
+    router.push(`?${sp.toString()}#listings-grid`, { scroll: true });
   }
 
   const dateDisplay = useMemo(() => formatRange(range), [range]);
