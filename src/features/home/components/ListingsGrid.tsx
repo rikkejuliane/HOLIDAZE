@@ -1,7 +1,7 @@
 "use client";
 
 import type { Venue } from "@/types/venue";
-import { filterJunkVenues } from "@/utils/venues";
+import { filterJunkVenues } from "@/utils/venues/filter";
 import ListingCard from "./ListingCard";
 import ListingCardSkeleton from "@/components/SkeletonLoader/ListingCardSkeleton";
 
@@ -33,7 +33,7 @@ export default function ListingsGrid({
   }
 
   const clean = filterJunkVenues(items ?? []);
-  if (!clean.length) return <p>No venues found.</p>;
+  if (!clean.length) return <p className="font-jakarta text-primary font-bold">No venues found.</p>;
 
   return (
     <ul className="grid grid-cols-1 gap-5 xl:grid-cols-2">

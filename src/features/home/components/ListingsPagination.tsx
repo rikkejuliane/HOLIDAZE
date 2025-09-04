@@ -28,7 +28,7 @@ export default function ListingsPagination({
   return (
     <nav
       aria-label="Pagination"
-      className="mt-6 flex items-center justify-center gap-4 font-jakarta text-[15px] font-semibold text-primary">
+      className="mt-6 flex items-center justify-center gap-4 font-jakarta text-[15px] font-semibold text-primary cursor-pointer">
       {/* Prev (SVG) */}
       <button
         type="button"
