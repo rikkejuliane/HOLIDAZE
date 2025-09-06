@@ -8,12 +8,8 @@ export default function Home() {
     <section>
       <HeroHome/>
     </section>
-
       <RefinedFiltering/>
-
       <HomeListingsSection />
-
-
     </>
   );
 }

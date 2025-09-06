@@ -23,7 +23,6 @@ export default function HomeListingsSection() {
       left={
         <>
           {error && <p className="text-red-500">Error: {error.message}</p>}
-
           <div id="listings-grid">
             <ListingsGrid
               items={items}
@@ -31,7 +30,6 @@ export default function HomeListingsSection() {
               skeletonCount={8}
             />
           </div>
-
           <ListingsPagination
             meta={meta}
             onPageChange={handlePageChange}

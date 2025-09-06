@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import DateRangePopover from "./date/DateRangePopover";
 import PricePopover from "./price/PricePopover";
 import GuestsPopover from "./guests/GuestsPopover";
