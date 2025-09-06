@@ -12,6 +12,7 @@ import { filterByGuests } from "@/utils/venues/guests";
 import { UI_PAGE_SIZE, buildMeta } from "@/utils/venues/pagination";
 import { matchesQuery } from "@/utils/venues/search";
 import { fetchAllVenues } from "@/utils/venues/FetchAll";
+import { sortByPrice, type PriceSort } from "@/utils/venues/sort"; // ← added
 
 function withSort(
   url: string,
@@ -36,14 +37,17 @@ export function useVenuesQuery() {
   const priceMinStr = searchParams.get("priceMin");
   const priceMaxStr = searchParams.get("priceMax");
   const guestsStr = searchParams.get("guests");
+  const sortStr = (searchParams.get("sort") ?? "").trim() as PriceSort | ""; // ← added
 
   const hasDates = Boolean(startStr && endStr);
   const priceMin = priceMinStr ? Number(priceMinStr) : undefined;
   const priceMax = priceMaxStr ? Number(priceMaxStr) : undefined;
   const guests = guestsStr ? Number(guestsStr) : undefined;
+  const sort: PriceSort | undefined =
+    sortStr === "price:asc" || sortStr === "price:desc" ? sortStr : undefined; // ← added
 
   const hasClientFilters = Boolean(
-    q || hasDates || priceMinStr || priceMaxStr || guestsStr
+    q || hasDates || priceMinStr || priceMaxStr || guestsStr || sort // ← added sort
   );
 
   // Server-paginated list (used only when no client filters)
@@ -55,7 +59,7 @@ export function useVenuesQuery() {
   // Stable key for filtered mode
   const filterKey = `${q}|${startStr ?? ""}|${endStr ?? ""}|${priceMin ?? ""}|${
     priceMax ?? ""
-  }|${guests ?? ""}`;
+  }|${guests ?? ""}|${sort ?? ""}`; // ← added sort
 
   const [items, setItems] = useState<Venue[]>([]);
   const [meta, setMeta] = useState<ListMeta | null>(null);
@@ -84,6 +88,9 @@ export function useVenuesQuery() {
           filtered = filtered.filter((v) => isVenueAvailable(v, start, end));
         filtered = filterByPriceRange(filtered, priceMin, priceMax);
         filtered = filterByGuests(filtered, guests);
+
+        // ← apply sort AFTER all filters
+        if (sort) filtered = sortByPrice(filtered, sort);
 
         const m = buildMeta(filtered.length, page, UI_PAGE_SIZE);
         const startIdx = (m.currentPage - 1) * UI_PAGE_SIZE;
