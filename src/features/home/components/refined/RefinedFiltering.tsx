@@ -1,7 +1,12 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  parseAmenitiesParam,
+  serializeAmenitiesParam,
+  type AmenityKey,
+} from "@/utils/venues/amenities";
 
 function useOutsideClose(onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
@@ -27,6 +32,7 @@ export default function RefinedFiltering() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // ---------- SORT (UNCHANGED) ----------
   const sort = searchParams.get("sort"); // "price:asc" | "price:desc" | null
   const [openSort, setOpenSort] = useState(false);
   const sortWrapRef = useOutsideClose(() => setOpenSort(false));
@@ -46,7 +52,67 @@ export default function RefinedFiltering() {
       ? "SORT BY: LOWEST PRICE"
       : sort === "price:desc"
       ? "SORT BY: HIGHEST PRICE"
-      : "SORT BY: HIGHEST PRICE"; // your default text
+      : "SORT BY: HIGHEST PRICE"; // default text
+
+  // ---------- AMENITIES (BUFFERED) ----------
+  const amenitiesParam = searchParams.get("amenities") ?? "";
+
+  // Parse from the *string* so the dependency is stable
+  const amenitiesFromUrl = useMemo(
+    () => parseAmenitiesParam(amenitiesParam),
+    [amenitiesParam]
+  );
+
+  const [openAmenities, setOpenAmenities] = useState(false);
+  const amenitiesWrapRef = useOutsideClose(() => setOpenAmenities(false));
+
+  // Local buffer used inside the popdown
+  const [pendingAmenities, setPendingAmenities] = useState<Set<AmenityKey>>(
+    new Set(amenitiesFromUrl)
+  );
+
+  // Sync buffer when the popdown is *closed* and the URL param actually changes
+  useEffect(() => {
+    if (!openAmenities) {
+      setPendingAmenities(new Set(amenitiesFromUrl));
+    }
+  }, [amenitiesParam, openAmenities, amenitiesFromUrl]);
+
+  const selectedCount = amenitiesFromUrl.length;
+
+  function toggleAmenityBuffered(key: AmenityKey) {
+    setPendingAmenities((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function clearAmenitiesBuffered(apply = false) {
+    // 1) empty the local buffer (uncheck boxes)
+    setPendingAmenities(new Set());
+  
+    // 2) optionally clear the active URL filter too
+    if (apply) {
+      const sp = new URLSearchParams(searchParams.toString());
+      sp.delete("amenities");
+      sp.set("page", "1");
+      router.push(`?${sp.toString()}#listings-grid`, { scroll: true });
+      setOpenAmenities(false);
+    }
+  }
+  
+
+  function applyAmenities() {
+    const serialized = serializeAmenitiesParam([...pendingAmenities]);
+    const sp = new URLSearchParams(searchParams.toString());
+    if (serialized) sp.set("amenities", serialized);
+    else sp.delete("amenities");
+    sp.set("page", "1");
+    router.push(`?${sp.toString()}#listings-grid`, { scroll: true });
+    setOpenAmenities(false);
+  }
 
   return (
     <section className="mt-[30px]">
@@ -56,7 +122,7 @@ export default function RefinedFiltering() {
         </p>
 
         <div className="flex flex-row gap-[15px] text-jakarta">
-          {/* Sort button + dropdown */}
+          {/* Sort button + dropdown (UNCHANGED) */}
           <div className="relative" ref={sortWrapRef}>
             <button
               type="button"
@@ -115,24 +181,100 @@ export default function RefinedFiltering() {
             )}
           </div>
 
-          {/* Placeholders for later */}
-          <button className="flex flex-row items-center justify-around bg-secondary w-[150px] h-[43px] text-primary/70">
-            AMENITIES (0)
-            <svg
-              width="12"
-              height="7"
-              viewBox="0 0 12 7"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M1 1L6 6L11 1"
-                stroke="#FCFEFF"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+          {/* Amenities button + popdown (buffered, styled like Sort) */}
+          <div className="relative" ref={amenitiesWrapRef}>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={openAmenities}
+              aria-controls="amenities-menu"
+              onClick={() => {
+                setPendingAmenities(new Set(amenitiesFromUrl)); // hydrate on open
+                setOpenAmenities((v) => !v);
+              }}
+              className={`flex flex-row items-center justify-around bg-secondary w-[150px] h-[43px] text-primary ${
+                selectedCount ? "opacity-100" : "opacity-70"
+              }`}>
+              AMENITIES ({selectedCount})
+              <svg
+                width="12"
+                height="7"
+                viewBox="0 0 12 7"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden>
+                <path
+                  d="M1 1L6 6L11 1"
+                  stroke="#FCFEFF"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
 
+            {openAmenities && (
+              <div
+                id="amenities-menu"
+                role="dialog"
+                aria-modal="false"
+                className="absolute left-0 top-full mt-2 z-50 w-[150px] border border-white/10 bg-background/80 backdrop-blur-xl p-3 shadow-lg text-primary">
+                <fieldset className="font-jakarta text-[15px]">
+                  <legend className="sr-only">Amenities</legend>
+
+                  <ul className="space-y-1">
+                    {(
+                      ["wifi", "parking", "breakfast", "pets"] as AmenityKey[]
+                    ).map((k) => (
+                      <li key={k}>
+                        <label className="flex items-center justify-between gap-2 cursor-pointer">
+                          <span className="uppercase">{k}</span>
+                          <input
+                            type="checkbox"
+                            className="accent-current"
+                            checked={pendingAmenities.has(k)}
+                            onChange={() => toggleAmenityBuffered(k)}
+                          />
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-2 flex items-center justify-between">
+                    <button
+                      type="button"
+                      className="mt-1 flex items-center py-2 hover:bg-white/10 text-left opacity-80 font-jakarta text-sm"
+                      onClick={() => clearAmenitiesBuffered(true)}>
+                      Clear
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={applyAmenities}
+                      className="font-jakarta text-[15px] font-bold flex flex-row items-center gap-1.5 cursor-pointer"
+                      aria-label="Apply amenities">
+                      GO
+                      <svg
+                        width="7"
+                        height="12"
+                        viewBox="0 0 7 12"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden>
+                        <path
+                          d="M1 11L6 6L1 1"
+                          stroke="#FCFEFF"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </fieldset>
+              </div>
+            )}
+          </div>
+
+          {/* SHOW: FEATURED (placeholder — unchanged) */}
           <button className="flex flex-row items-center justify-around bg-secondary w-[190px] h-[43px] text-primary/70">
             SHOW: FEATURED
             <svg
@@ -149,6 +291,8 @@ export default function RefinedFiltering() {
               />
             </svg>
           </button>
+
+          {/* CLEAR ALL FILTERING (placeholder — unchanged) */}
           <button className="flex flex-row items-center justify-around bg-secondary w-[200px] h-[43px] text-primary/70">
             CLEAR ALL FILTERING
             <svg
