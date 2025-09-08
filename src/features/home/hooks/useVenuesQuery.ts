@@ -12,6 +12,12 @@ import { filterByGuests } from "@/utils/venues/guests";
 import { UI_PAGE_SIZE, buildMeta } from "@/utils/venues/pagination";
 import { matchesQuery } from "@/utils/venues/search";
 import { fetchAllVenues } from "@/utils/venues/FetchAll";
+import { sortByPrice, type PriceSort } from "@/utils/venues/sort";
+import {
+  filterByAmenities,
+  parseAmenitiesParam,
+  type AmenityKey,
+} from "@/utils/venues/amenities";
 
 function withSort(
   url: string,
@@ -36,14 +42,25 @@ export function useVenuesQuery() {
   const priceMinStr = searchParams.get("priceMin");
   const priceMaxStr = searchParams.get("priceMax");
   const guestsStr = searchParams.get("guests");
+  const sortStr = (searchParams.get("sort") ?? "").trim() as PriceSort | "";
+  const amenitiesParam = searchParams.get("amenities"); // ← added
 
   const hasDates = Boolean(startStr && endStr);
   const priceMin = priceMinStr ? Number(priceMinStr) : undefined;
   const priceMax = priceMaxStr ? Number(priceMaxStr) : undefined;
   const guests = guestsStr ? Number(guestsStr) : undefined;
+  const sort: PriceSort | undefined =
+    sortStr === "price:asc" || sortStr === "price:desc" ? sortStr : undefined;
+  const amenities: AmenityKey[] = parseAmenitiesParam(amenitiesParam); // ← added
 
   const hasClientFilters = Boolean(
-    q || hasDates || priceMinStr || priceMaxStr || guestsStr
+    q ||
+      hasDates ||
+      priceMinStr ||
+      priceMaxStr ||
+      guestsStr ||
+      sort ||
+      amenities.length // ← added amenities
   );
 
   // Server-paginated list (used only when no client filters)
@@ -55,7 +72,7 @@ export function useVenuesQuery() {
   // Stable key for filtered mode
   const filterKey = `${q}|${startStr ?? ""}|${endStr ?? ""}|${priceMin ?? ""}|${
     priceMax ?? ""
-  }|${guests ?? ""}`;
+  }|${guests ?? ""}|${sort ?? ""}|${amenities.join(",")}`; // ← added amenities
 
   const [items, setItems] = useState<Venue[]>([]);
   const [meta, setMeta] = useState<ListMeta | null>(null);
@@ -84,6 +101,10 @@ export function useVenuesQuery() {
           filtered = filtered.filter((v) => isVenueAvailable(v, start, end));
         filtered = filterByPriceRange(filtered, priceMin, priceMax);
         filtered = filterByGuests(filtered, guests);
+        filtered = filterByAmenities(filtered, amenities); // ← added
+
+        // apply sort AFTER all filters
+        if (sort) filtered = sortByPrice(filtered, sort);
 
         const m = buildMeta(filtered.length, page, UI_PAGE_SIZE);
         const startIdx = (m.currentPage - 1) * UI_PAGE_SIZE;
