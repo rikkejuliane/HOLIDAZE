@@ -131,7 +131,7 @@ export default function HeroFilters() {
   return (
     <form
       onSubmit={onSubmit}
-      className="w-[1290px] h-20 bg-white/10 rounded-[10px] border border-white/0 backdrop-blur-[5.10px] flex flex-row justify-between items-center text-primary px-[39px] cursor-pointer">
+      className="w-[300px] lg:w-[1290px] h-[480px] lg:h-20 bg-white/10 rounded-[10px] border border-white/0 backdrop-blur-[5.10px] flex flex-col lg:flex-row justify-around lg:justify-between items-center text-primary px-[39px] cursor-pointer">
       {/* Search */}
       <div className="flex flex-col">
         <fieldset>
@@ -207,7 +207,7 @@ export default function HeroFilters() {
         </fieldset>
 
         {openCal && (
-          <div className="absolute left-0 bottom-[450px]">
+          <div className="absolute -left-8 lg:left-0 bottom-[395px]  lg:bottom-[450px]">
             <DateRangePopover
               value={range}
               onChange={setRange}
@@ -256,7 +256,7 @@ export default function HeroFilters() {
         </fieldset>
 
         {priceOpen && (
-          <div className="absolute left-0 bottom-[150px]">
+          <div className="absolute -left-8 lg:left-0  bottom-[135px] lg:bottom-[150px]">
             <PricePopover
               minValue={priceMin}
               maxValue={priceMax}
@@ -311,7 +311,7 @@ export default function HeroFilters() {
         </fieldset>
 
         {guestsOpen && (
-          <div className="absolute left-0 bottom-[135px]">
+          <div className="absolute -left-3 lg:left-0 bottom-[120px]">
             <GuestsPopover
               value={guests}
               onChange={setGuests}

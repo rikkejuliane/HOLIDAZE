@@ -119,13 +119,12 @@ export default function RefinedFiltering() {
   }
 
   return (
-    <section className="mt-[30px]">
+    <section className="mt-[350px] lg:mt-[30px]">
       <div className="flex flex-col items-center font-jakarta text-[15px]">
         <p className="text-primary/60 font-semibold mb-[15px]">
           REFINE YOUR SEARCH
         </p>
-
-        <div className="flex flex-row gap-[15px] text-jakarta">
+        <div className="flex flex-col lg:flex-row gap-[15px] text-jakarta">
           {/* Sort  by price*/}
           <div className="relative" ref={sortWrapRef}>
             <button

@@ -45,20 +45,21 @@ function inPreviewRange(day: Date, start?: Date, hovered?: Date) {
 }
 function daysInCalendar(month: Date) {
   const first = startOfMonth(month);
-  const startWeekday = (first.getDay() + 6) % 7;
+  const startWeekday = (first.getDay() + 6) % 7; // Mon=0
   const days: Date[] = [];
 
+  // leading
   for (let i = 0; i < startWeekday; i++) {
     const d = new Date(first);
     d.setDate(d.getDate() - (startWeekday - i));
     days.push(d);
   }
-
+  // month
   const last = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   for (let d = 1; d <= last; d++) {
     days.push(new Date(month.getFullYear(), month.getMonth(), d));
   }
-
+  // trailing to 42
   while (days.length % 7 !== 0 || days.length < 42) {
     const next = new Date(days[days.length - 1]);
     next.setDate(next.getDate() + 1);
@@ -84,8 +85,8 @@ function MonthView({
   const monthIndex = month.getMonth();
 
   return (
-    <div className="w-[280px] p-3">
-      <div className="grid grid-cols-7 text-center text-xs opacity-80 mb-1">
+    <div className="w-[240px] md:w-[280px] p-2 md:p-3">
+      <div className="grid grid-cols-7 text-center text-[11px] md:text-xs opacity-80 mb-1">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
           <div key={d}>{d}</div>
         ))}
@@ -93,18 +94,16 @@ function MonthView({
       <div className="grid grid-cols-7 gap-1">
         {grid.map((d, i) => {
           const isOtherMonth = d.getMonth() !== monthIndex;
-          const disabled = isPastDay(d); // 🚫 past days
+          const disabled = isPastDay(d);
 
           const selectedStart = isSameDay(d, range.start);
           const selectedEnd = isSameDay(d, range.end);
           const within = inRange(d, range.start, range.end);
           const previewWithin =
-            !!range.start &&
-            !range.end &&
-            inPreviewRange(d, range.start, hovered);
+            !!range.start && !range.end && inPreviewRange(d, range.start, hovered);
 
           const base =
-            "h-9 grid place-items-center rounded text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+            "h-8 md:h-9 grid place-items-center rounded text-xs md:text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
           const dim = isOtherMonth ? "opacity-40" : "";
           const isSelected = selectedStart || selectedEnd;
 
@@ -116,9 +115,8 @@ function MonthView({
             ? "bg-white/5"
             : "hover:bg-white/10";
 
-          // If you ALSO want a visual strike-through, add "line-through" below.
           const disabledCls = disabled
-            ? "opacity-40 cursor-not-allowed pointer-events-none /* line-through */"
+            ? "opacity-40 cursor-not-allowed pointer-events-none"
             : "cursor-pointer";
 
           const cls = `${base} ${bg} ${dim} ${disabledCls}`;
@@ -127,7 +125,6 @@ function MonthView({
             <button
               key={i}
               type="button"
-              // don’t fire handlers for disabled days
               onClick={disabled ? undefined : () => onPick(new Date(d))}
               onMouseEnter={disabled ? undefined : () => onHover(new Date(d))}
               onMouseLeave={disabled ? undefined : () => onHover(undefined)}
@@ -135,7 +132,8 @@ function MonthView({
               aria-pressed={isSelected}
               aria-disabled={disabled}
               tabIndex={disabled ? -1 : 0}
-              aria-label={d.toDateString()}>
+              aria-label={d.toDateString()}
+            >
               {d.getDate()}
             </button>
           );
@@ -157,6 +155,7 @@ export default function DateRangePopover({
   const [hovered, setHovered] = useState<Date | undefined>(undefined);
   const wrapRef = useRef<HTMLDivElement>(null);
 
+  // Close on outside click / ESC
   useEffect(() => {
     function onDoc(e: MouseEvent) {
       if (!wrapRef.current) return;
@@ -187,7 +186,6 @@ export default function DateRangePopover({
       return;
     }
 
-    // set end
     onChange({ start, end: day });
     onClose();
   }
@@ -195,33 +193,38 @@ export default function DateRangePopover({
   return (
     <div
       ref={wrapRef}
-      className="absolute z-50 mt-2 w-fit rounded-xl border border-white/10 bg-background/80 backdrop-blur-xl p-3 shadow-lg"
+      className="absolute z-50 mt-2 w-fit max-w-[95vw] rounded-xl border border-white/10 bg-background/80 backdrop-blur-xl p-2 md:p-3 shadow-lg"
       role="dialog"
-      aria-label="Choose dates">
+      aria-label="Choose dates"
+    >
       <div className="flex items-center justify-between px-2 pb-2">
         <button
           type="button"
           onClick={() => setVisibleMonth(addMonths(visibleMonth, -1))}
           className="p-1 rounded hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          aria-label="Previous month">
+          aria-label="Previous month"
+        >
           ‹
         </button>
-        <div className="text-sm font-semibold">
+        <div className="text-xs md:text-sm font-semibold text-center">
           {visibleMonth.toLocaleString(undefined, {
             month: "long",
             year: "numeric",
           })}
-          {"  –  "}
-          {addMonths(visibleMonth, 1).toLocaleString(undefined, {
-            month: "long",
-            year: "numeric",
-          })}
+          <span className="hidden md:inline">
+            {"  –  "}
+            {addMonths(visibleMonth, 1).toLocaleString(undefined, {
+              month: "long",
+              year: "numeric",
+            })}
+          </span>
         </div>
         <button
           type="button"
           onClick={() => setVisibleMonth(addMonths(visibleMonth, 1))}
           className="p-1 rounded hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          aria-label="Next month">
+          aria-label="Next month"
+        >
           ›
         </button>
       </div>
@@ -234,17 +237,20 @@ export default function DateRangePopover({
           onHover={setHovered}
           onPick={handlePick}
         />
-        <MonthView
-          month={addMonths(visibleMonth, 1)}
-          range={value}
-          hovered={hovered}
-          onHover={setHovered}
-          onPick={handlePick}
-        />
+        {/* Hide second month on mobile */}
+        <div className="hidden md:block">
+          <MonthView
+            month={addMonths(visibleMonth, 1)}
+            range={value}
+            hovered={hovered}
+            onHover={setHovered}
+            onPick={handlePick}
+          />
+        </div>
       </div>
 
-      <div className="flex items-center justify-between px-2 pt-2 text-xs opacity-80">
-        <span>
+      <div className="flex items-center justify-between px-2 pt-2 text-[11px] md:text-xs opacity-80">
+        <span className="truncate">
           {value.start ? value.start.toLocaleDateString() : "Pick a start date"}
           {" — "}
           {value.end ? value.end.toLocaleDateString() : "Pick an end date"}
@@ -252,7 +258,8 @@ export default function DateRangePopover({
         <button
           type="button"
           onClick={() => onChange({ start: undefined, end: undefined })}
-          className="underline hover:opacity-80">
+          className="underline hover:opacity-80"
+        >
           Clear
         </button>
       </div>
