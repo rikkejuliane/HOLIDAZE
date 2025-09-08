@@ -85,8 +85,8 @@ function MonthView({
   const monthIndex = month.getMonth();
 
   return (
-    <div className="w-[240px] md:w-[280px] p-2 md:p-3">
-      <div className="grid grid-cols-7 text-center text-[11px] md:text-xs opacity-80 mb-1">
+    <div className="w-[240px] sm:w-[280px] p-2 sm:p-3">
+      <div className="grid grid-cols-7 text-center text-[11px] sm:text-xs opacity-80 mb-1">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
           <div key={d}>{d}</div>
         ))}
@@ -100,10 +100,12 @@ function MonthView({
           const selectedEnd = isSameDay(d, range.end);
           const within = inRange(d, range.start, range.end);
           const previewWithin =
-            !!range.start && !range.end && inPreviewRange(d, range.start, hovered);
+            !!range.start &&
+            !range.end &&
+            inPreviewRange(d, range.start, hovered);
 
           const base =
-            "h-8 md:h-9 grid place-items-center rounded text-xs md:text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+            "h-8 sm:h-9 grid place-items-center rounded text-xs sm:text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
           const dim = isOtherMonth ? "opacity-40" : "";
           const isSelected = selectedStart || selectedEnd;
 
@@ -132,8 +134,7 @@ function MonthView({
               aria-pressed={isSelected}
               aria-disabled={disabled}
               tabIndex={disabled ? -1 : 0}
-              aria-label={d.toDateString()}
-            >
+              aria-label={d.toDateString()}>
               {d.getDate()}
             </button>
           );
@@ -193,25 +194,23 @@ export default function DateRangePopover({
   return (
     <div
       ref={wrapRef}
-      className="absolute z-50 mt-2 w-fit max-w-[95vw] rounded-xl border border-white/10 bg-background/80 backdrop-blur-xl p-2 md:p-3 shadow-lg"
+      className="absolute z-50 mt-2 w-fit max-w-[95vw] rounded-xl border border-white/10 bg-background/80 backdrop-blur-xl p-2 sm:p-3 shadow-lg"
       role="dialog"
-      aria-label="Choose dates"
-    >
+      aria-label="Choose dates">
       <div className="flex items-center justify-between px-2 pb-2">
         <button
           type="button"
           onClick={() => setVisibleMonth(addMonths(visibleMonth, -1))}
           className="p-1 rounded hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          aria-label="Previous month"
-        >
+          aria-label="Previous month">
           ‹
         </button>
-        <div className="text-xs md:text-sm font-semibold text-center">
+        <div className="text-xs sm:text-sm font-semibold text-center">
           {visibleMonth.toLocaleString(undefined, {
             month: "long",
             year: "numeric",
           })}
-          <span className="hidden md:inline">
+          <span className="hidden sm:inline">
             {"  –  "}
             {addMonths(visibleMonth, 1).toLocaleString(undefined, {
               month: "long",
@@ -223,8 +222,7 @@ export default function DateRangePopover({
           type="button"
           onClick={() => setVisibleMonth(addMonths(visibleMonth, 1))}
           className="p-1 rounded hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          aria-label="Next month"
-        >
+          aria-label="Next month">
           ›
         </button>
       </div>
@@ -238,7 +236,7 @@ export default function DateRangePopover({
           onPick={handlePick}
         />
         {/* Hide second month on mobile */}
-        <div className="hidden md:block">
+        <div className="hidden sm:block">
           <MonthView
             month={addMonths(visibleMonth, 1)}
             range={value}
@@ -249,7 +247,7 @@ export default function DateRangePopover({
         </div>
       </div>
 
-      <div className="flex items-center justify-between px-2 pt-2 text-[11px] md:text-xs opacity-80">
+      <div className="flex items-center justify-between px-2 pt-2 text-[11px] sm:text-xs opacity-80">
         <span className="truncate">
           {value.start ? value.start.toLocaleDateString() : "Pick a start date"}
           {" — "}
@@ -258,8 +256,7 @@ export default function DateRangePopover({
         <button
           type="button"
           onClick={() => onChange({ start: undefined, end: undefined })}
-          className="underline hover:opacity-80"
-        >
+          className="underline hover:opacity-80">
           Clear
         </button>
       </div>

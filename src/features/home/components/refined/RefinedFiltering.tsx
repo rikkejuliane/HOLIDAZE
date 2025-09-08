@@ -33,8 +33,7 @@ export default function RefinedFiltering() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // ---------- SORT (UNCHANGED) ----------
-  const sort = searchParams.get("sort"); // "price:asc" | "price:desc" | null
+  const sort = searchParams.get("sort");
   const [openSort, setOpenSort] = useState(false);
   const sortWrapRef = useOutsideClose(() => setOpenSort(false));
 
@@ -112,14 +111,13 @@ export default function RefinedFiltering() {
     clearAllFiltersIn(sp /* , { keep: ["limit"] } */);
     router.push(`?${sp.toString()}#listings-grid`, { scroll: true });
 
-    // keep UI in sync
     setOpenSort(false);
     setOpenAmenities(false);
     setPendingAmenities(new Set());
   }
 
   return (
-    <section className="mt-[350px] lg:mt-[30px]">
+    <section className="mt-[350px] sm:mt-[210px] lg:mt-[30px]">
       <div className="flex flex-col items-center font-jakarta text-[15px]">
         <p className="text-primary/60 font-semibold mb-[15px]">
           REFINE YOUR SEARCH

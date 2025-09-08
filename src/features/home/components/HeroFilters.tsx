@@ -131,7 +131,7 @@ export default function HeroFilters() {
   return (
     <form
       onSubmit={onSubmit}
-      className="w-[300px] lg:w-[1290px] h-[480px] lg:h-20 bg-white/10 rounded-[10px] border border-white/0 backdrop-blur-[5.10px] flex flex-col lg:flex-row justify-around lg:justify-between items-center text-primary px-[39px] cursor-pointer">
+      className="w-[300px] sm:w-[550px] lg:w-[1290px] h-[480px] sm:h-45 lg:h-20 bg-white/10 rounded-[10px] border border-white/0 backdrop-blur-[5.10px] flex flex-col sm:flex-row justify-around sm:flex-wrap lg:justify-between items-center text-primary px-[39px] cursor-pointer">
       {/* Search */}
       <div className="flex flex-col">
         <fieldset>
@@ -207,7 +207,7 @@ export default function HeroFilters() {
         </fieldset>
 
         {openCal && (
-          <div className="absolute -left-8 lg:left-0 bottom-[395px]  lg:bottom-[450px]">
+          <div className="absolute -left-8 sm:-left-80 lg:left-0 bottom-[395px] lg:bottom-[450px]">
             <DateRangePopover
               value={range}
               onChange={setRange}
@@ -324,7 +324,7 @@ export default function HeroFilters() {
       </div>
 
       {/* CTA Button */}
-      <div>
+      <div className="flex basis-auto sm:basis-full lg:basis-auto justify-normal sm:justify-center">
         <button
           type="submit"
           className="font-jakarta text-[15px] font-bold flex flex-row items-center gap-1.5 cursor-pointer">

@@ -19,7 +19,7 @@ export default function HeroHome() {
           of the World
         </h1>
       </div>
-      <div className="absolute -bottom-80 lg:bottom-4 left-0 right-0 px-4 flex justify-center">
+      <div className="absolute -bottom-80 sm:-bottom-44 lg:bottom-4 left-0 right-0 px-4 flex justify-center">
         <HeroFilters />
       </div>
     </div>
