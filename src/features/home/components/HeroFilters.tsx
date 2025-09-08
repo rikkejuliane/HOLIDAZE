@@ -56,7 +56,6 @@ export default function HeroFilters() {
   }));
   const [openCal, setOpenCal] = useState(false);
 
-  // keep dates in sync with URL changes (e.g., Clear All)
   useEffect(() => {
     setRange({
       start: startStr ? new Date(startStr) : undefined,
@@ -73,7 +72,6 @@ export default function HeroFilters() {
     priceMaxStr ? Number(priceMaxStr) : undefined
   );
 
-  // keep price in sync with URL
   useEffect(() => {
     setPriceMin(priceMinStr ? Number(priceMinStr) : undefined);
     setPriceMax(priceMaxStr ? Number(priceMaxStr) : undefined);
@@ -85,7 +83,6 @@ export default function HeroFilters() {
     guestsStr ? Number(guestsStr) : undefined
   );
 
-  // keep guests in sync with URL
   useEffect(() => {
     setGuests(guestsStr ? Number(guestsStr) : undefined);
   }, [guestsStr]);
@@ -146,7 +143,7 @@ export default function HeroFilters() {
           </label>
           <div className="flex flex-row relative mt-2">
             <input
-              key={q || "empty"} // remount when URL q changes so the field clears
+              key={q || "empty"}
               id="search"
               name="search"
               type="search"

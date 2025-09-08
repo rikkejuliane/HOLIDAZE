@@ -7,8 +7,17 @@ type Props = {
   value: Range;
   onChange: (next: Range) => void;
   onClose: () => void;
-  initialMonth?: Date; // defaults to today
+  initialMonth?: Date;
 };
+
+function startOfDaySafe(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+function isPastDay(day: Date, today = new Date()) {
+  return startOfDaySafe(day) < startOfDaySafe(today);
+}
 
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -36,23 +45,20 @@ function inPreviewRange(day: Date, start?: Date, hovered?: Date) {
 }
 function daysInCalendar(month: Date) {
   const first = startOfMonth(month);
-  const startWeekday = (first.getDay() + 6) % 7; // Mon=0
+  const startWeekday = (first.getDay() + 6) % 7;
   const days: Date[] = [];
 
-  // Fill leading blanks from previous month
   for (let i = 0; i < startWeekday; i++) {
     const d = new Date(first);
     d.setDate(d.getDate() - (startWeekday - i));
     days.push(d);
   }
 
-  // Fill current month (max 31)
   const last = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   for (let d = 1; d <= last; d++) {
     days.push(new Date(month.getFullYear(), month.getMonth(), d));
   }
 
-  // Trailing to fill 6 rows * 7 cols = 42 cells
   while (days.length % 7 !== 0 || days.length < 42) {
     const next = new Date(days[days.length - 1]);
     next.setDate(next.getDate() + 1);
@@ -87,14 +93,18 @@ function MonthView({
       <div className="grid grid-cols-7 gap-1">
         {grid.map((d, i) => {
           const isOtherMonth = d.getMonth() !== monthIndex;
+          const disabled = isPastDay(d); // 🚫 past days
+
           const selectedStart = isSameDay(d, range.start);
           const selectedEnd = isSameDay(d, range.end);
           const within = inRange(d, range.start, range.end);
           const previewWithin =
-            !!range.start && !range.end && inPreviewRange(d, range.start, hovered);
+            !!range.start &&
+            !range.end &&
+            inPreviewRange(d, range.start, hovered);
 
           const base =
-            "h-9 grid place-items-center rounded cursor-pointer text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+            "h-9 grid place-items-center rounded text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
           const dim = isOtherMonth ? "opacity-40" : "";
           const isSelected = selectedStart || selectedEnd;
 
@@ -103,22 +113,29 @@ function MonthView({
             : within
             ? "bg-white/10"
             : previewWithin
-            ? "bg-white/5" // softer preview color while hovering to choose end date
+            ? "bg-white/5"
             : "hover:bg-white/10";
 
-          const cls = `${base} ${bg} ${dim}`;
+          // If you ALSO want a visual strike-through, add "line-through" below.
+          const disabledCls = disabled
+            ? "opacity-40 cursor-not-allowed pointer-events-none /* line-through */"
+            : "cursor-pointer";
+
+          const cls = `${base} ${bg} ${dim} ${disabledCls}`;
 
           return (
             <button
               key={i}
               type="button"
-              onClick={() => onPick(new Date(d))}
-              onMouseEnter={() => onHover(new Date(d))}
-              onMouseLeave={() => onHover(undefined)}
+              // don’t fire handlers for disabled days
+              onClick={disabled ? undefined : () => onPick(new Date(d))}
+              onMouseEnter={disabled ? undefined : () => onHover(new Date(d))}
+              onMouseLeave={disabled ? undefined : () => onHover(undefined)}
               className={cls}
               aria-pressed={isSelected}
-              aria-label={d.toDateString()}
-            >
+              aria-disabled={disabled}
+              tabIndex={disabled ? -1 : 0}
+              aria-label={d.toDateString()}>
               {d.getDate()}
             </button>
           );
@@ -140,7 +157,6 @@ export default function DateRangePopover({
   const [hovered, setHovered] = useState<Date | undefined>(undefined);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click / ESC
   useEffect(() => {
     function onDoc(e: MouseEvent) {
       if (!wrapRef.current) return;
@@ -161,13 +177,11 @@ export default function DateRangePopover({
     const { start, end } = value;
 
     if (!start || (start && end)) {
-      // start new range
       onChange({ start: day, end: undefined });
       return;
     }
 
     if (isBefore(day, start)) {
-      // clicked before start -> swap
       onChange({ start: day, end: start });
       onClose();
       return;
@@ -183,15 +197,13 @@ export default function DateRangePopover({
       ref={wrapRef}
       className="absolute z-50 mt-2 w-fit rounded-xl border border-white/10 bg-background/80 backdrop-blur-xl p-3 shadow-lg"
       role="dialog"
-      aria-label="Choose dates"
-    >
+      aria-label="Choose dates">
       <div className="flex items-center justify-between px-2 pb-2">
         <button
           type="button"
           onClick={() => setVisibleMonth(addMonths(visibleMonth, -1))}
           className="p-1 rounded hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          aria-label="Previous month"
-        >
+          aria-label="Previous month">
           ‹
         </button>
         <div className="text-sm font-semibold">
@@ -209,8 +221,7 @@ export default function DateRangePopover({
           type="button"
           onClick={() => setVisibleMonth(addMonths(visibleMonth, 1))}
           className="p-1 rounded hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          aria-label="Next month"
-        >
+          aria-label="Next month">
           ›
         </button>
       </div>
@@ -234,17 +245,14 @@ export default function DateRangePopover({
 
       <div className="flex items-center justify-between px-2 pt-2 text-xs opacity-80">
         <span>
-          {value.start
-            ? value.start.toLocaleDateString()
-            : "Pick a start date"}
+          {value.start ? value.start.toLocaleDateString() : "Pick a start date"}
           {" — "}
           {value.end ? value.end.toLocaleDateString() : "Pick an end date"}
         </span>
         <button
           type="button"
           onClick={() => onChange({ start: undefined, end: undefined })}
-          className="underline hover:opacity-80"
-        >
+          className="underline hover:opacity-80">
           Clear
         </button>
       </div>

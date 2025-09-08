@@ -53,12 +53,10 @@ export default function RefinedFiltering() {
       ? "SORT BY: LOWEST PRICE"
       : sort === "price:desc"
       ? "SORT BY: HIGHEST PRICE"
-      : "SORT BY: HIGHEST PRICE"; // default text
+      : "SORT BY: HIGHEST PRICE"; 
 
-  // ---------- AMENITIES (BUFFERED) ----------
   const amenitiesParam = searchParams.get("amenities") ?? "";
 
-  // Parse from the *string* so the dependency is stable
   const amenitiesFromUrl = useMemo(
     () => parseAmenitiesParam(amenitiesParam),
     [amenitiesParam]
@@ -67,12 +65,10 @@ export default function RefinedFiltering() {
   const [openAmenities, setOpenAmenities] = useState(false);
   const amenitiesWrapRef = useOutsideClose(() => setOpenAmenities(false));
 
-  // Local buffer used inside the popdown
   const [pendingAmenities, setPendingAmenities] = useState<Set<AmenityKey>>(
     new Set(amenitiesFromUrl)
   );
 
-  // Sync buffer when the popdown is *closed* and the URL param actually changes
   useEffect(() => {
     if (!openAmenities) {
       setPendingAmenities(new Set(amenitiesFromUrl));
@@ -91,10 +87,7 @@ export default function RefinedFiltering() {
   }
 
   function clearAmenitiesBuffered(apply = false) {
-    // 1) empty the local buffer (uncheck boxes)
     setPendingAmenities(new Set());
-
-    // 2) optionally clear the active URL filter too
     if (apply) {
       const sp = new URLSearchParams(searchParams.toString());
       sp.delete("amenities");
@@ -133,7 +126,7 @@ export default function RefinedFiltering() {
         </p>
 
         <div className="flex flex-row gap-[15px] text-jakarta">
-          {/* Sort button + dropdown (UNCHANGED) */}
+          {/* Sort  by price*/}
           <div className="relative" ref={sortWrapRef}>
             <button
               type="button"
@@ -161,7 +154,6 @@ export default function RefinedFiltering() {
               </svg>
             </button>
 
-            {/* Popover */}
             {openSort && (
               <div
                 id="sort-menu"
@@ -192,7 +184,7 @@ export default function RefinedFiltering() {
             )}
           </div>
 
-          {/* Amenities button + popdown (buffered, styled like Sort) */}
+          {/* Amenities */}
           <div className="relative" ref={amenitiesWrapRef}>
             <button
               type="button"
@@ -285,7 +277,7 @@ export default function RefinedFiltering() {
             )}
           </div>
 
-          {/* CLEAR ALL FILTERING (placeholder — unchanged) */}
+          {/* CLEAR ALL FILTERING */}
           <button
             onClick={clearAllFilters}
             className="flex flex-row items-center justify-around bg-secondary w-[200px] h-[43px] text-primary">
