@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { clearAllFiltersIn } from "@/utils/venues/FiltersHub";
 import {
   parseAmenitiesParam,
   serializeAmenitiesParam,
@@ -92,7 +93,7 @@ export default function RefinedFiltering() {
   function clearAmenitiesBuffered(apply = false) {
     // 1) empty the local buffer (uncheck boxes)
     setPendingAmenities(new Set());
-  
+
     // 2) optionally clear the active URL filter too
     if (apply) {
       const sp = new URLSearchParams(searchParams.toString());
@@ -102,7 +103,6 @@ export default function RefinedFiltering() {
       setOpenAmenities(false);
     }
   }
-  
 
   function applyAmenities() {
     const serialized = serializeAmenitiesParam([...pendingAmenities]);
@@ -112,6 +112,17 @@ export default function RefinedFiltering() {
     sp.set("page", "1");
     router.push(`?${sp.toString()}#listings-grid`, { scroll: true });
     setOpenAmenities(false);
+  }
+
+  function clearAllFilters() {
+    const sp = new URLSearchParams(searchParams.toString());
+    clearAllFiltersIn(sp /* , { keep: ["limit"] } */);
+    router.push(`?${sp.toString()}#listings-grid`, { scroll: true });
+
+    // keep UI in sync
+    setOpenSort(false);
+    setOpenAmenities(false);
+    setPendingAmenities(new Set());
   }
 
   return (
@@ -274,26 +285,10 @@ export default function RefinedFiltering() {
             )}
           </div>
 
-          {/* SHOW: FEATURED (placeholder — unchanged) */}
-          <button className="flex flex-row items-center justify-around bg-secondary w-[190px] h-[43px] text-primary/70">
-            SHOW: FEATURED
-            <svg
-              width="12"
-              height="7"
-              viewBox="0 0 12 7"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M1 1L6 6L11 1"
-                stroke="#FCFEFF"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-
           {/* CLEAR ALL FILTERING (placeholder — unchanged) */}
-          <button className="flex flex-row items-center justify-around bg-secondary w-[200px] h-[43px] text-primary/70">
+          <button
+            onClick={clearAllFilters}
+            className="flex flex-row items-center justify-around bg-secondary w-[200px] h-[43px] text-primary">
             CLEAR ALL FILTERING
             <svg
               width="7"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import DateRangePopover from "./date/DateRangePopover";
 import PricePopover from "./price/PricePopover";
 import GuestsPopover from "./guests/GuestsPopover";
@@ -56,6 +56,14 @@ export default function HeroFilters() {
   }));
   const [openCal, setOpenCal] = useState(false);
 
+  // keep dates in sync with URL changes (e.g., Clear All)
+  useEffect(() => {
+    setRange({
+      start: startStr ? new Date(startStr) : undefined,
+      end: endStr ? new Date(endStr) : undefined,
+    });
+  }, [startStr, endStr]);
+
   // Price
   const [priceOpen, setPriceOpen] = useState(false);
   const [priceMin, setPriceMin] = useState<number | undefined>(
@@ -65,11 +73,22 @@ export default function HeroFilters() {
     priceMaxStr ? Number(priceMaxStr) : undefined
   );
 
+  // keep price in sync with URL
+  useEffect(() => {
+    setPriceMin(priceMinStr ? Number(priceMinStr) : undefined);
+    setPriceMax(priceMaxStr ? Number(priceMaxStr) : undefined);
+  }, [priceMinStr, priceMaxStr]);
+
   // Guests
   const [guestsOpen, setGuestsOpen] = useState(false);
   const [guests, setGuests] = useState<number | undefined>(
     guestsStr ? Number(guestsStr) : undefined
   );
+
+  // keep guests in sync with URL
+  useEffect(() => {
+    setGuests(guestsStr ? Number(guestsStr) : undefined);
+  }, [guestsStr]);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -127,6 +146,7 @@ export default function HeroFilters() {
           </label>
           <div className="flex flex-row relative mt-2">
             <input
+              key={q || "empty"} // remount when URL q changes so the field clears
               id="search"
               name="search"
               type="search"
