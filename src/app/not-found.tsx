@@ -13,21 +13,21 @@ export default function NotFound() {
           height={767}
           className="w-full h-[745px] object-cover object-center sm:h-auto"
         />
-        <div className="absolute top-80 sm:top-28 md:top-28 lg:top-45 xl:top-30 left-1/2 -translate-x-1/2 w-full ">
+        <div className="absolute top-60 sm:top-20 md:top-20 lg:top-30 xl:top-30 left-1/2 -translate-x-1/2 w-full ">
           <h1 className="text-[25px] sm:text-[29px]  md:text-[50px] lg:text-[55px] xl:text-[65px] font-noto text-primary font-black italic text-center [text-shadow:0_4px_4px_rgba(0,0,0,0.25)]">
             404
           </h1>
-          <h1 className="text-[25px] sm:text-[29px]  md:text-[50px] lg:text-[55px] xl:text-[65px] font-noto text-primary font-black italic text-center [text-shadow:0_4px_4px_rgba(0,0,0,0.25)] -mb-2 md:-mb-8">
+          <h1 className="text-[20px] sm:text-[29px]  md:text-[50px] lg:text-[55px] xl:text-[65px] font-noto text-primary font-black italic text-center [text-shadow:0_4px_4px_rgba(0,0,0,0.25)] -mb-2 md:-mb-8">
             Looks like you booked a trip
           </h1>
-          <h1 className="text-[25px] sm:text-[29px]  md:text-[50px] lg:text-[55px] xl:text-[65px] font-noto text-primary font-black italic text-center [text-shadow:0_4px_4px_rgba(0,0,0,0.25)]">
+          <h1 className="text-[20px] sm:text-[29px]  md:text-[50px] lg:text-[55px] xl:text-[65px] font-noto text-primary font-black italic text-center [text-shadow:0_4px_4px_rgba(0,0,0,0.25)]">
             to nowhere
           </h1>
-          <div className="flex flex-col text-center pt-[130px]">
-            <p className="text-jakarta font-extrabold text-[20px] text-primary leading-none">
+          <div className="flex flex-col text-center pt-[50px] sm:pt-0 lg:pt-[130px]">
+            <p className="text-jakarta font-extrabold  text- sm:text-[20px] text-primary leading-none">
               The page you’re looking for doesn’t exist.
             </p>
-            <p className="text-jakarta font-extrabold text-[20px] text-primary leading-none">
+            <p className="text-jakarta font-extrabold sm:text-[20px] text-primary leading-none">
               Let’s get you back on track.
             </p>
           </div>
