@@ -24,10 +24,10 @@ export default function NotFound() {
             to nowhere
           </h1>
           <div className="flex flex-col text-center pt-[50px] sm:pt-0 lg:pt-[130px]">
-            <p className="text-jakarta font-extrabold  text- sm:text-[20px] text-primary leading-none">
+            <p className="text-jakarta font-extrabold  text-sm sm:text-[20px] text-primary leading-none">
               The page you’re looking for doesn’t exist.
             </p>
-            <p className="text-jakarta font-extrabold sm:text-[20px] text-primary leading-none">
+            <p className="text-jakarta font-extrabold text-sm sm:text-[20px] text-primary leading-none">
               Let’s get you back on track.
             </p>
           </div>
