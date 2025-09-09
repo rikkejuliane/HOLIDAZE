@@ -17,7 +17,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased bg-background max-w-[1440px] mx-auto">
         <Navbar />
-        <main className="mb-20">{children}</main>
+        <main>{children}</main>
         <Footer />
       </body>
     </html>

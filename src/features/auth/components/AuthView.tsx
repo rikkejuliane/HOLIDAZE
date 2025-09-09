@@ -46,7 +46,7 @@ export default function AuthView() {
     (mode === "signup" ? "right-panel-active" : "");
 
   return (
-    <section>
+    <section className="mb-20">
       <div id="container" className={containerClasses}>
         {/* Sign Up */}
         <div className="form-container sign-up-container">

@@ -12,7 +12,7 @@ export default function ListingsAndMapLayout({
   right,
 }: ListingsAndMapLayoutProps) {
   return (
-    <section className="relative mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-[35px]">
+    <section className="relative mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-[35px] mb-20">
       <div style={{ height: "var(--header-h)" }} aria-hidden />
       {/* Single column by default, 2 cols on xl */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_500px]">
