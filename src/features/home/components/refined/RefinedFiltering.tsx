@@ -33,8 +33,7 @@ export default function RefinedFiltering() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // ---------- SORT (UNCHANGED) ----------
-  const sort = searchParams.get("sort"); // "price:asc" | "price:desc" | null
+  const sort = searchParams.get("sort");
   const [openSort, setOpenSort] = useState(false);
   const sortWrapRef = useOutsideClose(() => setOpenSort(false));
 
@@ -112,20 +111,18 @@ export default function RefinedFiltering() {
     clearAllFiltersIn(sp /* , { keep: ["limit"] } */);
     router.push(`?${sp.toString()}#listings-grid`, { scroll: true });
 
-    // keep UI in sync
     setOpenSort(false);
     setOpenAmenities(false);
     setPendingAmenities(new Set());
   }
 
   return (
-    <section className="mt-[30px]">
+    <section className="mt-[350px] sm:mt-[210px] lg:mt-[30px]">
       <div className="flex flex-col items-center font-jakarta text-[15px]">
         <p className="text-primary/60 font-semibold mb-[15px]">
           REFINE YOUR SEARCH
         </p>
-
-        <div className="flex flex-row gap-[15px] text-jakarta">
+        <div className="flex flex-col md:flex-row gap-[15px] text-jakarta">
           {/* Sort  by price*/}
           <div className="relative" ref={sortWrapRef}>
             <button
@@ -134,7 +131,7 @@ export default function RefinedFiltering() {
               aria-expanded={openSort}
               aria-controls="sort-menu"
               onClick={() => setOpenSort((v) => !v)}
-              className={`flex flex-row items-center justify-around bg-secondary w-[240px] h-[43px] text-primary ${
+              className={`flex flex-row items-center justify-between bg-secondary w-[310px] md:w-[240px] h-[43px] text-primary px-2 ${
                 isSortActive ? "opacity-100" : "opacity-70"
               }`}>
               {sortLabel}
@@ -195,7 +192,7 @@ export default function RefinedFiltering() {
                 setPendingAmenities(new Set(amenitiesFromUrl)); // hydrate on open
                 setOpenAmenities((v) => !v);
               }}
-              className={`flex flex-row items-center justify-around bg-secondary w-[150px] h-[43px] text-primary ${
+              className={`flex flex-row items-center justify-between bg-secondary w-[310px] md:w-[150px] h-[43px] text-primary px-2 ${
                 selectedCount ? "opacity-100" : "opacity-70"
               }`}>
               AMENITIES ({selectedCount})
@@ -220,7 +217,7 @@ export default function RefinedFiltering() {
                 id="amenities-menu"
                 role="dialog"
                 aria-modal="false"
-                className="absolute left-0 top-full mt-2 z-50 w-[150px] border border-white/10 bg-background/80 backdrop-blur-xl p-3 shadow-lg text-primary">
+                className="absolute left-0 top-full mt-2 z-50 w-[150px] border border-white/10 bg-background/95 sm:bg-background/80 sm:backdrop-blur-xl p-3 shadow-lg text-primary">
                 <fieldset className="font-jakarta text-[15px]">
                   <legend className="sr-only">Amenities</legend>
 
@@ -233,7 +230,7 @@ export default function RefinedFiltering() {
                           <span className="uppercase">{k}</span>
                           <input
                             type="checkbox"
-                            className="accent-current"
+                            className="h-4 w-4 rounded-sm border border-white/40 accent-[#1f2937] "
                             checked={pendingAmenities.has(k)}
                             onChange={() => toggleAmenityBuffered(k)}
                           />
@@ -280,7 +277,7 @@ export default function RefinedFiltering() {
           {/* CLEAR ALL FILTERING */}
           <button
             onClick={clearAllFilters}
-            className="flex flex-row items-center justify-around bg-secondary w-[200px] h-[43px] text-primary">
+            className="flex flex-row items-center justify-between bg-secondary w-[310px] md:w-[200px] h-[43px] text-primary px-2">
             CLEAR ALL FILTERING
             <svg
               width="7"

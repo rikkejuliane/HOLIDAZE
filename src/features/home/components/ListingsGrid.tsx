@@ -19,7 +19,7 @@ export default function ListingsGrid({
   if (isLoading) {
     return (
       <ul
-        className="grid grid-cols-1 gap-5 xl:grid-cols-2"
+        className="grid grid-cols-1 gap-5 md:[grid-template-columns:repeat(2,minmax(0,320px))] justify-items-center justify-center"
         aria-busy="true"
         aria-live="polite">
         {Array.from({ length: skeletonCount }).map((_, i) => (
@@ -27,7 +27,7 @@ export default function ListingsGrid({
             <ListingCardSkeleton />
           </li>
         ))}
-        <span className="sr-only">Laster inn steder…</span>
+        <span className="sr-only">Loading listings..</span>
       </ul>
     );
   }
@@ -36,7 +36,7 @@ export default function ListingsGrid({
   if (!clean.length) return <p className="font-jakarta text-primary font-bold">No venues found.</p>;
 
   return (
-    <ul className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+    <ul className="grid grid-cols-1 gap-5 md:[grid-template-columns:repeat(2,minmax(0,320px))] justify-items-center justify-center">
       {clean.map((v) => (
         <li key={v.id}>
           <ListingCard venue={v} />

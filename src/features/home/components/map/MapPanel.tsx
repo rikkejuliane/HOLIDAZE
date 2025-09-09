@@ -246,14 +246,33 @@ export default function MapPanel({ items = [] }: Props) {
       );
 
       popup.on("open", () => {
-        const h = container.offsetHeight || 220;
-        const offsetY = Math.min(Math.round(h / 2 + 24), 220);
-        map.easeTo({
-          center: p.coords,
-          offset: [0, offsetY],
-          duration: 300,
-          maxZoom: Math.max(map.getZoom(), 12),
-        });
+        const viewH = map.getContainer()?.clientHeight ?? 0;
+        const popupH = container.offsetHeight || 220;
+      
+        const isShort = viewH > 0 && viewH <= 360; // ~h-[300px]–h-[360px]
+      
+        if (isShort) {
+          // Push the marker toward the bottom so the card sits at the bottom edge
+          const bottomPad = 0;
+          // Leave enough top padding to accommodate the popup height (+ a bit)
+          const topPad = Math.min(popupH + 24, Math.max(0, viewH - bottomPad - 8));
+      
+          map.easeTo({
+            center: p.coords,
+            padding: { top: topPad, bottom: bottomPad, left: 0, right: 0 },
+            duration: 300,
+            maxZoom: Math.max(map.getZoom(), 12),
+          });
+        } else {
+          // Original “center the popup” behavior on taller maps
+          const offsetY = Math.min(Math.round(popupH / 2 + 24), 220);
+          map.easeTo({
+            center: p.coords,
+            offset: [0, offsetY],
+            duration: 300,
+            maxZoom: Math.max(map.getZoom(), 12),
+          });
+        }
       });
 
       marker.setPopup(popup);
@@ -272,7 +291,7 @@ export default function MapPanel({ items = [] }: Props) {
   }, [points]);
 
   return (
-    <div className="h-[636px] w-full overflow-hidden overscroll-contain">
+    <div className="h-[300px] xl:h-[636px] w-full overflow-hidden overscroll-contain">
       <div ref={mapNode} className="h-full w-full" />
     </div>
   );

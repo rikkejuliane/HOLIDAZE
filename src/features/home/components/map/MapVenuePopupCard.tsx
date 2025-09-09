@@ -1,4 +1,3 @@
-// src/features/home/components/map/MapVenuePopupCard.tsx
 "use client";
 
 type Props = {
@@ -8,8 +7,8 @@ type Props = {
   city?: string;
   country?: string;
   price?: number | null;
-  basePath?: string; // default: "/venues"
-  onClose?: () => void; // 👈 added
+  basePath?: string;
+  onClose?: () => void; 
 };
 
 export default function MapVenuePopupCard({
@@ -24,7 +23,6 @@ export default function MapVenuePopupCard({
 }: Props) {
   return (
     <article className="w-[292px] overflow-hidden rounded-3xl shadow-lg text-primary bg-[#282A2E] relative">
-      {/* IMAGE (smaller) */}
       {img ? (
         <div className="relative h-[140px] w-[292px] overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
