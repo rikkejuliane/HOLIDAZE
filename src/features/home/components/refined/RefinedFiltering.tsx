@@ -217,7 +217,7 @@ export default function RefinedFiltering() {
                 id="amenities-menu"
                 role="dialog"
                 aria-modal="false"
-                className="absolute left-0 top-full mt-2 z-50 w-[150px] border border-white/10 bg-background/80 backdrop-blur-xl p-3 shadow-lg text-primary">
+                className="absolute left-0 top-full mt-2 z-50 w-[150px] border border-white/10 bg-background/95 sm:bg-background/80 sm:backdrop-blur-xl p-3 shadow-lg text-primary">
                 <fieldset className="font-jakarta text-[15px]">
                   <legend className="sr-only">Amenities</legend>
 
@@ -230,7 +230,7 @@ export default function RefinedFiltering() {
                           <span className="uppercase">{k}</span>
                           <input
                             type="checkbox"
-                            className="accent-current"
+                            className="h-4 w-4 rounded-sm border border-white/40 accent-[#1f2937] "
                             checked={pendingAmenities.has(k)}
                             onChange={() => toggleAmenityBuffered(k)}
                           />
