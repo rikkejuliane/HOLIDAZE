@@ -7,8 +7,8 @@ type Props = {
   start?: Date;
   end?: Date;
   guests?: number;
-  cleaningFee?: number; // default 25
-  taxRate?: number; // default 0.10
+  cleaningFee?: number; 
+  taxRate?: number; 
 };
 
 function daysBetween(a?: Date, b?: Date) {
@@ -25,7 +25,6 @@ export default function BookingSummary({
   nightlyPrice,
   start,
   end,
-  guests,
   cleaningFee = 25,
   taxRate = 0.1,
 }: Props) {

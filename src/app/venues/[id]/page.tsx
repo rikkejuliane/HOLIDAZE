@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Venue } from "@/types/venue";
 import { getVenueById } from "@/utils/api/venues";
 import Link from "next/link";
+import Image from "next/image";
 import MediaMapPanel from "@/features/singleVenue/components/MediaMapPanel";
 import BookingPanel from "@/features/singleVenue/components/BookingPanel";
 
@@ -217,11 +218,14 @@ export default async function VenueDetailPage({ params }: Props) {
             <div className="w-[199px] h-36 bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] p-4 flex flex-col font-jakarta text-primary text-xs">
               <h2 className="font-bold pb-4">HOST</h2>
               <div className="flex flex-row gap-1.5 items-center">
-                <img
+                <Image
                   src={venue.owner?.avatar?.url || "/placeholder-avatar.jpg"}
                   alt={venue.owner?.avatar?.alt || "Host profile picture"}
+                  width={36}
+                  height={36}
+                  unoptimized
                   className="w-9 h-9 rounded-full object-cover"
-                />{" "}
+                />
                 {/* HOST PROFILE PICTURE */}
                 <p className="font-bold">
                   {venue.owner?.name ?? "Unknown Host"}
