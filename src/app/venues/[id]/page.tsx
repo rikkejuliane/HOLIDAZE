@@ -3,7 +3,7 @@ import type { Venue } from "@/types/venue";
 import { getVenueById } from "@/utils/api/venues";
 import Link from "next/link";
 import MediaMapPanel from "@/features/singleVenue/components/MediaMapPanel";
-import DateInputsWithCalendar from "@/features/singleVenue/components/DateInputsWithCalendar";
+import BookingPanel from "@/features/singleVenue/components/BookingPanel";
 
 type Props = { params: { id: string } };
 
@@ -12,7 +12,7 @@ export default async function VenueDetailPage({ params }: Props) {
 
   let venue: Venue | null = null;
   try {
-    venue = await getVenueById(id, { owner: true });
+    venue = await getVenueById(id, { owner: true, bookings: true });
   } catch {}
   if (!venue) return notFound();
 
@@ -234,7 +234,7 @@ export default async function VenueDetailPage({ params }: Props) {
           </div>
 
           {/* BOOKING & SUMMARY */}
-          <div className="w-[413px] h-[288px] bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] mt-4 px-4 py-1 flex flex-col">
+          <div className="w-[413px] h-[300px] bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] mt-4 px-4 py-1 flex flex-col">
             <div className="flex flew-row justify-between items-end">
               <h3 className="font-noto font-bold text-xl text-primary">
                 ${venue.price} / per night
@@ -258,62 +258,11 @@ export default async function VenueDetailPage({ params }: Props) {
             </div>
             <form>
               <div className="flex flex-col pt-2.5 font-jakarta">
-                <div className="flex flex-row justify-between">
-                <DateInputsWithCalendar
-                  // pass venue bookings if/when available (safe to pass empty)
-                  existingBookings={(venue as any).bookings ?? []}
-                  minNights={1}
+                <BookingPanel
+                  nightlyPrice={venue.price}
+                  maxGuests={venue.maxGuests}
+                  existingBookings={venue.bookings ?? []}
                 />
-                </div>
-                <div className="relative mt-2.5">
-                  <label
-                    htmlFor="guests"
-                    className="absolute z-10 left-3 top-1 text-[10px] font-bold text-primary/70">
-                    GUESTS
-                  </label>
-                  <input
-                    id="guests"
-                    name="guests"
-                    type="text"
-                    placeholder="- 1 +"
-                    className="w-full h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none"
-                  />
-                </div>
-
-                {/* SUMMARY OF BOOKING */}
-                <div className="w-full h-auto mt-2.5 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none ">
-                  <label
-                    htmlFor="summary"
-                    className="absolute z-10 left-3 top-1 text-[10px] font-bold text-primary/70">
-                    SUMMARY
-                  </label>
-                  <output id="summary" className="text-primary text-sm">
-                    <div className="flex flex-row justify-between">
-                      <p>$ price per night x number nigts</p>
-                      <p>$price</p>
-                    </div>
-                    <div className="flex flex-row justify-between">
-                      {" "}
-                      {/*ALWAYS $25 FEE */}
-                      <p>Cleaning fee</p>
-                      <p>$25</p>
-                    </div>
-                    <div className="flex flex-row justify-between">
-                      {" "}
-                      {/*ALWAYS $25 FEE */}
-                      <p>Taxes (included)</p>
-                      <p>$42.50</p>{" "}
-                      {/*ALWAYS 10% OF PRICE PER NIGHT x NIGHTS */}
-                    </div>
-                    <span className="block h-px w-full bg-primary/60 my-1"></span>
-                    <div className="flex flex-row justify-between">
-                      {" "}
-                      {/*ALWAYS $25 FEE */}
-                      <p>TOTAL</p>
-                      <p>$425</p> {/*TOTAL PRICE OF SUMMARY */}
-                    </div>
-                  </output>
-                </div>
               </div>
             </form>
           </div>

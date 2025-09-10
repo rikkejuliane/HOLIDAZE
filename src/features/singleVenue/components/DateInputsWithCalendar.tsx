@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react"; // ⬅️ added useEffect
 import DateRangePopover from "@/components/date/DateRangePopover";
 
 type Range = { start?: Date; end?: Date };
@@ -16,9 +16,11 @@ function toISODate(d: Date) {
 export default function DateInputsWithCalendar({
   existingBookings = [],
   minNights = 1,
+  onRangeChange,
 }: {
   existingBookings?: Booking[];
   minNights?: number;
+  onRangeChange?: (range: { start?: Date; end?: Date }) => void; // ⬅️ NEW
 }) {
   const [range, setRange] = useState<Range>({
     start: undefined,
@@ -26,13 +28,18 @@ export default function DateInputsWithCalendar({
   });
   const [openCal, setOpenCal] = useState(false);
 
-  // Reuse your DateRangePopover exactly, and block days if bookings are provided
+  useEffect(() => {
+    onRangeChange?.(range);
+  }, [range, onRangeChange]);
+
   const unavailableRanges = useMemo(
     () =>
-      (existingBookings ?? []).map((b) => ({
-        start: new Date(b.dateFrom),
-        end: new Date(b.dateTo),
-      })),
+      (existingBookings ?? []).map((b) => {
+        const start = new Date(b.dateFrom);
+        const end = new Date(b.dateTo);
+        end.setDate(end.getDate() - 1);
+        return { start, end };
+      }),
     [existingBookings]
   );
 
