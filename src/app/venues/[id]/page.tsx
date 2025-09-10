@@ -3,6 +3,7 @@ import type { Venue } from "@/types/venue";
 import { getVenueById } from "@/utils/api/venues";
 import Link from "next/link";
 import MediaMapPanel from "@/features/singleVenue/components/MediaMapPanel";
+import DateInputsWithCalendar from "@/features/singleVenue/components/DateInputsWithCalendar";
 
 type Props = { params: { id: string } };
 
@@ -236,7 +237,7 @@ export default async function VenueDetailPage({ params }: Props) {
           <div className="w-[413px] h-[288px] bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] mt-4 px-4 py-1 flex flex-col">
             <div className="flex flew-row justify-between items-end">
               <h3 className="font-noto font-bold text-xl text-primary">
-                $100 / per night
+                ${venue.price} / per night
               </h3>
               <button className="flex flex-row gap-1.5 items-center font-jakarta font-bold text-primary text-[15px]">
                 BOOK{" "}
@@ -258,36 +259,11 @@ export default async function VenueDetailPage({ params }: Props) {
             <form>
               <div className="flex flex-col pt-2.5 font-jakarta">
                 <div className="flex flex-row justify-between">
-                  <div className="relative">
-                    <label
-                      htmlFor="checkIn"
-                      className="absolute z-10 left-3 top-1 text-[10px] font-bold text-primary/70">
-                      CHECK IN
-                    </label>
-                    <input
-                      id="checkIn"
-                      name="checkIn"
-                      type="text"
-                      placeholder="Add date"
-                      className="w-[186.5px] h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none [appearance:none] [&::-webkit-calendar-picker-indicator]:hidden"
-                    />
-                  </div>
-                  <div className="relative">
-                    {/* ADD CALENDAR POPUP LIKE ON HOMEPAGE WHERE FIRST DATE IS CHECKIN AND SECOUND FILLS OUT CHECKOUT - MUST SHOW WHAT DATES ARE
-                    AVALIABLE FOR BOOKING FOR THAT LIST - UNAVALIABLE DATES CANT BE CHOOSEN SINCE ITS BOOKED */}
-                    <label
-                      htmlFor="checkOut"
-                      className="absolute z-10 left-3 top-1 text-[10px] font-bold text-primary/70">
-                      CHECK OUT
-                    </label>
-                    <input
-                      id="checkOut"
-                      name="checkOu"
-                      type="text"
-                      placeholder="Add date"
-                      className="w-[186.5px] h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none [appearance:none] [&::-webkit-calendar-picker-indicator]:hidden"
-                    />
-                  </div>
+                <DateInputsWithCalendar
+                  // pass venue bookings if/when available (safe to pass empty)
+                  existingBookings={(venue as any).bookings ?? []}
+                  minNights={1}
+                />
                 </div>
                 <div className="relative mt-2.5">
                   <label

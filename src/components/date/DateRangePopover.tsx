@@ -3,11 +3,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type Range = { start?: Date; end?: Date };
+type BlockedRange = { start: Date; end: Date };
+
 type Props = {
   value: Range;
   onChange: (next: Range) => void;
   onClose: () => void;
   initialMonth?: Date;
+
+  /** NEW (optional): block dates (booked/out of service) by ranges */
+  unavailableRanges?: BlockedRange[];
+  /** NEW (optional): custom blocker if you prefer full control */
+  isDateBlocked?: (day: Date) => boolean;
+  /** NEW (optional): require at least N nights */
+  minNights?: number;
+  /** NEW (optional): allow selecting past days (default false) */
+  allowPast?: boolean;
 };
 
 function startOfDaySafe(d: Date) {
@@ -30,6 +41,9 @@ function isSameDay(a?: Date, b?: Date) {
 }
 function isBefore(a: Date, b: Date) {
   return a.setHours(0, 0, 0, 0) < b.setHours(0, 0, 0, 0);
+}
+function isAfter(a: Date, b: Date) {
+  return a.setHours(0, 0, 0, 0) > b.setHours(0, 0, 0, 0);
 }
 function inRange(day: Date, start?: Date, end?: Date) {
   if (!start || !end) return false;
@@ -59,7 +73,7 @@ function daysInCalendar(month: Date) {
   for (let d = 1; d <= last; d++) {
     days.push(new Date(month.getFullYear(), month.getMonth(), d));
   }
-  // trailing to 42
+  // trailing to 42 cells
   while (days.length % 7 !== 0 || days.length < 42) {
     const next = new Date(days[days.length - 1]);
     next.setDate(next.getDate() + 1);
@@ -68,18 +82,75 @@ function daysInCalendar(month: Date) {
   return days.slice(0, 42);
 }
 
+function clampToStartOfDay(d?: Date) {
+  return d ? startOfDaySafe(d) : undefined;
+}
+
+function buildIsBlocked(opts: {
+  unavailableRanges?: BlockedRange[];
+  isDateBlocked?: (d: Date) => boolean;
+  allowPast?: boolean;
+}) {
+  const { unavailableRanges = [], isDateBlocked, allowPast = false } = opts;
+
+  // normalize ranges (inclusive)
+  const ranges = unavailableRanges
+    .map((r) => ({
+      start: startOfDaySafe(r.start),
+      end: startOfDaySafe(r.end),
+    }))
+    .filter((r) => !isAfter(r.start, r.end));
+
+  function inAnyBlockedRange(d: Date) {
+    const t = startOfDaySafe(d).getTime();
+    for (const r of ranges) {
+      const a = r.start.getTime();
+      const b = r.end.getTime();
+      if (t >= a && t <= b) return true;
+    }
+    return false;
+  }
+
+  return (d: Date) => {
+    if (!allowPast && isPastDay(d)) return true;
+    if (isDateBlocked && isDateBlocked(d)) return true;
+    if (inAnyBlockedRange(d)) return true;
+    return false;
+  };
+}
+
+function hasBlockedBetween(a: Date, b: Date, isBlocked: (d: Date) => boolean) {
+  const start = isBefore(a, b) ? a : b;
+  const end = isBefore(a, b) ? b : a;
+  const cur = new Date(start);
+  // walk day by day (exclusive of start, inclusive of end)
+  cur.setDate(cur.getDate() + 1);
+  while (cur <= end) {
+    if (isBlocked(cur)) return true;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return false;
+}
+
+function daysDiff(a: Date, b: Date) {
+  const ms = startOfDaySafe(b).getTime() - startOfDaySafe(a).getTime();
+  return Math.round(ms / (1000 * 60 * 60 * 24));
+}
+
 function MonthView({
   month,
   range,
   hovered,
   onHover,
   onPick,
+  isBlocked,
 }: {
   month: Date;
   range: Range;
   hovered?: Date;
   onHover: (d?: Date) => void;
   onPick: (d: Date) => void;
+  isBlocked: (d: Date) => boolean;
 }) {
   const grid = useMemo(() => daysInCalendar(month), [month]);
   const monthIndex = month.getMonth();
@@ -94,7 +165,7 @@ function MonthView({
       <div className="grid grid-cols-7 gap-1">
         {grid.map((d, i) => {
           const isOtherMonth = d.getMonth() !== monthIndex;
-          const disabled = isPastDay(d);
+          const disabled = isBlocked(d);
 
           const selectedStart = isSameDay(d, range.start);
           const selectedEnd = isSameDay(d, range.end);
@@ -149,6 +220,10 @@ export default function DateRangePopover({
   onChange,
   onClose,
   initialMonth,
+  unavailableRanges,
+  isDateBlocked,
+  minNights = 1,
+  allowPast = false,
 }: Props) {
   const [visibleMonth, setVisibleMonth] = useState<Date>(
     startOfMonth(initialMonth ?? new Date())
@@ -156,7 +231,16 @@ export default function DateRangePopover({
   const [hovered, setHovered] = useState<Date | undefined>(undefined);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click / ESC
+  const isBlocked = useMemo(
+    () =>
+      buildIsBlocked({
+        unavailableRanges,
+        isDateBlocked,
+        allowPast,
+      }),
+    [unavailableRanges, isDateBlocked, allowPast]
+  );
+
   useEffect(() => {
     function onDoc(e: MouseEvent) {
       if (!wrapRef.current) return;
@@ -174,20 +258,46 @@ export default function DateRangePopover({
   }, [onClose]);
 
   function handlePick(day: Date) {
-    const { start, end } = value;
+    const start = clampToStartOfDay(value.start);
+    const end = clampToStartOfDay(value.end);
+    const picked = clampToStartOfDay(day)!;
 
+    // 1) No start yet, or both chosen: start over
     if (!start || (start && end)) {
-      onChange({ start: day, end: undefined });
+      if (isBlocked(picked)) return; // guard
+      onChange({ start: picked, end: undefined });
       return;
     }
 
-    if (isBefore(day, start)) {
-      onChange({ start: day, end: start });
+    // 2) Choosing the end
+    if (isBefore(picked, start)) {
+      // If user clicks before start, flip to (picked -> start) if path isn’t blocked
+      if (hasBlockedBetween(picked, start, isBlocked)) return;
+      const nights = daysDiff(picked, start);
+      if (nights < minNights) return;
+      onChange({ start: picked, end: start });
       onClose();
       return;
     }
 
-    onChange({ start, end: day });
+    // same day?
+    if (isSameDay(picked, start)) {
+      // Only allow same-day if minNights === 0 (rare). Otherwise ignore.
+      if (minNights <= 0) {
+        onChange({ start, end: picked });
+        onClose();
+      }
+      return;
+    }
+
+    // path must not cross blocked dates
+    if (hasBlockedBetween(start, picked, isBlocked)) return;
+
+    // min nights
+    const nights = daysDiff(start, picked);
+    if (nights < minNights) return;
+
+    onChange({ start, end: picked });
     onClose();
   }
 
@@ -234,6 +344,7 @@ export default function DateRangePopover({
           hovered={hovered}
           onHover={setHovered}
           onPick={handlePick}
+          isBlocked={isBlocked}
         />
         {/* Hide second month on mobile */}
         <div className="hidden sm:block">
@@ -243,6 +354,7 @@ export default function DateRangePopover({
             hovered={hovered}
             onHover={setHovered}
             onPick={handlePick}
+            isBlocked={isBlocked}
           />
         </div>
       </div>
