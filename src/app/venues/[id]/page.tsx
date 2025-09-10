@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Venue } from "@/types/venue";
 import { getVenueById } from "@/utils/api/venues";
 import Link from "next/link";
+import MediaMapPanel from "@/features/singleVenue/components/MediaMapPanel";
 
 type Props = { params: { id: string } };
 
@@ -10,7 +11,7 @@ export default async function VenueDetailPage({ params }: Props) {
 
   let venue: Venue | null = null;
   try {
-    venue = await getVenueById(id);
+    venue = await getVenueById(id, { owner: true });
   } catch {}
   if (!venue) return notFound();
 
@@ -18,64 +19,14 @@ export default async function VenueDetailPage({ params }: Props) {
     <section className="mt-[70px] mb-20">
       <div className="flex flex-row gap-[45px]">
         {/* MAP AND IMAGES */}
-        <div className="relative pt-[10px]">
-          <img
-            src="/listingplaceholder.jpg"
-            alt="Placeholder"
-            className="w-[720px] h-[680px] object-cover"
-          />
-          <div className="absolute top-9 left-1/2 -translate-x-1/2 -translate-y-1/2  flex flex-row items-center w-[200px] h-[38px] mx-auto rounded-[10px]  bg-secondary/10  border border-secondary/0 backdrop-blur-[5.10px]">
-            {/* Photos tab */}
-            <button
-              type="button"
-              className="w-[100px] h-[38px] bg-secondary rounded-[10px] font-jakarta font-bold text-primary text-[15px]">
-              PHOTOS
-            </button>
-
-            {/* Map tab */}
-            <button
-              type="button"
-              className="w-[100px] h-[38px] text-primary font-jakarta font-bold text-[15px] rounded-[10px]">
-              MAP
-            </button>
-          </div>
-
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-row gap-[32px] items-center cursor-pointer">
-            {/* Prev image */}
-            <button className="w-[26px] h-[26px] bg-secondary/10 rounded-full border-[1.25px] border-primary/10 backdrop-blur-[5.10px] flex items-center justify-center">
-              <svg
-                width="9"
-                height="16"
-                viewBox="0 0 9 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M8.1875 1L1 8.1875L8.1875 15.375"
-                  stroke="#FCFEFF"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-
-            {/* Next image */}
-            <button className="w-[26px] h-[26px] bg-secondary/10 rounded-full border-[1.25px] border-primary/10 backdrop-blur-[5.10px] flex items-center justify-center">
-              <svg
-                width="9"
-                height="16"
-                viewBox="0 0 9 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M0.8125 15L8 7.8125L0.8125 0.625"
-                  stroke="#FCFEFF"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
+        <MediaMapPanel
+          media={venue.media}
+          owner={venue.owner}
+          location={{
+            lat: venue.location?.lat,
+            lng: venue.location?.lng,
+          }}
+        />
 
         {/* LISTINGS INFO */}
         <div className="flex flex-col pt-[10px]">
@@ -113,15 +64,10 @@ export default async function VenueDetailPage({ params }: Props) {
 
           {/* Title of listing - placeholder */}
           <h1 className="font-noto text-white font-bold text-[35px] leading-tight mb-4">
-            Cozy Cabin in the Woods
+            {venue.name}
           </h1>
           <p className="max-w-[590px] font-jakarta text-primary text-sm leading-tight mb-4">
-            Escape to this cozy cabin in the woods, where rustic charm meets
-            modern comfort. Surrounded by nature, the cabin features warm wood
-            interiors, a crackling wood stove, and inviting spaces to relax.
-            Enjoy evenings under the string lights on the patio or gather around
-            the rustic dining nook indoors. Perfect for a peaceful getaway or a
-            romantic retreat.
+            {venue.description}
           </p>
 
           {/* META: location | guests | rating (CORRECT CODE)*/}
@@ -196,7 +142,7 @@ export default async function VenueDetailPage({ params }: Props) {
                   </div>
                   <p className="">WIFI:</p>
                 </div>
-                <p>YES</p> {/*YES OR NO FROM THE API IF THEY HAVE IT OR NOT */}
+                <p>{venue.meta?.wifi ? "YES" : "NO"}</p>
               </div>
 
               {/* PARKING */}
@@ -219,7 +165,7 @@ export default async function VenueDetailPage({ params }: Props) {
 
                   <p className="">PARKING:</p>
                 </div>
-                <p>YES</p> {/*YES OR NO FROM THE API IF THEY HAVE IT OR NOT */}
+                <p>{venue.meta?.wifi ? "YES" : "NO"}</p>
               </div>
 
               {/* BREAKFAST */}
@@ -241,7 +187,7 @@ export default async function VenueDetailPage({ params }: Props) {
                   </div>
                   <p className="">BREAKFAST:</p>
                 </div>
-                <p>YES</p> {/*YES OR NO FROM THE API IF THEY HAVE IT OR NOT */}
+                <p>{venue.meta?.wifi ? "YES" : "NO"}</p>
               </div>
 
               {/* PETS */}
@@ -263,7 +209,7 @@ export default async function VenueDetailPage({ params }: Props) {
                   </div>
                   <p className="">PETS:</p>
                 </div>
-                <p>YES</p> {/*YES OR NO FROM THE API IF THEY HAVE IT OR NOT */}
+                <p>{venue.meta?.wifi ? "YES" : "NO"}</p>
               </div>
             </div>
 
@@ -271,15 +217,17 @@ export default async function VenueDetailPage({ params }: Props) {
               <h2 className="font-bold pb-4">HOST</h2>
               <div className="flex flex-row gap-1.5 items-center">
                 <img
-                  src="/photo-1453396450673-3fe83d2db2c4.jpg"
-                  alt="Profile picture Host"
+                  src={venue.owner?.avatar?.url || "/placeholder-avatar.jpg"}
+                  alt={venue.owner?.avatar?.alt || "Host profile picture"}
                   className="w-9 h-9 rounded-full object-cover"
                 />{" "}
                 {/* HOST PROFILE PICTURE */}
-                <p className="font-bold">HostyHosty</p>
+                <p className="font-bold">
+                  {venue.owner?.name ?? "Unknown Host"}
+                </p>
               </div>
               <p className="text-[10px] font-medium pt-[12px]">
-                HostyHosty@stud.noroff.no
+                {venue.owner?.email ?? "No email available"}
               </p>
             </div>
           </div>
@@ -317,10 +265,10 @@ export default async function VenueDetailPage({ params }: Props) {
                       CHECK IN
                     </label>
                     <input
-                       id="checkIn"
-                       name="dates"
-                       type="text"
-                       placeholder="Add date"
+                      id="checkIn"
+                      name="checkIn"
+                      type="text"
+                      placeholder="Add date"
                       className="w-[186.5px] h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none [appearance:none] [&::-webkit-calendar-picker-indicator]:hidden"
                     />
                   </div>
@@ -330,59 +278,66 @@ export default async function VenueDetailPage({ params }: Props) {
                     <label
                       htmlFor="checkOut"
                       className="absolute z-10 left-3 top-1 text-[10px] font-bold text-primary/70">
-                      CHECK IN
+                      CHECK OUT
                     </label>
                     <input
-                       id="checkOut"
-                       name="dates"
-                       type="text"
-                       placeholder="Add date"
+                      id="checkOut"
+                      name="checkOu"
+                      type="text"
+                      placeholder="Add date"
                       className="w-[186.5px] h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none [appearance:none] [&::-webkit-calendar-picker-indicator]:hidden"
                     />
                   </div>
                 </div>
                 <div className="relative mt-2.5">
-                    <label
-                      htmlFor="checkOut"
-                      className="absolute z-10 left-3 top-1 text-[10px] font-bold text-primary/70">
-                      GUESTS
-                    </label>
-                    <input
-                       id="checkOut"
-                       name="dates"
-                       type="text"
-                       placeholder="- 1 +"
-                      className="w-full h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none"/>
-                  </div>
+                  <label
+                    htmlFor="guests"
+                    className="absolute z-10 left-3 top-1 text-[10px] font-bold text-primary/70">
+                    GUESTS
+                  </label>
+                  <input
+                    id="guests"
+                    name="guests"
+                    type="text"
+                    placeholder="- 1 +"
+                    className="w-full h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none"
+                  />
+                </div>
 
                 {/* SUMMARY OF BOOKING */}
-                  <div className="w-full h-auto mt-2.5 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none ">
+                <div className="w-full h-auto mt-2.5 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none ">
                   <label
-                      htmlFor="summary"
-                      className="absolute z-10 left-3 top-1 text-[10px] font-bold text-primary/70">
-                      SUMMARY
-                    </label>
-                    <output id="summary" className="text-primary text-sm">
-                      <div className="flex flex-row justify-between">
+                    htmlFor="summary"
+                    className="absolute z-10 left-3 top-1 text-[10px] font-bold text-primary/70">
+                    SUMMARY
+                  </label>
+                  <output id="summary" className="text-primary text-sm">
+                    <div className="flex flex-row justify-between">
                       <p>$ price per night x number nigts</p>
                       <p>$price</p>
-                      </div>
-                       <div className="flex flex-row justify-between"> {/*ALWAYS $25 FEE */}
+                    </div>
+                    <div className="flex flex-row justify-between">
+                      {" "}
+                      {/*ALWAYS $25 FEE */}
                       <p>Cleaning fee</p>
                       <p>$25</p>
-                      </div>
-                      <div className="flex flex-row justify-between"> {/*ALWAYS $25 FEE */}
+                    </div>
+                    <div className="flex flex-row justify-between">
+                      {" "}
+                      {/*ALWAYS $25 FEE */}
                       <p>Taxes (included)</p>
-                      <p>$42.50</p> {/*ALWAYS 10% OF PRICE PER NIGHT x NIGHTS */}
-                      </div>
-                      <span className="block h-px w-full bg-primary/60 my-1"></span>
-                      <div className="flex flex-row justify-between"> {/*ALWAYS $25 FEE */}
+                      <p>$42.50</p>{" "}
+                      {/*ALWAYS 10% OF PRICE PER NIGHT x NIGHTS */}
+                    </div>
+                    <span className="block h-px w-full bg-primary/60 my-1"></span>
+                    <div className="flex flex-row justify-between">
+                      {" "}
+                      {/*ALWAYS $25 FEE */}
                       <p>TOTAL</p>
                       <p>$425</p> {/*TOTAL PRICE OF SUMMARY */}
-                      </div>
-
-                    </output>
-                  </div>
+                    </div>
+                  </output>
+                </div>
               </div>
             </form>
           </div>

@@ -1,11 +1,12 @@
-// src/types/venue.ts
 export type VenueMedia = { url: string; alt?: string | null };
+
 export type VenueMeta = {
   wifi?: boolean;
   parking?: boolean;
   breakfast?: boolean;
   pets?: boolean;
 };
+
 export type VenueLocation = {
   address?: string | null;
   city?: string | null;
@@ -14,6 +15,30 @@ export type VenueLocation = {
   continent?: string | null;
   lat?: number | null;
   lng?: number | null;
+};
+
+export type VenueOwner = {
+  name: string;
+  email: string;
+  bio?: string | null;
+  avatar?: VenueMedia | null;
+  banner?: VenueMedia | null;
+} | null;
+
+export type VenueBooking = {
+  id: string;
+  dateFrom: string;
+  dateTo: string;
+  guests: number;
+  created?: string;
+  updated?: string;
+  customer?: {
+    name: string;
+    email: string;
+    bio?: string | null;
+    avatar?: VenueMedia | null;
+    banner?: VenueMedia | null;
+  } | null;
 };
 
 export type Venue = {
@@ -28,6 +53,8 @@ export type Venue = {
   updated?: string;
   meta?: VenueMeta;
   location?: VenueLocation;
+  owner?: VenueOwner;
+  bookings?: VenueBooking[];
 };
 
 export type ListMeta = {
@@ -43,4 +70,9 @@ export type ListMeta = {
 export type ListResponse<T> = {
   data: T[];
   meta: ListMeta;
+};
+
+export type ItemResponse<T> = {
+  data: T;
+  meta: Record<string, unknown>;
 };

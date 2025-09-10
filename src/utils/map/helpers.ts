@@ -13,36 +13,25 @@ export function toNum(x: MaybeNum): number | null {
 }
 
 export function extractCoordsFromVenue(v: Venue): [number, number] | null {
-  const rec = v as unknown as Record<string, unknown>;
-  const loc = (rec["location"] as Record<string, unknown> | undefined) ?? {};
+  const lat = v.location?.lat ?? null;
+  const lng = v.location?.lng ?? null;
 
-  const candidates: Array<[MaybeNum, MaybeNum]> = [
-    [loc["lng"] as MaybeNum, loc["lat"] as MaybeNum],
-    [loc["lon"] as MaybeNum, loc["lat"] as MaybeNum],
-    [loc["longitude"] as MaybeNum, loc["latitude"] as MaybeNum],
-  ];
-
-  const coordsField = loc["coordinates"] as unknown;
-  if (Array.isArray(coordsField) && coordsField.length >= 2) {
-    candidates.push([coordsField[0] as MaybeNum, coordsField[1] as MaybeNum]);
-  } else if (isRecord(coordsField)) {
-    candidates.push([coordsField["lng"] as MaybeNum, coordsField["lat"] as MaybeNum]);
-    candidates.push([coordsField["lon"] as MaybeNum, coordsField["lat"] as MaybeNum]);
-  }
-
-  candidates.push([rec["lng"] as MaybeNum, rec["lat"] as MaybeNum]);
-  candidates.push([rec["lon"] as MaybeNum, rec["lat"] as MaybeNum]);
-  candidates.push([rec["longitude"] as MaybeNum, rec["latitude"] as MaybeNum]);
-
-  for (const [lng, lat] of candidates) {
-    const Lng = toNum(lng);
-    const Lat = toNum(lat);
-    if (Lng != null && Lat != null) return [Lng, Lat];
+  if (
+    typeof lat === "number" &&
+    typeof lng === "number" &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    (lat !== 0 || lng !== 0) // exclude invalid 0,0
+  ) {
+    return [lng, lat];
   }
   return null;
 }
 
-export function extractCityCountry(v: Venue): { city?: string; country?: string } {
+export function extractCityCountry(v: Venue): {
+  city?: string;
+  country?: string;
+} {
   const rec = v as unknown as Record<string, unknown>;
   const loc = (rec["location"] as Record<string, unknown> | undefined) ?? {};
   const city = String(loc["city"] ?? "").trim() || undefined;
@@ -57,7 +46,11 @@ export function makePlaceKeys(v: Venue): PlaceKey[] {
   const keys: PlaceKey[] = [];
 
   // Best: "City, Country" (or just City if Country missing)
-  if (city && country) keys.push({ q: `${city}, ${country}`, types: "place,locality,region,country" });
+  if (city && country)
+    keys.push({
+      q: `${city}, ${country}`,
+      types: "place,locality,region,country",
+    });
   else if (city) keys.push({ q: city, types: "place,locality,region" });
 
   // Fallback: country-only
@@ -86,17 +79,23 @@ export async function geocodeToLngLat(
         return parsed;
       }
     }
-  } catch {/* ignore */}
+  } catch {
+    /* ignore */
+  }
 
   try {
     const url =
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json` +
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+        query
+      )}.json` +
       `?limit=1&access_token=${accessToken}` +
       (types ? `&types=${encodeURIComponent(types)}` : "");
     const res = await fetch(url);
     if (!res.ok) return null;
     const data: unknown = await res.json();
-    const features = (data as { features?: Array<{ center?: [number, number] }> }).features ?? [];
+    const features =
+      (data as { features?: Array<{ center?: [number, number] }> }).features ??
+      [];
     const center = features[0]?.center;
     if (Array.isArray(center) && center.length >= 2) {
       const pair: [number, number] = [Number(center[0]), Number(center[1])];
@@ -104,13 +103,20 @@ export async function geocodeToLngLat(
         memCache.set(cacheKey, pair);
         try {
           if (typeof window !== "undefined") {
-            window.localStorage.setItem("mbx:gc:" + cacheKey, JSON.stringify(pair));
+            window.localStorage.setItem(
+              "mbx:gc:" + cacheKey,
+              JSON.stringify(pair)
+            );
           }
-        } catch {/* ignore */}
+        } catch {
+          /* ignore */
+        }
         return pair;
       }
     }
-  } catch {/* ignore network errors */}
+  } catch {
+    /* ignore network errors */
+  }
 
   return null;
 }
