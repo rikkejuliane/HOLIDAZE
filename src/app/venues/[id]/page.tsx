@@ -20,15 +20,17 @@ export default async function VenueDetailPage({ params }: Props) {
   return (
     <section className="mt-[70px] mb-20">
       <div className="flex flex-row gap-[45px]">
-        {/* MAP AND IMAGES */}
-        <MediaMapPanel
-          media={venue.media}
-          owner={venue.owner}
-          location={{
-            lat: venue.location?.lat,
-            lng: venue.location?.lng,
-          }}
-        />
+        <div className="sticky top-0 self-start">
+          {/* MAP AND IMAGES */}
+          <MediaMapPanel
+            media={venue.media}
+            owner={venue.owner}
+            location={{
+              lat: venue.location?.lat,
+              lng: venue.location?.lng,
+            }}
+          />
+        </div>
 
         {/* LISTINGS INFO */}
         <div className="flex flex-col pt-[10px]">
@@ -238,31 +240,18 @@ export default async function VenueDetailPage({ params }: Props) {
           </div>
 
           {/* BOOKING & SUMMARY */}
-          <div className="w-[413px] h-[300px] bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] mt-4 px-4 py-1 flex flex-col">
-            <div className="flex flew-row justify-between items-end">
-              <h3 className="font-noto font-bold text-xl text-primary">
-                ${venue.price} / per night
-              </h3>
-              <button className="flex flex-row gap-1.5 items-center font-jakarta font-bold text-primary text-[15px]">
-                BOOK
-                <svg
-                  width="7"
-                  height="12"
-                  viewBox="0 0 7 12"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M1 11L6 6L1 1"
-                    stroke="#FCFEFF"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
+          <div className="w-[413px] h-[300px] bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] mt-4 px-4 flex flex-col">
             <form>
-              <div className="flex flex-col pt-2.5 font-jakarta">
+              <div
+                id="booking-panel"
+                className="flex flex-col pt-2.5 font-jakarta">
                 <BookingPanel
+                  venueId={venue.id}
+                  venueName={venue.name}
+                  venueImg={{
+                    url: venue.media?.[0]?.url,
+                    alt: venue.media?.[0]?.alt ?? undefined, // fix: null -> undefined
+                  }}
                   nightlyPrice={venue.price}
                   maxGuests={venue.maxGuests}
                   existingBookings={venue.bookings ?? []}

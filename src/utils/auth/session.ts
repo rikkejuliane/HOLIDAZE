@@ -18,3 +18,12 @@ export function clearSession() {
   document.cookie = "token=; Path=/; Max-Age=0; SameSite=Lax";
   window.dispatchEvent(new CustomEvent("auth:changed"));
 }
+
+export function getAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("token");
+}
+
+export function isAuthenticated(): boolean {
+  return !!getAccessToken();
+}

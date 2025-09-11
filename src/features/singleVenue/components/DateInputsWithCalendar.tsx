@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react"; // ⬅️ added useEffect
+import { useMemo, useState, useEffect } from "react";
 import DateRangePopover from "@/components/date/DateRangePopover";
 
 type Range = { start?: Date; end?: Date };
@@ -20,26 +20,22 @@ export default function DateInputsWithCalendar({
 }: {
   existingBookings?: Booking[];
   minNights?: number;
-  onRangeChange?: (range: { start?: Date; end?: Date }) => void; // ⬅️ NEW
+  onRangeChange?: (range: { start?: Date; end?: Date }) => void;
 }) {
-  const [range, setRange] = useState<Range>({
-    start: undefined,
-    end: undefined,
-  });
+  const [range, setRange] = useState<Range>({ start: undefined, end: undefined });
   const [openCal, setOpenCal] = useState(false);
 
   useEffect(() => {
     onRangeChange?.(range);
   }, [range, onRangeChange]);
 
+  // API dateTo is inclusive (last occupied night) — no subtraction
   const unavailableRanges = useMemo(
     () =>
-      (existingBookings ?? []).map((b) => {
-        const start = new Date(b.dateFrom);
-        const end = new Date(b.dateTo);
-        end.setDate(end.getDate() - 1);
-        return { start, end };
-      }),
+      (existingBookings ?? []).map((b) => ({
+        start: new Date(b.dateFrom),
+        end: new Date(b.dateTo),
+      })),
     [existingBookings]
   );
 
@@ -61,7 +57,6 @@ export default function DateInputsWithCalendar({
 
   return (
     <div className="relative">
-      {/* Inputs row — same look, now with a gap */}
       <div className="flex flex-row justify-between gap-3">
         {/* CHECK IN */}
         <div className="relative">
@@ -102,7 +97,6 @@ export default function DateInputsWithCalendar({
         </div>
       </div>
 
-      {/* Popover — pops ABOVE the inputs and inherits white text */}
       {openCal && (
         <div className="absolute z-50 -left-1/2 bottom-107 text-primary">
           <DateRangePopover
@@ -118,16 +112,8 @@ export default function DateInputsWithCalendar({
       )}
 
       {/* Hidden fields if submitting via <form> */}
-      <input
-        type="hidden"
-        name="start"
-        value={range.start ? toISODate(range.start) : ""}
-      />
-      <input
-        type="hidden"
-        name="end"
-        value={range.end ? toISODate(range.end) : ""}
-      />
+      <input type="hidden" name="start" value={range.start ? toISODate(range.start) : ""} />
+      <input type="hidden" name="end" value={range.end ? toISODate(range.end) : ""} />
     </div>
   );
 }
