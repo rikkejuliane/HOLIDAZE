@@ -65,7 +65,7 @@ export default async function VenueDetailPage({ params }: Props) {
           </div>
 
           {/* Title of listing - placeholder */}
-          <h1 className="font-noto text-white font-bold text-[35px] leading-tight mb-4">
+          <h1 className="max-w-[590px] font-noto text-white font-bold text-[35px] leading-tight mb-4">
             {venue.name}
           </h1>
           <p className="max-w-[590px] font-jakarta text-primary text-sm leading-tight mb-4">
@@ -244,7 +244,7 @@ export default async function VenueDetailPage({ params }: Props) {
                 ${venue.price} / per night
               </h3>
               <button className="flex flex-row gap-1.5 items-center font-jakarta font-bold text-primary text-[15px]">
-                BOOK{" "}
+                BOOK
                 <svg
                   width="7"
                   height="12"

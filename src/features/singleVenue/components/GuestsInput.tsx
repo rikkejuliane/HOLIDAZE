@@ -6,7 +6,7 @@ export default function GuestsInput({
   max,
   name = "guests",
   initial = 1,
-  onChange, // optional
+  onChange, 
 }: {
   max: number;
   name?: string;
@@ -22,10 +22,8 @@ export default function GuestsInput({
     Number.isFinite(initial) ? clamp(initial) : 1
   );
 
-  // ✅ Emit to parent AFTER render commits
   useEffect(() => {
     if (Number.isFinite(value)) onChange?.(value as number);
-    // when value is NaN (user is typing), we don't emit
   }, [value, onChange]);
 
   const bump = (delta: number) => {
@@ -35,7 +33,6 @@ export default function GuestsInput({
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^\d]/g, "");
     if (raw === "") {
-      // allow empty while typing; don't emit yet
       setValue(NaN as unknown as number);
       return;
     }
@@ -60,9 +57,9 @@ export default function GuestsInput({
         name={name}
         type="text"
         inputMode="numeric"
-        placeholder="- 1 +"
+        placeholder="1"
         value={display}
-        onChange={handleInput} // ⬅️ update handler name
+        onChange={handleInput}
         onBlur={handleBlur}
         className="w-full h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-9 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none"
         aria-label="Number of guests"
