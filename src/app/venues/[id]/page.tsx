@@ -212,8 +212,13 @@ export default async function VenueDetailPage({ params }: Props) {
               <h2 className="font-bold pb-4">HOST</h2>
               <div className="flex flex-row gap-1.5 items-center">
                 <Link
-                  href={`/profile/${venue.owner?.id}`}
-                  className="flex flex-row gap-1.5 items-center hover:underline">
+                  href={
+                    venue.owner?.name
+                      ? `/profile/${encodeURIComponent(venue.owner.name)}`
+                      : "#"
+                  }
+                  className="flex flex-row gap-1.5 items-center hover:underline"
+                  aria-disabled={!venue.owner?.name}>
                   <Image
                     src={venue.owner?.avatar?.url || "/placeholder-avatar.jpg"}
                     alt={venue.owner?.avatar?.alt || "Host profile picture"}
