@@ -1,17 +1,19 @@
-import { useEffect } from "react";
+import { useEffect, RefObject } from "react";
 
 export function useOutsideAndEsc(
-  ref: React.RefObject<HTMLElement>,
+  ref: RefObject<HTMLElement | null>,
   onClose: () => void
 ) {
   useEffect(() => {
     function onDoc(e: MouseEvent) {
-      if (!ref.current) return;
-      if (!ref.current.contains(e.target as Node)) onClose();
+      const el = ref.current;
+      if (!el) return;
+      if (!el.contains(e.target as Node)) onClose();
     }
     function onEsc(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
+
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onEsc);
     return () => {

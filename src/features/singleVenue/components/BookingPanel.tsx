@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DateInputsWithCalendar from "@/features/singleVenue/components/DateInputsWithCalendar";
 import GuestsInput from "@/features/singleVenue/components/GuestsInput";
@@ -30,7 +30,6 @@ function fmtMoney(n: number) {
     : "—";
 }
 
-/** Convert checkout (exclusive) → API dateTo (inclusive = checkout-1 day). */
 function toInclusiveDateTo(checkout: Date): string {
   const d = new Date(checkout);
   d.setDate(d.getDate() - 1);
@@ -38,7 +37,6 @@ function toInclusiveDateTo(checkout: Date): string {
   return d.toISOString();
 }
 
-/** Narrow unknown errors into a displayable message (no `any`). */
 function getErrorMessage(err: unknown): string {
   if (err instanceof ApiError) return err.message;
   if (err instanceof Error) return err.message;
@@ -75,9 +73,12 @@ export default function BookingPanel({
   const [guests, setGuests] = useState<number>(1);
   const [isSubmitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-
-  // track if the booking completed so we refresh on close
   const [wasConfirmed, setWasConfirmed] = useState(false);
+
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  useEffect(() => {
+    setAuthed(isAuthenticated());
+  }, []);
 
   // toast
   const [notice, setNotice] = useState<string | null>(null);
@@ -120,8 +121,8 @@ export default function BookingPanel({
     guests <= Math.max(1, maxGuests);
 
   const handleCTA = useCallback(async () => {
+    // Always re-check auth at click-time
     if (!isAuthenticated()) {
-      // Preserve user selection through login
       const params = new URLSearchParams(sp?.toString() ?? "");
       if (range.start)
         params.set("start", range.start.toISOString().slice(0, 10));
@@ -148,12 +149,14 @@ export default function BookingPanel({
 
   return (
     <div className="flex flex-col pt-2.5 font-jakarta">
-      {/* Header: price + auth-aware CTA */}
       <div className="flex flex-row justify-between items-end pb-2">
         <h3 className="font-noto font-bold text-xl text-primary">
           ${nightlyPrice} / per night
         </h3>
-        {isAuthenticated() ? (
+
+        {authed === null ? (
+          <div className="h-[20px] w-[88px]" aria-hidden />
+        ) : authed ? (
           <button
             type="button"
             onClick={handleCTA}
@@ -236,7 +239,7 @@ export default function BookingPanel({
           setShowConfirm(false);
           if (wasConfirmed) {
             setWasConfirmed(false);
-            router.refresh(); // refresh venue so booked dates show immediately
+            router.refresh();
           }
         }}
         venueName={venueName}
@@ -267,14 +270,14 @@ export default function BookingPanel({
               dateTo: toInclusiveDateTo(range.end),
               guests,
             });
-            setWasConfirmed(true); // mark success; refresh will happen on close
+            setWasConfirmed(true);
           } catch (e) {
             const msg =
               e instanceof ApiError && e.status === 409
                 ? "Those dates overlap an existing booking. Please choose different dates."
                 : getErrorMessage(e);
             showNotice(msg);
-            throw e; // keep modal on confirm step
+            throw e;
           } finally {
             setSubmitting(false);
           }

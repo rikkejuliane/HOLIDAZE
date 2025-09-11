@@ -49,9 +49,7 @@ export default function DateRangePopover({
   );
   const [hovered, setHovered] = useState<Date | undefined>(undefined);
   const wrapRef = useRef<HTMLDivElement>(null);
-
-  // ✨ TS fix: cast the ref to the hook’s expected type
-  useOutsideAndEsc(wrapRef as React.RefObject<HTMLElement | null>, onClose);
+  useOutsideAndEsc(wrapRef, onClose);
 
   const isBlocked = useMemo(
     () =>
