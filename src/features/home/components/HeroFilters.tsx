@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useEffect } from "react";
-import DateRangePopover from "./date/DateRangePopover";
+import DateRangePopover from "../../../components/date/DateRangePopover";
 import PricePopover from "./price/PricePopover";
 import GuestsPopover from "./guests/GuestsPopover";
 

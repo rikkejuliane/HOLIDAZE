@@ -1,4 +1,3 @@
-// src/utils/api/constants.ts
 export const API_BASE = "https://v2.api.noroff.dev";
 
 /** Holidaze */

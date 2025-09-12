@@ -1,4 +1,3 @@
-// src/features/home/components/MapPanel.tsx
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -12,7 +11,7 @@ import {
   extractCoordsFromVenue,
   extractCityCountry,
   geocodeToLngLat,
-} from "@/features/home/components/map/utils";
+} from "@/utils/map/helpers";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 const STYLE_URL =
@@ -248,13 +247,9 @@ export default function MapPanel({ items = [] }: Props) {
       popup.on("open", () => {
         const viewH = map.getContainer()?.clientHeight ?? 0;
         const popupH = container.offsetHeight || 220;
-      
-        const isShort = viewH > 0 && viewH <= 360; // ~h-[300px]–h-[360px]
-      
+        const isShort = viewH > 0 && viewH <= 360; 
         if (isShort) {
-          // Push the marker toward the bottom so the card sits at the bottom edge
           const bottomPad = 0;
-          // Leave enough top padding to accommodate the popup height (+ a bit)
           const topPad = Math.min(popupH + 24, Math.max(0, viewH - bottomPad - 8));
       
           map.easeTo({
@@ -264,7 +259,6 @@ export default function MapPanel({ items = [] }: Props) {
             maxZoom: Math.max(map.getZoom(), 12),
           });
         } else {
-          // Original “center the popup” behavior on taller maps
           const offsetY = Math.min(Math.round(popupH / 2 + 24), 220);
           map.easeTo({
             center: p.coords,

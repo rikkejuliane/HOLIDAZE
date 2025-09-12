@@ -1,10 +1,44 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
+function hasToken() {
+  if (typeof window === "undefined") return false;
+  return !!localStorage.getItem("token");
+}
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setLoggedIn(!!localStorage.getItem("token"));
+    sync();
+
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === "token") sync();
+    };
+    const onVis = () => {
+      if (document.visibilityState === "visible") sync();
+    };
+
+    // 🔹 listen to our same-tab event
+    const onAuthChanged = () => sync();
+
+    window.addEventListener("storage", onStorage);
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("auth:changed", onAuthChanged as EventListener);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener(
+        "auth:changed",
+        onAuthChanged as EventListener
+      );
+    };
+  }, []);
 
   return (
     <header className="absolute top-0 left-0 right-0 z-50 bg-transparent px-10px lg:px-[74px] max-w-[1440px] mx-auto">
@@ -78,7 +112,11 @@ export default function Navbar() {
           <nav className="flex items-center gap-14 [&>a]:border-b [&>a]:border-transparent [&>a:hover]:border-primary [&>a]:transition-colors">
             <Link href="/venues">VENUES</Link>
             <span className="w-px h-[18px] bg-primary" />
-            <Link href="/auth">LOGIN</Link>
+            {loggedIn ? (
+              <Link href="/profile">PROFILE</Link>
+            ) : (
+              <Link href="/auth">LOGIN</Link>
+            )}
           </nav>
         </div>
       </div>
@@ -99,9 +137,15 @@ export default function Navbar() {
               VENUES
             </Link>
             <span className="h-px w-full bg-primary" />
-            <Link href="/auth" onClick={() => setOpen(false)}>
-              LOGIN
-            </Link>
+            {loggedIn ? (
+              <Link href="/profile" onClick={() => setOpen(false)}>
+                PROFILE
+              </Link>
+            ) : (
+              <Link href="/auth" onClick={() => setOpen(false)}>
+                LOGIN
+              </Link>
+            )}
           </nav>
         </div>
       )}

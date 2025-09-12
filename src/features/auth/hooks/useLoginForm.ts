@@ -3,12 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/utils/api/auth";
-import { extractAuthFields } from "../../../utils/auth/authResponse";
-import {
-  validateLoginFields,
-  type LoginErrors,
-} from "../../../utils/auth/validation";
-import { setTokenCookie } from "@/utils/auth/session"; // 👈 import helper
+import { extractAuthFields } from "@/utils/auth/authResponse";
+import { validateLoginFields, type LoginErrors } from "@/utils/auth/validation";
+import { setSession } from "@/utils/auth/session";
 
 export function useLoginForm(onNotice: (msg: string) => void) {
   const [email, setEmail] = useState("");
@@ -29,18 +26,17 @@ export function useLoginForm(onNotice: (msg: string) => void) {
         email: email.trim(),
         password: password.trim(),
       });
+
       const { token, name } = extractAuthFields(res);
 
       if (token) {
-        localStorage.setItem("token", token);
-        setTokenCookie(token);
-      }
-      if (name) {
-        localStorage.setItem("username", name);
+        setSession(token, name);
       }
 
       onNotice("Login successful! Redirecting…");
       router.push("/profile");
+      // optional: ensure any server components re-read cookies
+      router.refresh();
     } catch (err) {
       onNotice(
         err instanceof Error ? err.message : "Login failed. Please try again."

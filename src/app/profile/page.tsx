@@ -1,3 +1,4 @@
+import LogoutButton from "@/features/auth/components/LogoutButton";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -22,6 +23,7 @@ export default async function ProfilePage() {
       <h1 className="text-2xl font-bold">My Profile</h1>
       <p className="mt-4">You are logged in 🎉</p>
       {/* Replace with profile.data.name etc. when API is wired up */}
+      <LogoutButton/>
     </main>
   );
 }

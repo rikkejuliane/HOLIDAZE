@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { Venue } from "@/types/venue";
 
 type Props = {
@@ -82,7 +83,9 @@ export default function ListingCard({ venue, onClick }: Props) {
           <div className="text-primary font-light ">
             {formatPrice(venue.price)} / per night
           </div>
-          <button className="inline-flex items-center gap-1 text-white font-bold">
+          <Link
+            href={`/venues/${encodeURIComponent(venue.id)}`}
+            className="inline-flex items-center gap-1 text-white font-bold hover:opacity-90 cursor-pointer">
             BOOK VENUE
             <svg
               width="7"
@@ -97,7 +100,7 @@ export default function ListingCard({ venue, onClick }: Props) {
                 strokeLinejoin="round"
               />
             </svg>
-          </button>
+          </Link>
         </div>
       </div>
     </article>
