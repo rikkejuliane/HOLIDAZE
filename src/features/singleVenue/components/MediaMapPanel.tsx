@@ -33,7 +33,6 @@ export default function MediaMapPanel({
 }: Props) {
   const [mode, setMode] = useState<"photos" | "map">("photos");
 
-  // images
   const images = useMemo(
     () => (media ?? []).map((m) => m?.url).filter(Boolean) as string[],
     [media]
@@ -74,9 +73,8 @@ export default function MediaMapPanel({
   }, [location?.city, location?.country]);
 
   const geoCacheRef = useRef<Map<string, [number, number]>>(new Map());
-  const [derived, setDerived] = useState<[number, number] | null>(null); // [lng, lat]
+  const [derived, setDerived] = useState<[number, number] | null>(null);
 
-  // try geocoding only when needed (on MAP tab, no coords, have keys)
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -97,7 +95,7 @@ export default function MediaMapPanel({
         );
         if (!alive) return;
         if (coords) {
-          setDerived(coords); // [lng, lat]
+          setDerived(coords);
           break;
         }
       }
@@ -109,12 +107,10 @@ export default function MediaMapPanel({
 
   const showMap = hasCoords || !!derived;
 
-  // Map refs
   const mapNodeRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
 
-  // init map (lazy) with either API coords or derived geocode
   useEffect(() => {
     if (mode !== "map") return;
     if (!showMap) return;
@@ -143,7 +139,6 @@ export default function MediaMapPanel({
     (el.style as CSSStyleDeclaration).backgroundColor =
       "var(--color-imperialRed, #e63946)";
 
-    // ✅ reuse the typed tuple
     const markerLngLat: [number, number] = center;
     const marker = new mapboxgl.Marker({ element: el, anchor: "center" })
       .setLngLat(markerLngLat)
@@ -174,7 +169,7 @@ export default function MediaMapPanel({
   }
 
   return (
-    <div className="relative shrink-0 w-[720px] h-[680px] overflow-hidden">
+    <div className="relative w-full md:w-[720px] h-[56vw] md:h-[680px] min-h-[260px] overflow-hidden object-fit">
       {/* Tabs */}
       <div className="absolute z-20 top-9 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center w-[200px] h-[38px] mx-auto rounded-[10px] bg-secondary/10 border border-secondary/0 backdrop-blur-[5.10px]">
         <button
@@ -208,7 +203,7 @@ export default function MediaMapPanel({
             src={currSrc}
             alt={media?.[idx]?.alt || "Venue photo"}
             fill
-            sizes="720px"
+            sizes="(max-width: 767px) 100vw, 720px"
             priority
             className="object-cover"
             unoptimized

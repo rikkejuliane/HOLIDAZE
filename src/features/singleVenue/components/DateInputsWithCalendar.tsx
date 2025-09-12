@@ -29,7 +29,6 @@ export default function DateInputsWithCalendar({
     onRangeChange?.(range);
   }, [range, onRangeChange]);
 
-  // API dateTo is inclusive (last occupied night) — no subtraction
   const unavailableRanges = useMemo(
     () =>
       (existingBookings ?? []).map((b) => ({
@@ -56,10 +55,10 @@ export default function DateInputsWithCalendar({
     });
 
   return (
-    <div className="relative">
-      <div className="flex flex-row justify-between gap-3">
+    <div className="relative w-full">
+      <div className="flex gap-3 w-full">
         {/* CHECK IN */}
-        <div className="relative">
+        <div className="relative flex-1 min-w-0">
           <label
             htmlFor="checkIn"
             className="absolute z-10 left-3 top-1 text-[10px] font-bold text-primary/70">
@@ -73,12 +72,12 @@ export default function DateInputsWithCalendar({
             readOnly
             onClick={() => setOpenCal((v) => !v)}
             value={checkInStr || ""}
-            className="w-[186.5px] h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none [appearance:none] [&::-webkit-calendar-picker-indicator]:hidden cursor-pointer"
+            className="w-full h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none [appearance:none] [&::-webkit-calendar-picker-indicator]:hidden cursor-pointer"
           />
         </div>
 
         {/* CHECK OUT */}
-        <div className="relative">
+        <div className="relative flex-1 min-w-0">
           <label
             htmlFor="checkOut"
             className="absolute z-10 left-3 top-1 text-[10px] font-bold text-primary/70">
@@ -92,13 +91,13 @@ export default function DateInputsWithCalendar({
             readOnly
             onClick={() => setOpenCal((v) => !v)}
             value={checkOutStr || ""}
-            className="w-[186.5px] h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none [appearance:none] [&::-webkit-calendar-picker-indicator]:hidden cursor-pointer"
+            className="w-full h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none [appearance:none] [&::-webkit-calendar-picker-indicator]:hidden cursor-pointer"
           />
         </div>
       </div>
 
       {openCal && (
-        <div className="absolute z-50 -left-1/2 bottom-107 text-primary">
+        <div className="absolute z-50  md:left-0 xl:-left-1/2 bottom-97 md:bottom-107 text-primary">
           <DateRangePopover
             value={range}
             onChange={setRange}
@@ -110,10 +109,6 @@ export default function DateInputsWithCalendar({
           />
         </div>
       )}
-
-      {/* Hidden fields if submitting via <form> */}
-      <input type="hidden" name="start" value={range.start ? toISODate(range.start) : ""} />
-      <input type="hidden" name="end" value={range.end ? toISODate(range.end) : ""} />
     </div>
   );
 }

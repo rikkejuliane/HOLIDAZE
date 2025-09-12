@@ -149,7 +149,7 @@ export default function BookingPanel({
 
   return (
     <div className="flex flex-col pt-2.5 font-jakarta">
-      <div className="flex flex-row justify-between items-end pb-2">
+      <div className="flex flex-row flex-wrap-reverse gap-2 sm:gap-0 justify-between items-start pb-2">
         <h3 className="font-noto font-bold text-xl text-primary">
           ${nightlyPrice} / per night
         </h3>
@@ -200,13 +200,11 @@ export default function BookingPanel({
       </div>
 
       {/* Dates */}
-      <div className="flex flex-row justify-between">
-        <DateInputsWithCalendar
-          existingBookings={existingBookings}
-          minNights={1}
-          onRangeChange={setRange}
-        />
-      </div>
+      <DateInputsWithCalendar
+        existingBookings={existingBookings}
+        minNights={1}
+        onRangeChange={setRange}
+      />
 
       {/* Guests */}
       <div className="relative mt-2.5">

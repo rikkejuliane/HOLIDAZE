@@ -19,9 +19,9 @@ export default async function VenueDetailPage({ params }: Props) {
   if (!venue) return notFound();
 
   return (
-    <section className="mt-[70px] mb-20">
-      <div className="flex flex-row gap-[45px]">
-        <div className="sticky top-0 self-start">
+    <section className="mt-[90px] sm:mt-[70px] mb-20">
+      <div className="flex flex-col xl:flex-row gap-[45px] items-stretch md:items-center">
+        <div className="w-full md:w-auto static xl:sticky top-0 xl:self-start">
           {/* MAP AND IMAGES */}
           <MediaMapPanel
             media={venue.media}
@@ -33,12 +33,12 @@ export default async function VenueDetailPage({ params }: Props) {
           />
         </div>
 
-        {/* LISTINGS INFO */}
-        <div className="flex flex-col pt-[10px]">
-          <div className="flex flex-row justify-between">
+        {/* LISTINGS INFO (unchanged) */}
+        <div className="flex flex-col mx-auto md:mx-0 pt-[10px] px-3">
+          <div className="flex flex-row justify-between max-w-[590px] mb-[25px]">
             <Link
               href="/"
-              className="flex flex-row gap-1.5 items-center font-jakarta font-bold text-primary mb-[25px]">
+              className="flex flex-row gap-1.5 items-center font-jakarta font-bold text-primary">
               <svg
                 width="7"
                 height="12"
@@ -65,8 +65,8 @@ export default async function VenueDetailPage({ params }: Props) {
             {venue.description}
           </p>
 
-          {/* META: location | guests | rating (CORRECT CODE)*/}
-          <div className="flex items-center gap-2 text-primary/60 text-[17px] font-light font-jakarta leading-tight mb-4">
+          {/* META: location | guests | rating */}
+          <div className="flex flex-wrap items-center gap-2 text-primary/60 text-base sm:text-[17px] font-light font-jakarta leading-tight mb-4">
             <span>
               {[venue.location?.city, venue.location?.country]
                 .filter(Boolean)
@@ -76,7 +76,6 @@ export default async function VenueDetailPage({ params }: Props) {
             <span>{venue.maxGuests ?? "—"} guests</span>
             <span aria-hidden>|</span>
             <span className="inline-flex items-center gap-1">
-              {/* star svg */}
               <svg
                 width="12"
                 height="11"
@@ -98,8 +97,8 @@ export default async function VenueDetailPage({ params }: Props) {
           </div>
 
           {/* AMENITIES AND HOST */}
-          <div className="flex flex-row gap-[15px]">
-            <div className="w-[199px] h-36 bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] p-4 flex flex-col font-jakarta text-primary text-xs">
+          <div className="flex flex-col sm:flex-row gap-[15px]">
+            <div className="w-full sm:w-[199px] h-36 bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] p-4 flex flex-col font-jakarta text-primary text-xs">
               <h2 className="font-bold pb-3">AMENITIES</h2>
 
               {/* WIFI */}
@@ -157,7 +156,6 @@ export default async function VenueDetailPage({ params }: Props) {
                       />
                     </svg>
                   </div>
-
                   <p className="">PARKING:</p>
                 </div>
                 <p>{venue.meta?.wifi ? "YES" : "NO"}</p>
@@ -208,7 +206,7 @@ export default async function VenueDetailPage({ params }: Props) {
               </div>
             </div>
 
-            <div className="w-[199px] h-36 bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] p-4 flex flex-col font-jakarta text-primary text-xs">
+            <div className="w-full sm:w-[199px] h-36 bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] p-4 flex flex-col font-jakarta text-primary text-xs">
               <h2 className="font-bold pb-4">HOST</h2>
               <div className="flex flex-row gap-1.5 items-center">
                 <Link
@@ -239,8 +237,8 @@ export default async function VenueDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {/* BOOKING & SUMMARY */}
-          <div className="w-[413px] h-[300px] bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] mt-4 px-4 flex flex-col">
+          {/* BOOKING & SUMMARY (unchanged) */}
+          <div className="w-full sm:max-w-[413px] h-[330px] sm:h-[300px] bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] mt-4 px-4 flex flex-col">
             <form>
               <div
                 id="booking-panel"
@@ -250,7 +248,7 @@ export default async function VenueDetailPage({ params }: Props) {
                   venueName={venue.name}
                   venueImg={{
                     url: venue.media?.[0]?.url,
-                    alt: venue.media?.[0]?.alt ?? undefined, // fix: null -> undefined
+                    alt: venue.media?.[0]?.alt ?? undefined,
                   }}
                   nightlyPrice={venue.price}
                   maxGuests={venue.maxGuests}
