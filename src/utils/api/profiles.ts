@@ -1,6 +1,6 @@
 // src/utils/api/profiles.ts
 import { API_PROFILES } from "./constants";
-import { buildServerHeaders } from "./headers";
+import { buildServerHeaders, buildHeaders } from "./headers";
 
 export type Media = { url: string; alt?: string | null };
 export type Profile = {
@@ -33,6 +33,30 @@ export async function getProfileByName(
     console.error("Profiles GET failed", res.status, await res.text());
     throw new Error(`getProfileByName failed: ${res.status}`);
   }
+  const { data } = await res.json();
+  return data as Profile;
+}
+
+export async function updateProfile(
+  name: string,
+  body: {
+    bio?: string | null;
+    venueManager?: boolean;
+    avatar?: Media | null;
+    banner?: Media | null;
+  }
+): Promise<Profile> {
+  const res = await fetch(`${API_PROFILES}/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    headers: buildHeaders({ apiKey: true, authToken: true, contentType: true }), // client-side: reads token from localStorage
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Update profile failed: ${res.status} – ${txt}`);
+  }
+
   const { data } = await res.json();
   return data as Profile;
 }

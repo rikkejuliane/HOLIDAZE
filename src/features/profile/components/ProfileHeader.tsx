@@ -1,7 +1,7 @@
-// src/features/profile/components/ProfileHeader.tsx
 import Image from "next/image";
 import type { Profile } from "@/utils/api/profiles";
 import LogoutButton from "@/features/auth/components/LogoutButton";
+import UpdateProfileButton from "./UpdateProfileButton";
 
 export default function ProfileHeader({ profile }: { profile: Profile }) {
   return (
@@ -35,14 +35,8 @@ export default function ProfileHeader({ profile }: { profile: Profile }) {
             </button>
           </div>
         </div>
-        <Image
-          src={profile.avatar?.url || "/listingplaceholder.jpg"}
-          alt={profile.avatar?.alt || `${profile.name} avatar`}
-          width={150}
-          height={150}
-          unoptimized
-          className="absolute top-30 left-1/2 -translate-x-1/2 w-[150px] h-[150px] rounded-full object-cover"
-        />
+
+        <UpdateProfileButton profile={profile} />
 
         <div className="absolute top-2 right-2">
           <LogoutButton />
