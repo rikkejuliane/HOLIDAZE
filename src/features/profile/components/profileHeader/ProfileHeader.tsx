@@ -2,8 +2,7 @@ import Image from "next/image";
 import type { Profile } from "@/utils/api/profiles";
 import LogoutButton from "@/features/auth/components/LogoutButton";
 import UpdateProfileButton from "./UpdateProfileButton";
-
-
+import VenueManagerToggle from "./VenueManagerToggle";
 
 export default function ProfileHeader({ profile }: { profile: Profile }) {
   return (
@@ -29,12 +28,10 @@ export default function ProfileHeader({ profile }: { profile: Profile }) {
           </p>
           <div className="flex flex-row justify-center items-center pt-[35px] gap-1.5">
             <p className="text-[15px] font-bold">VENUE MANAGER</p>
-            <button
-              type="button"
-              aria-pressed={!!profile.venueManager}
-              className="relative inline-block w-[29px] h-[15px] rounded-full bg-primary/60 shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[5.10px]">
-              <span className="absolute left-[1px] top-[1px] h-[13px] w-[13px] rounded-full bg-secondary transition-transform" />
-            </button>
+            <VenueManagerToggle
+              profileName={profile.name}
+              initialOn={!!profile.venueManager}
+            />
           </div>
         </div>
 

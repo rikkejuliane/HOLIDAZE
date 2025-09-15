@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import ProfileHeader from "@/features/profile/components/ProfileHeader";
+import ProfileHeader from "@/features/profile/components/profileHeader/ProfileHeader";
 import { getProfileByName } from "@/utils/api/profiles";
+import ProfileVenuesSection from "@/features/profile/components/ProfileVenues/ProfileVenuesSection";
+
 
 export default async function ProfilePage() {
   const cookieStore = await cookies();
@@ -19,6 +21,7 @@ export default async function ProfilePage() {
   return (
     <>
       <ProfileHeader profile={profile} />
+      <ProfileVenuesSection />
     </>
   );
 }
