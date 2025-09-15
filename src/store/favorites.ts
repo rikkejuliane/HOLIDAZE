@@ -3,9 +3,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-// We store timestamps so you can sort by "recently added" later.
 export type FavoritesState = {
-  favoriteIds: Record<string, number>; // venueId -> addedAt (ms)
+  favoriteIds: Record<string, number>;
   add: (id: string) => void;
   remove: (id: string) => void;
   toggle: (id: string) => void;
@@ -35,7 +34,7 @@ export const useFavoritesStore = create<FavoritesState>()(
       clearAll: () => set({ favoriteIds: {} }),
     }),
     {
-      name: "favorites-store", // localStorage key
+      name: "favorites-store",
       version: 1,
       partialize: (s) => ({ favoriteIds: s.favoriteIds }),
     }

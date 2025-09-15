@@ -4,7 +4,6 @@ import ProfileHeader from "@/features/profile/components/profileHeader/ProfileHe
 import { getProfileByName } from "@/utils/api/profiles";
 import ProfileVenuesSection from "@/features/profile/components/ProfileVenues/ProfileVenuesSection";
 
-
 export default async function ProfilePage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
@@ -21,7 +20,7 @@ export default async function ProfilePage() {
   return (
     <>
       <ProfileHeader profile={profile} />
-      <ProfileVenuesSection />
+      <ProfileVenuesSection profileName={profile?.name ?? username} />
     </>
   );
 }
