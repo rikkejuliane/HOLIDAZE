@@ -3,6 +3,8 @@ import type { Profile } from "@/utils/api/profiles";
 import LogoutButton from "@/features/auth/components/LogoutButton";
 import UpdateProfileButton from "./UpdateProfileButton";
 
+
+
 export default function ProfileHeader({ profile }: { profile: Profile }) {
   return (
     <section className="pt-[70px] text-primary font-jakarta">
