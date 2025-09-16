@@ -1,13 +1,29 @@
+// src/features/profile/components/ProfileVenues/ProfileVenuesSection.tsx
 "use client";
 
+import { useEffect, useState } from "react";
 import { useProfileTabs } from "@/store/useProfileTabs";
 import MyBookingsList from "./MyBookingsList";
 import MyFavoritesList from "./MyFavoritesList";
+import MyVenuesList from "./MyVenuesList";
+import CreateVenueModal from "./CreateVenueModal";
 
-type Props = { profileName: string };
+type Props = {
+  profileName: string;
+  isVenueManager: boolean;
+};
 
-export default function ProfileVenuesSection({ profileName }: Props) {
+export default function ProfileVenuesSection({
+  profileName,
+  isVenueManager,
+}: Props) {
   const { active, setActive } = useProfileTabs();
+  const [createOpen, setCreateOpen] = useState(false); // <-- needed
+
+  // If user turns off venue manager while "venues" is active, bounce back to bookings
+  useEffect(() => {
+    if (!isVenueManager && active === "venues") setActive("bookings");
+  }, [isVenueManager, active, setActive]);
 
   return (
     <section className="mt-5 mb-20">
@@ -42,8 +58,47 @@ export default function ProfileVenuesSection({ profileName }: Props) {
             FAVORITES
           </button>
 
-          {/* spacer */}
-          <div className="flex-1 bg-secondary rounded-t-[10px]" />
+          {/* My venues — only visible if venue manager; fixed bg-primary/9, bold when active */}
+          {isVenueManager && (
+            <button
+              role="tab"
+              aria-selected={active === "venues"}
+              type="button"
+              onClick={() => setActive("venues")}
+              className={[
+                "w-[185px] rounded-t-[10px] backdrop-blur-[2px] grid place-items-center",
+                "bg-primary/9",
+                active === "venues" ? "font-bold" : "",
+              ].join(" ")}>
+              MY VENUES
+            </button>
+          )}
+
+          {/* spacer (relative) + create button inside it */}
+          <div className="relative flex-1 bg-secondary rounded-t-[10px]">
+            {isVenueManager && (
+              <button
+                type="button"
+                onClick={() => setCreateOpen(true)}
+                className="absolute right-8 top-4 w-[175px] font-jakarta text-[13px] md:text-[15px] font-bold flex flex-row gap-1.5 items-center"
+                aria-haspopup="dialog">
+                CREATE NEW VENUE
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M6 11V1M1 6H11"
+                    stroke="#FCFEFF"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* PANEL */}
@@ -51,16 +106,29 @@ export default function ProfileVenuesSection({ profileName }: Props) {
           role="tabpanel"
           className={[
             "h-[572px] rounded-bl-[10px] rounded-br-[10px] shadow-[0_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] flex flex-col",
-            active === "bookings" ? "bg-primary/20" : "bg-secondary/20",
+            active === "bookings"
+              ? "bg-primary/20"
+              : active === "favorites"
+              ? "bg-secondary/20"
+              : "bg-primary/9",
           ].join(" ")}>
           {active === "bookings" && (
             <MyBookingsList profileName={profileName} />
           )}
+
           {active === "favorites" && (
             <MyFavoritesList profileName={profileName} />
           )}
+
+          {active === "venues" && isVenueManager && <MyVenuesList />}
         </div>
       </div>
+
+      {/* Modal lives at the bottom so it can overlay everything */}
+      <CreateVenueModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+      />
     </section>
   );
 }

@@ -4,10 +4,10 @@ export type ProfileTab = "bookings" | "favorites" | "venues";
 
 type State = {
   active: ProfileTab;
-  setActive: (t: ProfileTab) => void;
+  setActive: (tab: ProfileTab) => void;
 };
 
 export const useProfileTabs = create<State>((set) => ({
-  active: "bookings",       // default tab
-  setActive: (t) => set({ active: t }),
+  active: "bookings",
+  setActive: (tab) => set({ active: tab }),
 }));

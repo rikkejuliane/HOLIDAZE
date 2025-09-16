@@ -20,7 +20,10 @@ export default async function ProfilePage() {
   return (
     <>
       <ProfileHeader profile={profile} />
-      <ProfileVenuesSection profileName={profile?.name ?? username} />
+      <ProfileVenuesSection
+        profileName={profile?.name ?? username}
+        isVenueManager={Boolean(profile?.venueManager)}
+      />
     </>
   );
 }

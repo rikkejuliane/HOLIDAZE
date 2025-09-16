@@ -2,6 +2,7 @@
 import type { ListResponse, Venue } from "@/types/venue";
 import { apiFetch } from "./client";
 import { API_VENUES } from "./constants";
+import { buildHeaders } from "./headers";
 
 type SortableField = "created" | "updated" | "name" | "price" | "rating";
 type SingleResponse<T> = { data: T };
@@ -63,5 +64,51 @@ export async function getVenueById(
 
   const res = await apiFetch<SingleResponse<Venue>>(u.toString());
   if (!res?.data) throw new Error(`Venue ${id} not found`);
+  return res.data;
+}
+
+// ---------- CREATE ----------
+/**
+ * Create a new venue.
+ * API: POST /holidaze/venues
+ * Requires: apiKey + auth token
+ */
+export type CreateVenueInput = {
+  name: string; // Required
+  description: string; // Required
+  price: number; // Required
+  maxGuests: number; // Required
+  media?: { url: string; alt?: string | null }[]; // Optional
+  rating?: number; // Optional (default 0)
+  meta?: {
+    wifi?: boolean;
+    parking?: boolean;
+    breakfast?: boolean;
+    pets?: boolean;
+  };
+  location?: {
+    address?: string | null;
+    city?: string | null;
+    zip?: string | null;
+    country?: string | null;
+    continent?: string | null;
+    lat?: number;
+    lng?: number;
+  };
+};
+
+export async function createVenue(input: CreateVenueInput): Promise<Venue> {
+  const headers = buildHeaders({
+    apiKey: true,
+    authToken: true, // requires logged-in user w/ token
+    contentType: true,
+  });
+
+  const res = await apiFetch<SingleResponse<Venue>>(API_VENUES, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(input),
+  });
+
   return res.data;
 }
