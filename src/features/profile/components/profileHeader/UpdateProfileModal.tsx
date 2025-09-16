@@ -98,8 +98,8 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
 
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
           {/* Avatar URL */}
-          <div className="flex flex-col w-full gap-1">
-            <label htmlFor="avatarUrl" className="font-jakarta font-bold">
+          <div className="flex flex-col w-full">
+            <label htmlFor="avatarUrl" className="font-jakarta font-bold text-xs">
               Avatar URL
             </label>
             <input
@@ -114,8 +114,8 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
           </div>
 
           {/* Avatar alt */}
-          <div className="flex flex-col w-full gap-1">
-            <label htmlFor="avatarAlt" className="font-jakarta font-bold">
+          <div className="flex flex-col w-full">
+            <label htmlFor="avatarAlt" className="font-jakarta font-bold text-xs">
               Avatar alt
             </label>
             <input
@@ -130,8 +130,8 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
           </div>
 
           {/* Banner URL */}
-          <div className="flex flex-col w-full gap-1">
-            <label htmlFor="bannerUrl" className="font-jakarta font-bold">
+          <div className="flex flex-col w-full">
+            <label htmlFor="bannerUrl" className="font-jakarta font-bold text-xs">
               Banner URL
             </label>
             <input
@@ -146,8 +146,8 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
           </div>
 
           {/* Banner alt */}
-          <div className="flex flex-col w-full gap-1">
-            <label htmlFor="bannerAlt" className="font-jakarta font-bold">
+          <div className="flex flex-col w-full">
+            <label htmlFor="bannerAlt" className="font-jakarta font-bold text-xs">
               Banner alt
             </label>
             <input
@@ -162,8 +162,8 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
           </div>
 
           {/* Bio */}
-          <div className="flex flex-col w-full gap-1">
-            <label htmlFor="bio" className="font-jakarta font-bold">
+          <div className="flex flex-col w-full">
+            <label htmlFor="bio" className="font-jakarta font-bold text-xs">
               Bio
             </label>
             <textarea

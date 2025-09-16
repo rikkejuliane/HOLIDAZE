@@ -75,12 +75,13 @@ export default function ProfileVenuesSection({
           )}
 
           {/* spacer (relative) + create button inside it */}
-          <div className="relative flex-1 bg-secondary rounded-t-[10px]">
+          <div className="flex-1 bg-secondary rounded-t-[10px]">
+            <div className="relative">
             {isVenueManager && (
               <button
                 type="button"
                 onClick={() => setCreateOpen(true)}
-                className="absolute right-8 top-4 w-[175px] font-jakarta text-[13px] md:text-[15px] font-bold flex flex-row gap-1.5 items-center"
+                className="absolute right-4 top-4 w-[175px] font-jakarta text-[13px] md:text-[15px] font-bold flex flex-row gap-1.5 items-center"
                 aria-haspopup="dialog">
                 CREATE NEW VENUE
                 <svg
@@ -98,6 +99,7 @@ export default function ProfileVenuesSection({
                 </svg>
               </button>
             )}
+            </div>
           </div>
         </div>
 
