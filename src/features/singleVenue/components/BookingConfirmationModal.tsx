@@ -113,7 +113,16 @@ export default function BookingConfirmationModal({
               Thank you so much for your booking:
             </p>
           </div>
-        ) : null}
+        ) : (
+          <div className="mb-3">
+            <h3 className="font-noto font-bold text-lg tracking-wide">
+              BOOKING CONFIRMATION
+            </h3>
+            <p className="text-sm font-jakarta text-primary/80 mt-1">
+              Are you sure you want to book this venue?
+            </p>
+          </div>
+        )}
 
         {/* Venue mini header (image + title) */}
         <div className="flex items-center gap-3 mb-3">
