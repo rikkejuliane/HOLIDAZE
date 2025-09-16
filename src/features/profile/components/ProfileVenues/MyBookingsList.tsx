@@ -1,3 +1,4 @@
+// src/features/profile/components/ProfileVenues/MyBookingsList.tsx
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -28,6 +29,30 @@ type ApiListMeta = {
   pageCount: number;
   totalCount: number;
 };
+
+function sameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function fmtDMY2(d: Date) {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${dd}.${mm}.${yy}`;
+}
+
+function formatRange(fromISO: string, toISO: string) {
+  const from = new Date(fromISO);
+  const to = new Date(toISO);
+
+  if (sameDay(from, to)) return fmtDMY2(from);
+  // want an en dash? replace '-' with '–'
+  return `${fmtDMY2(from)} - ${fmtDMY2(to)}`;
+}
 
 export default function BookingsList({ profileName }: Props) {
   const PAGE_SIZE = 6;
@@ -102,14 +127,12 @@ export default function BookingsList({ profileName }: Props) {
     try {
       await deleteBookingById(target.id);
 
-      // If this was the ONLY row on the LAST page, go back a page
       const isOnlyRow = rows.length === 1;
       const isLastPage = meta?.currentPage === meta?.pageCount;
 
       if (isOnlyRow && isLastPage && page > 1) {
-        setPage(page - 1); // useEffect will refetch for the previous page
+        setPage(page - 1);
       } else {
-        // stay on the same page and refetch so we “pull up” from next page
         await fetchData(page);
       }
 
@@ -134,6 +157,14 @@ export default function BookingsList({ profileName }: Props) {
       </div>
     );
 
+  // compute once per render for "past" comparison (midnight today)
+  const today = new Date();
+  const todayStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 flex flex-col">
@@ -144,25 +175,30 @@ export default function BookingsList({ profileName }: Props) {
           const loc = [v?.location?.city, v?.location?.country]
             .filter(Boolean)
             .join(", ");
-          const guestsLabel = `${b.guests} ${
-            b.guests === 1 ? "Guest" : "Guests"
-          }`;
+          const dateLabel = formatRange(b.dateFrom, b.dateTo);
+          const isPast = new Date(b.dateTo) < todayStart;
+
+          const textMuted = isPast ? "text-primary/60" : "";
+          const iconMuted = isPast ? "opacity-60" : "";
 
           return (
             <div key={b.id} className="flex flex-col">
               <div className="flex flex-row mt-2.5 justify-between text-lg px-[40px]">
                 {/* left side */}
-                <div className="flex items-center gap-7.5 flex-1 min-w-0">
+                <div
+                  className={`flex items-center gap-7.5 flex-1 min-w-0 ${textMuted}`}>
                   <Image
                     src={img}
                     alt={alt}
                     width={60}
                     height={60}
                     unoptimized
-                    className="w-15 h-15 rounded-full object-cover shrink-0"
+                    className={`w-15 h-15 rounded-full object-cover shrink-0 ${
+                      isPast ? "grayscale opacity-60" : ""
+                    }`}
                   />
 
-                  {/* simple 3-column block */}
+                  {/* simple 3-column block (Title, Location, Dates) */}
                   <div className="flex items-center gap-7.5 flex-1 min-w-0">
                     <p className="font-bold w-[25%] min-w-0 truncate">
                       {v?.name ?? "Untitled venue"}
@@ -170,11 +206,15 @@ export default function BookingsList({ profileName }: Props) {
                     <p className="text-primary/70 w-[25%] min-w-0 truncate">
                       {loc || "—"}
                     </p>
-                    <p className="font-bold w-[90px] shrink-0">{guestsLabel}</p>
+                    {/* Date range column (fixed width, truncates if too long) */}
+                    <p className="font-bold w-[210px] shrink-0 truncate">
+                      {dateLabel}
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-7.5 shrink-0">
+                <div
+                  className={`flex items-center gap-7.5 shrink-0 ${iconMuted}`}>
                   {v?.id && (
                     <Link href={`/venues/${v.id}`} aria-label="View venue">
                       {/* eye SVG */}
