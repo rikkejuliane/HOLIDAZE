@@ -1,4 +1,3 @@
-// src/features/profile/components/ProfileVenues/MyBookingsList.tsx
 "use client";
 
 import { useCallback, useEffect, useState } from "react";

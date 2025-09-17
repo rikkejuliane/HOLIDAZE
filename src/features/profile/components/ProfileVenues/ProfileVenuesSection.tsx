@@ -129,7 +129,9 @@ export default function ProfileVenuesSection({
             <MyFavoritesList profileName={profileName} />
           )}
 
-          {active === "venues" && isVenueManager && <MyVenuesList />}
+          {active === "venues" && isVenueManager && (
+            <MyVenuesList profileName={profileName} /> 
+          )}
         </div>
       </div>
 
