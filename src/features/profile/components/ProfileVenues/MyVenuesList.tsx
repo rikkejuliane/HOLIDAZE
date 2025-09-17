@@ -1,3 +1,4 @@
+// src/features/profile/components/ProfileVenues/MyVenuesList.tsx
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -6,7 +7,6 @@ import Link from "next/link";
 import type { Venue, ListMeta } from "@/types/venue";
 import ListingsPagination from "@/features/home/components/ListingsPagination";
 import { getVenuesByProfile, deleteVenueById } from "@/utils/api/venues";
-import EditVenueModal from "./EditVenueModal";
 
 type Props = { profileName: string };
 
@@ -34,10 +34,6 @@ export default function MyVenuesList({ profileName }: Props) {
   const [target, setTarget] = useState<Venue | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
   const [modalErr, setModalErr] = useState<string | null>(null);
-
-  // EDIT modal state (added)
-  const [editOpen, setEditOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Venue | null>(null);
 
   // reset pagination when profile changes
   useEffect(() => {
@@ -92,7 +88,7 @@ export default function MyVenuesList({ profileName }: Props) {
     return () => window.removeEventListener("venues:created", onCreated);
   }, [fetchData]);
 
-  // refresh on "venues:updated" (added)
+  // refresh on "venues:updated"
   useEffect(() => {
     function onUpdated() {
       fetchData(page);
@@ -109,11 +105,9 @@ export default function MyVenuesList({ profileName }: Props) {
     setModalOpen(true);
   }
 
-  // open edit modal (added)
+  // open edit (emit event for parent to handle)
   function openEdit(v: Venue) {
-    if (modalBusy) return;
-    setEditTarget(v);
-    setEditOpen(true);
+    window.dispatchEvent(new CustomEvent("venues:edit", { detail: v }));
   }
 
   // confirm deletion (API DELETE)
@@ -200,7 +194,7 @@ export default function MyVenuesList({ profileName }: Props) {
 
                 {/* actions */}
                 <div className="flex items-center gap-7.5 shrink-0">
-                  {/* EDIT (added) */}
+                  {/* EDIT */}
                   <button aria-label="Edit venue" onClick={() => openEdit(v)}>
                     <svg
                       width="20"
@@ -358,16 +352,6 @@ export default function MyVenuesList({ profileName }: Props) {
           </div>
         </div>
       )}
-
-      {/* EDIT modal (added) */}
-      <EditVenueModal
-        open={editOpen}
-        venue={editTarget}
-        onClose={() => {
-          setEditOpen(false);
-          setEditTarget(null);
-        }}
-      />
     </div>
   );
 }

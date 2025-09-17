@@ -10,12 +10,32 @@ import { ImageRows } from "../createVenue/ImageRows";
 
 type Props = { open: boolean; onClose: () => void; venue: Venue | null };
 
+type EditBuildResult =
+  | { ok: true; payload: UpdateVenueInput }
+  | { ok: false; error: string };
+
 export default function EditVenueModal({ open, onClose, venue }: Props) {
   const [busy, setBusy] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
   const hideTimerRef = React.useRef<number | null>(null);
 
-  // form state
+  const clearNotice = React.useCallback(() => {
+    setNotice(null);
+    if (hideTimerRef.current) {
+      window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+  }, []);
+
+  function showNotice(msg: string) {
+    setNotice(msg);
+    if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = window.setTimeout(() => {
+      setNotice(null);
+      hideTimerRef.current = null;
+    }, 5000);
+  }
+
   const [name, setName] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [price, setPrice] = React.useState<string>("");
@@ -37,21 +57,11 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
   const [lat, setLat] = React.useState<string>("");
   const [lng, setLng] = React.useState<string>("");
 
-  function showNotice(msg: string) {
-    setNotice(msg);
-    if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
-    hideTimerRef.current = window.setTimeout(() => {
-      setNotice(null);
-      hideTimerRef.current = null;
-    }, 5000);
-  }
-
-  // hydrate from current venue on open
   React.useEffect(() => {
     if (!open || !venue) return;
 
     setBusy(false);
-    setNotice(null);
+    clearNotice();
 
     setName(venue.name ?? "");
     setDescription(venue.description ?? "");
@@ -101,7 +111,11 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
         hideTimerRef.current = null;
       }
     };
-  }, [open, venue]);
+  }, [open, venue, clearNotice]);
+
+  React.useEffect(() => {
+    if (!open) clearNotice();
+  }, [open, clearNotice]);
 
   if (!open || !venue) return null;
 
@@ -126,7 +140,7 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
       country,
       lat,
       lng,
-    });
+    }) as EditBuildResult;
 
     if (!result.ok) {
       showNotice(result.error);
@@ -136,13 +150,14 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
     const payload: UpdateVenueInput = result.payload;
     setBusy(true);
     try {
+      if (!venue) {
+        showNotice("No venue to update.");
+        return;
+      }
       await updateVenue(venue.id, payload);
       showNotice("Changes saved");
-
       window.dispatchEvent(new CustomEvent("venues:updated"));
-
-      // give the toast a moment, then close
-      setTimeout(() => onClose(), 800);
+      window.setTimeout(() => onClose(), 900);
     } catch (err: unknown) {
       showNotice(
         err instanceof Error ? err.message : "Failed to update venue."
@@ -153,6 +168,7 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
   }
 
   function handleCancel() {
+    clearNotice();
     onClose();
   }
 

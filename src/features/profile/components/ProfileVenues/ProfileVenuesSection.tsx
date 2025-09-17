@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Venue } from "@/types/venue";
 import { useProfileTabs } from "@/store/useProfileTabs";
 import MyBookingsList from "./MyBookingsList";
 import MyFavoritesList from "./MyFavoritesList";
 import MyVenuesList from "./MyVenuesList";
 import CreateVenueModal from "../createVenue/CreateVenueModal";
+import EditVenueModal from "./EditVenueModal";
 
 type Props = {
   profileName: string;
@@ -17,7 +19,10 @@ export default function ProfileVenuesSection({
   isVenueManager,
 }: Props) {
   const { active, setActive } = useProfileTabs();
-  const [createOpen, setCreateOpen] = useState(false); // <-- needed
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Venue | null>(null);
 
   // If user turns off venue manager while "venues" is active, bounce back to bookings
   useEffect(() => {
@@ -31,6 +36,17 @@ export default function ProfileVenuesSection({
     window.addEventListener("venues:created", onCreated);
     return () => window.removeEventListener("venues:created", onCreated);
   }, [setActive]);
+
+  // OPEN Edit modal when MyVenuesList emits "venues:edit"
+  useEffect(() => {
+    function onEdit(e: Event) {
+      const ve = e as CustomEvent<Venue>;
+      setEditTarget(ve.detail ?? null);
+      setEditOpen(true);
+    }
+    window.addEventListener("venues:edit", onEdit);
+    return () => window.removeEventListener("venues:edit", onEdit);
+  }, []);
 
   return (
     <section className="mt-5 mb-20">
@@ -130,7 +146,7 @@ export default function ProfileVenuesSection({
           )}
 
           {active === "venues" && isVenueManager && (
-            <MyVenuesList profileName={profileName} /> 
+            <MyVenuesList profileName={profileName} />
           )}
         </div>
       </div>
@@ -139,6 +155,14 @@ export default function ProfileVenuesSection({
       <CreateVenueModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
+      />
+      <EditVenueModal
+        open={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+          setEditTarget(null);
+        }}
+        venue={editTarget}
       />
     </section>
   );
