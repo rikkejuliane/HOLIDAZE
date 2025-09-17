@@ -27,7 +27,11 @@ export async function fetchVenues({
   u.searchParams.set("limit", String(limit));
   u.searchParams.set("sort", sort);
   u.searchParams.set("sortOrder", sortOrder);
-  return apiFetch<ListResponse<Venue>>(u.toString());
+
+  return apiFetch<ListResponse<Venue>>(u.toString(), {
+    cache: "no-store",
+    next: { revalidate: 0 },
+  });
 }
 
 // ---------- SEARCH ----------
@@ -74,12 +78,12 @@ export async function getVenueById(
  * Requires: apiKey + auth token
  */
 export type CreateVenueInput = {
-  name: string; // Required
-  description: string; // Required
-  price: number; // Required
-  maxGuests: number; // Required
-  media?: { url: string; alt?: string | null }[]; // Optional
-  rating?: number; // Optional (default 0)
+  name: string; 
+  description: string; 
+  price: number; 
+  maxGuests: number; 
+  media?: { url: string; alt?: string | null }[]; 
+  rating?: number; 
   meta?: {
     wifi?: boolean;
     parking?: boolean;
@@ -100,7 +104,7 @@ export type CreateVenueInput = {
 export async function createVenue(input: CreateVenueInput): Promise<Venue> {
   const headers = buildHeaders({
     apiKey: true,
-    authToken: true, // requires logged-in user w/ token
+    authToken: true, 
     contentType: true,
   });
 

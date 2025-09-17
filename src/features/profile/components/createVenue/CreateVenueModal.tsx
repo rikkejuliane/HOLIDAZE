@@ -1,26 +1,148 @@
 "use client";
 
 import * as React from "react";
+import { createVenue, type CreateVenueInput } from "@/utils/api/venues";
+import { useProfileTabs } from "@/store/useProfileTabs";
+import { buildCreateVenuePayload } from "@/utils/venues/buildCreateVenuePayload";
+import { StarRating } from "./StarRating";
+import { AmenityToggle } from "./AmenityToggle";
+import { ImageRows } from "./ImageRows";
 
-type Props = {
-  open: boolean;
-  onClose: () => void;
-};
+type Props = { open: boolean; onClose: () => void };
 
 export default function CreateVenueModal({ open, onClose }: Props) {
   const [busy, setBusy] = React.useState(false);
+  const [notice, setNotice] = React.useState<string | null>(null);
+  const hideTimerRef = React.useRef<number | null>(null);
+
+  // form state
+  const [name, setName] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [price, setPrice] = React.useState<string>("");
+  const [maxGuests, setMaxGuests] = React.useState<string>("");
+  const [rating, setRating] = React.useState<number>(0);
+  const [media, setMedia] = React.useState<Array<{ url: string; alt: string }>>(
+    [{ url: "", alt: "" }]
+  );
+
+  const [wifi, setWifi] = React.useState(false);
+  const [parking, setParking] = React.useState(false);
+  const [breakfast, setBreakfast] = React.useState(false);
+  const [pets, setPets] = React.useState(false);
+
+  const [address, setAddress] = React.useState("");
+  const [zip, setZip] = React.useState("");
+  const [city, setCity] = React.useState("");
+  const [country, setCountry] = React.useState("");
+  const [lat, setLat] = React.useState<string>("");
+  const [lng, setLng] = React.useState<string>("");
+
+  const resetForm = React.useCallback((opts?: { keepNotice?: boolean }) => {
+    setName("");
+    setDescription("");
+    setPrice("");
+    setMaxGuests("");
+    setRating(0);
+    setMedia([{ url: "", alt: "" }]);
+
+    setWifi(false);
+    setParking(false);
+    setBreakfast(false);
+    setPets(false);
+
+    setAddress("");
+    setZip("");
+    setCity("");
+    setCountry("");
+    setLat("");
+    setLng("");
+
+    setBusy(false);
+
+    if (!opts?.keepNotice) {
+      setNotice(null);
+      if (hideTimerRef.current) {
+        window.clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
+    }
+  }, []);
 
   React.useEffect(() => {
     if (open) {
-      setBusy(false);
+      resetForm();
     }
-  }, [open]);
+    return () => {
+      if (hideTimerRef.current) {
+        window.clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
+    };
+  }, [open, resetForm]);
 
   if (!open) return null;
 
-  function onSubmit(e: React.FormEvent) {
+  function showNotice(msg: string) {
+    setNotice(msg);
+    if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = window.setTimeout(() => {
+      setNotice(null);
+      hideTimerRef.current = null;
+    }, 5000);
+  }
+
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // layout-only for now — we'll wire this to createVenue later
+    setNotice(null);
+
+    const result = buildCreateVenuePayload({
+      name,
+      description,
+      price,
+      maxGuests,
+      rating,
+      media,
+      wifi,
+      parking,
+      breakfast,
+      pets,
+      address,
+      zip,
+      city,
+      country,
+      lat,
+      lng,
+    });
+
+    if (!result.ok) {
+      showNotice(result.error);
+      return;
+    }
+
+    const payload: CreateVenueInput = result.payload;
+
+    setBusy(true);
+    try {
+      await createVenue(payload);
+      showNotice("Venue created!");
+
+      useProfileTabs.getState().setActive("venues");
+      window.dispatchEvent(new CustomEvent("venues:created"));
+
+      resetForm({ keepNotice: true });
+
+      setTimeout(() => onClose(), 1000);
+    } catch (err: unknown) {
+      showNotice(
+        err instanceof Error ? err.message : "Failed to create venue."
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleCancel() {
+    resetForm();
     onClose();
   }
 
@@ -29,11 +151,11 @@ export default function CreateVenueModal({ open, onClose }: Props) {
       {/* backdrop */}
       <button
         aria-label="Close modal"
-        onClick={onClose}
+        onClick={handleCancel}
         className="absolute inset-0 bg-black/50"
       />
 
-      {/* dialog (same look as UpdateProfileModal) */}
+      {/* dialog */}
       <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-[685px] -translate-x-1/2 -translate-y-1/2 rounded-[10px] bg-secondary p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] px-5 md:px-30 text-primary font-jakarta max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex-1 text-center">
@@ -43,8 +165,8 @@ export default function CreateVenueModal({ open, onClose }: Props) {
           </div>
         </div>
 
-        {/* Placeholder form content — swap these for your real fields later */}
         <form onSubmit={onSubmit} className="flex flex-col gap-3 text-sm">
+          {/* name */}
           <div className="flex flex-col w-full">
             <label htmlFor="title" className="font-jakarta font-bold text-xs">
               Title
@@ -55,10 +177,13 @@ export default function CreateVenueModal({ open, onClose }: Props) {
               type="text"
               placeholder="Title *"
               required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
 
+          {/* description */}
           <div className="flex flex-col w-full">
             <label className="font-jakarta font-bold text-xs">
               Description
@@ -67,10 +192,13 @@ export default function CreateVenueModal({ open, onClose }: Props) {
               rows={4}
               placeholder="Describe your venue *"
               required
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               className="min-h-[90px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 py-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
 
+          {/* price */}
           <div className="flex flex-col w-full">
             <label htmlFor="price" className="font-jakarta font-bold text-xs">
               Price per night
@@ -78,13 +206,16 @@ export default function CreateVenueModal({ open, onClose }: Props) {
             <input
               id="price"
               name="price"
-              type="text"
+              inputMode="decimal"
               placeholder="Price per night *"
               required
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
               className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
 
+          {/* guests */}
           <div className="flex flex-col w-full">
             <label htmlFor="guest" className="font-jakarta font-bold text-xs">
               Guests
@@ -92,149 +223,52 @@ export default function CreateVenueModal({ open, onClose }: Props) {
             <input
               id="guest"
               name="guest"
-              type="text"
-              placeholder="Maximum number of quests *"
+              inputMode="numeric"
+              placeholder="Maximum number of guests *"
               required
+              value={maxGuests}
+              onChange={(e) => setMaxGuests(e.target.value)}
               className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
 
-          <div className="flex flex-col w-full">
-            <label htmlFor="image" className="font-jakarta font-bold text-xs">
-              Images
-            </label>
-            <input
-              id="image"
-              name="image"
-              type="text"
-              placeholder="Image url *"
-              required
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
-            />
-          </div>
-          <button className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] font-bold">
-            ADD IMAGE{" "}
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M6 11V1M1 6H11"
-                stroke="#FCFEFF"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
+          {/* images */}
+          <ImageRows rows={media} onChange={setMedia} max={4} />
 
-          <div className="flex flex-row gap-1.5 items-center">
+          {/* rating */}
+          <div className="flex flex-row gap-2 items-center">
             <h2 className="font-jakarta text-[15px] font-bold">Rating:</h2>
-            <svg
-              width="15"
-              height="14"
-              viewBox="0 0 15 14"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M2.86875 14L4.0875 8.82368L0 5.34211L5.4 4.88158L7.5 0L9.6 4.88158L15 5.34211L10.9125 8.82368L12.1312 14L7.5 11.2553L2.86875 14Z"
-                fill="#FCFEFF"
-                fillOpacity="0.6"
-              />
-            </svg>
-            <svg
-              width="15"
-              height="14"
-              viewBox="0 0 15 14"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M2.86875 14L4.0875 8.82368L0 5.34211L5.4 4.88158L7.5 0L9.6 4.88158L15 5.34211L10.9125 8.82368L12.1312 14L7.5 11.2553L2.86875 14Z"
-                fill="#FCFEFF"
-                fillOpacity="0.6"
-              />
-            </svg>
-            <svg
-              width="15"
-              height="14"
-              viewBox="0 0 15 14"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M2.86875 14L4.0875 8.82368L0 5.34211L5.4 4.88158L7.5 0L9.6 4.88158L15 5.34211L10.9125 8.82368L12.1312 14L7.5 11.2553L2.86875 14Z"
-                fill="#FCFEFF"
-                fillOpacity="0.6"
-              />
-            </svg>
-            <svg
-              width="15"
-              height="14"
-              viewBox="0 0 15 14"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M2.86875 14L4.0875 8.82368L0 5.34211L5.4 4.88158L7.5 0L9.6 4.88158L15 5.34211L10.9125 8.82368L12.1312 14L7.5 11.2553L2.86875 14Z"
-                fill="#FCFEFF"
-                fillOpacity="0.6"
-              />
-            </svg>
-            <svg
-              width="15"
-              height="14"
-              viewBox="0 0 15 14"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M2.86875 14L4.0875 8.82368L0 5.34211L5.4 4.88158L7.5 0L9.6 4.88158L15 5.34211L10.9125 8.82368L12.1312 14L7.5 11.2553L2.86875 14Z"
-                fill="#FCFEFF"
-                fillOpacity="0.6"
-              />
-            </svg>
+            <StarRating value={rating} onChange={setRating} />
           </div>
 
+          {/* amenities */}
           <div className="flex flex-col bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 py-2 text-[14px]">
             <h2 className="font-jakarta text-[15px] font-bold pb-2">
-              Ameneties:
+              Amenities:
             </h2>
-
-            {/* WIFI */}
-            <div className="flex flex-row justify-between">
-              <p className="">Wifi available</p>
-              <div className="w-7 h-3.5 relative">
-                <div className="w-7 h-3.5 left-0 top-0 absolute bg-white/60 rounded-[50px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[5.10px]" />
-                <div className="w-3 h-3 left-[1px] top-[1px] absolute bg-zinc-800 rounded-full" />
-              </div>
-            </div>
-
-            {/* PARKING */}
-            <div className="flex flex-row justify-between">
-              <p className="">Parking available</p>
-              <div className="w-7 h-3.5 relative">
-                <div className="w-7 h-3.5 left-0 top-0 absolute bg-white/60 rounded-[50px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[5.10px]" />
-                <div className="w-3 h-3 left-[1px] top-[1px] absolute bg-zinc-800 rounded-full" />
-              </div>
-            </div>
-
-            {/* BREAKFAST */}
-            <div className="flex flex-row justify-between">
-              <p className="">Breakfast included</p>
-              <div className="w-7 h-3.5 relative">
-                <div className="w-7 h-3.5 left-0 top-0 absolute bg-white/60 rounded-[50px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[5.10px]" />
-                <div className="w-3 h-3 left-[1px] top-[1px] absolute bg-zinc-800 rounded-full" />
-              </div>
-            </div>
-
-            {/* PETS */}
-            <div className="flex flex-row justify-between">
-              <p className="">Pets allowed</p>
-              <div className="w-7 h-3.5 relative">
-                <div className="w-7 h-3.5 left-0 top-0 absolute bg-white/60 rounded-[50px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[5.10px]" />
-                <div className="w-3 h-3 left-[1px] top-[1px] absolute bg-zinc-800 rounded-full" />
-              </div>
-            </div>
+            <AmenityToggle
+              label="Wifi available"
+              checked={wifi}
+              onChange={setWifi}
+            />
+            <AmenityToggle
+              label="Parking available"
+              checked={parking}
+              onChange={setParking}
+            />
+            <AmenityToggle
+              label="Breakfast included"
+              checked={breakfast}
+              onChange={setBreakfast}
+            />
+            <AmenityToggle
+              label="Pets allowed"
+              checked={pets}
+              onChange={setPets}
+            />
           </div>
 
+          {/* location */}
           <div className="flex flex-col w-full">
             <label htmlFor="address" className="font-jakarta font-bold text-xs">
               Address
@@ -243,8 +277,9 @@ export default function CreateVenueModal({ open, onClose }: Props) {
               id="address"
               name="address"
               type="text"
-              placeholder="Address *"
-              required
+              placeholder="Address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
               className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
@@ -257,8 +292,9 @@ export default function CreateVenueModal({ open, onClose }: Props) {
               id="zipCode"
               name="zipCode"
               type="text"
-              placeholder="Zip code *"
-              required
+              placeholder="Zip code"
+              value={zip}
+              onChange={(e) => setZip(e.target.value)}
               className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
@@ -271,8 +307,9 @@ export default function CreateVenueModal({ open, onClose }: Props) {
               id="city"
               name="city"
               type="text"
-              placeholder="City *"
-              required
+              placeholder="City"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
               className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
@@ -285,8 +322,9 @@ export default function CreateVenueModal({ open, onClose }: Props) {
               id="country"
               name="country"
               type="text"
-              placeholder="Country *"
-              required
+              placeholder="Country"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
               className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
@@ -298,9 +336,10 @@ export default function CreateVenueModal({ open, onClose }: Props) {
             <input
               id="lat"
               name="lat"
-              type="text"
-              placeholder="Latitude *"
-              required
+              inputMode="decimal"
+              placeholder="Latitude"
+              value={lat}
+              onChange={(e) => setLat(e.target.value)}
               className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
@@ -312,14 +351,15 @@ export default function CreateVenueModal({ open, onClose }: Props) {
             <input
               id="lng"
               name="lng"
-              type="text"
-              placeholder="Longitude *"
-              required
+              inputMode="decimal"
+              placeholder="Longitude"
+              value={lng}
+              onChange={(e) => setLng(e.target.value)}
               className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
 
-          {/* Buttons row */}
+          {/* actions */}
           <div className="mt-2 flex w-full items-center justify-center gap-[30px]">
             <button
               type="submit"
@@ -343,7 +383,8 @@ export default function CreateVenueModal({ open, onClose }: Props) {
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleCancel}
+              disabled={busy}
               className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary/60 font-bold">
               CANCEL
               <svg
@@ -364,6 +405,16 @@ export default function CreateVenueModal({ open, onClose }: Props) {
           </div>
         </form>
       </div>
+
+      {/* toast notice */}
+      {notice && (
+        <div
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-secondary text-primary font-jakarta px-4 py-2 rounded z-[200] shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+          role="status"
+          aria-live="polite">
+          {notice}
+        </div>
+      )}
     </div>
   );
 }

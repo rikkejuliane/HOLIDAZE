@@ -1,3 +1,4 @@
+// src/utils/api/FetchAll.ts
 import type { Venue, ListResponse } from "@/types/venue";
 import { venuesListURL } from "@/utils/api/constants";
 import { apiFetch } from "@/utils/api/client";
@@ -27,7 +28,14 @@ export async function fetchAllVenues(
       "created",
       "desc"
     );
-    const res = await apiFetch<ListResponse<Venue>>(url, { signal });
+
+    // ⬇️ add cache-busting here
+    const res = await apiFetch<ListResponse<Venue>>(url, {
+      signal,
+      cache: "no-store",
+      next: { revalidate: 0 },
+    });
+
     collected.push(...res.data);
 
     if (res.meta.isLastPage || !res.meta.nextPage) break;

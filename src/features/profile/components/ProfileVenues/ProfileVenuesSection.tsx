@@ -1,4 +1,3 @@
-// src/features/profile/components/ProfileVenues/ProfileVenuesSection.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,7 +5,7 @@ import { useProfileTabs } from "@/store/useProfileTabs";
 import MyBookingsList from "./MyBookingsList";
 import MyFavoritesList from "./MyFavoritesList";
 import MyVenuesList from "./MyVenuesList";
-import CreateVenueModal from "./CreateVenueModal";
+import CreateVenueModal from "../createVenue/CreateVenueModal";
 
 type Props = {
   profileName: string;
@@ -24,6 +23,14 @@ export default function ProfileVenuesSection({
   useEffect(() => {
     if (!isVenueManager && active === "venues") setActive("bookings");
   }, [isVenueManager, active, setActive]);
+
+  useEffect(() => {
+    function onCreated() {
+      setActive("venues");
+    }
+    window.addEventListener("venues:created", onCreated);
+    return () => window.removeEventListener("venues:created", onCreated);
+  }, [setActive]);
 
   return (
     <section className="mt-5 mb-20">
@@ -77,28 +84,28 @@ export default function ProfileVenuesSection({
           {/* spacer (relative) + create button inside it */}
           <div className="flex-1 bg-secondary rounded-t-[10px]">
             <div className="relative">
-            {isVenueManager && (
-              <button
-                type="button"
-                onClick={() => setCreateOpen(true)}
-                className="absolute right-4 top-4 w-[175px] font-jakarta text-[13px] md:text-[15px] font-bold flex flex-row gap-1.5 items-center"
-                aria-haspopup="dialog">
-                CREATE NEW VENUE
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M6 11V1M1 6H11"
-                    stroke="#FCFEFF"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-            )}
+              {isVenueManager && (
+                <button
+                  type="button"
+                  onClick={() => setCreateOpen(true)}
+                  className="absolute right-4 top-4 w-[175px] font-jakarta text-[13px] md:text-[15px] font-bold flex flex-row gap-1.5 items-center"
+                  aria-haspopup="dialog">
+                  CREATE NEW VENUE
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M6 11V1M1 6H11"
+                      stroke="#FCFEFF"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         </div>
