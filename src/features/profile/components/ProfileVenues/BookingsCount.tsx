@@ -161,29 +161,25 @@ export default function BookingsCount({
             ) : (
               <ul className="space-y-3 max-h-[55vh] overflow-auto pr-1.5">
                 {bookings.map((b) => {
-                  const avatarUrl = b.customer?.avatar?.url;
-                  const avatarAlt = b.customer?.avatar?.alt || "Avatar";
+                  const avatarSrc =
+                    b.customer?.avatar?.url ?? "/default-avatar.png";
+                  const avatarAlt = b.customer?.avatar?.alt ?? "Avatar";
                   const who =
                     b.customer?.name || b.customer?.email || "Unknown guest";
+
                   return (
                     <li
                       key={b.id}
                       className="flex items-center gap-3 border-b border-primary/20 pb-3">
                       <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-primary/10">
-                        {avatarUrl ? (
-                          <Image
-                            src={avatarUrl}
-                            alt={avatarAlt}
-                            width={40}
-                            height={40}
-                            unoptimized
-                            className="w-10 h-10 object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 grid place-items-center text-xs opacity-70">
-                            👤
-                          </div>
-                        )}
+                        <Image
+                          src={avatarSrc}
+                          alt={avatarAlt}
+                          width={40}
+                          height={40}
+                          unoptimized
+                          className="w-10 h-10 object-cover"
+                        />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-bold truncate">{who}</p>
