@@ -1,29 +1,29 @@
-import LogoutButton from "@/features/auth/components/LogoutButton";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import ProfileHeader from "@/features/profile/components/profileHeader/ProfileHeader";
+import { getProfileByName } from "@/utils/api/profiles";
+import ProfileVenuesSection from "@/features/profile/components/ProfileVenues/ProfileVenuesSection";
 
 export default async function ProfilePage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
+  const username = cookieStore.get("username")?.value;
 
-  if (!token) {
-    redirect("/auth");
-  }
+  if (!token) redirect("/auth");
+  if (!username) redirect("/auth");
 
-  // TODO: fetch profile data with the token
-  // Example (if Noroff has a profile endpoint):
-  // const res = await fetch("https://v2.api.noroff.dev/auth/profile", {
-  //   headers: { Authorization: `Bearer ${token}` },
-  //   cache: "no-store",
-  // });
-  // const profile = await res.json();
+  const profile = await getProfileByName(username, token, {
+    bookings: true,
+    venues: true,
+  });
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold">My Profile</h1>
-      <p className="mt-4">You are logged in 🎉</p>
-      {/* Replace with profile.data.name etc. when API is wired up */}
-      <LogoutButton/>
-    </main>
+    <>
+      <ProfileHeader profile={profile} />
+      <ProfileVenuesSection
+        profileName={profile?.name ?? username}
+        isVenueManager={Boolean(profile?.venueManager)}
+      />
+    </>
   );
 }

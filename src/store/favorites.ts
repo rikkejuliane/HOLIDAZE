@@ -1,11 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
-// We store timestamps so you can sort by "recently added" later.
 export type FavoritesState = {
-  favoriteIds: Record<string, number>; // venueId -> addedAt (ms)
+  favoriteIds: Record<string, number>;
   add: (id: string) => void;
   remove: (id: string) => void;
   toggle: (id: string) => void;
@@ -13,31 +13,57 @@ export type FavoritesState = {
   clearAll: () => void;
 };
 
-export const useFavoritesStore = create<FavoritesState>()(
-  persist(
-    (set, get) => ({
-      favoriteIds: {},
-      add: (id) =>
-        set((s) => ({
-          favoriteIds: { ...s.favoriteIds, [id]: Date.now() },
-        })),
-      remove: (id) =>
-        set((s) => {
-          const next = { ...s.favoriteIds };
-          delete next[id];
-          return { favoriteIds: next };
-        }),
-      toggle: (id) => {
-        const { isFav, add, remove } = get();
-        isFav(id) ? remove(id) : add(id);
-      },
-      isFav: (id) => Boolean(get().favoriteIds[id]),
-      clearAll: () => set({ favoriteIds: {} }),
-    }),
-    {
-      name: "favorites-store", // localStorage key
-      version: 1,
-      partialize: (s) => ({ favoriteIds: s.favoriteIds }),
-    }
-  )
-);
+/**
+ * Factory: create a favorites store that is *scoped to a username*.
+ * It persists to localStorage key: `favorites-store:${username}`
+ */
+export function createFavoritesStore(username: string) {
+  // use NO trailing colon to match your existing key
+  const storageKey = `favorites-store:${username}`;
+
+  return create<FavoritesState>()(
+    persist(
+      (set, get) => ({
+        favoriteIds: {},
+        add: (id) =>
+          set((s) => ({
+            favoriteIds: { ...s.favoriteIds, [id]: Date.now() },
+          })),
+        remove: (id) =>
+          set((s) => {
+            const next = { ...s.favoriteIds };
+            delete next[id];
+            return { favoriteIds: next };
+          }),
+        toggle: (id) => {
+          const { isFav, add, remove } = get();
+          if (isFav(id)) remove(id);
+          else add(id);
+        },
+        isFav: (id) => Boolean(get().favoriteIds[id]),
+        clearAll: () => set({ favoriteIds: {} }),
+      }),
+      {
+        name: storageKey,
+        version: 1,
+        storage: createJSONStorage(() => localStorage),
+        partialize: (s) => ({ favoriteIds: s.favoriteIds }),
+      }
+    )
+  );
+}
+
+/**
+ * Helper for components:
+ * Get a *user-scoped* favorites store hook you can use like a normal Zustand hook.
+ *
+ * Usage:
+ *   const useFavs = useFavoritesForUser(profileName);
+ *   const isFav = useFavs(s => s.isFav(venueId));
+ *   const toggle = useFavs(s => s.toggle(venueId));
+ */
+export function useFavoritesForUser(username: string) {
+  // create the store once per username in this component tree
+  const store = useMemo(() => createFavoritesStore(username), [username]);
+  return store;
+}

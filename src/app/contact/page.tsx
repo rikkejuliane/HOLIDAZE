@@ -34,6 +34,9 @@ export default function ContactPage() {
                 </h1>
 
                 <div className="flex w-full gap-2.5">
+                  <label htmlFor="firstName" className="sr-only">
+                    First Name
+                  </label>
                   <input
                     id="firstName"
                     name="firstName"
@@ -42,6 +45,9 @@ export default function ContactPage() {
                     required
                     className="h-[30px] flex-1 min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
                   />
+                  <label htmlFor="lastName" className="sr-only">
+                    Last Name
+                  </label>
                   <input
                     id="lastName"
                     name="lastName"
@@ -51,7 +57,9 @@ export default function ContactPage() {
                     className="h-[30px] flex-1 min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
                   />
                 </div>
-
+                <label htmlFor="email" className="sr-only">
+                  Email
+                </label>
                 <input
                   id="email"
                   name="email"
@@ -60,7 +68,9 @@ export default function ContactPage() {
                   required
                   className="h-[30px] w-full bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
                 />
-
+                <label htmlFor="subject" className="sr-only">
+                  Subject
+                </label>
                 <input
                   id="subject"
                   name="subject"
@@ -69,7 +79,9 @@ export default function ContactPage() {
                   required
                   className="h-[30px] w-full bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
                 />
-
+                <label htmlFor="bookingId" className="sr-only">
+                  Booking ID
+                </label>
                 <input
                   id="bookingId"
                   name="bookingId"
@@ -77,7 +89,9 @@ export default function ContactPage() {
                   placeholder="Booking ID / Venue"
                   className="h-[30px] w-full bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
                 />
-
+                <label htmlFor="message" className="sr-only">
+                  Message
+                </label>
                 <textarea
                   id="message"
                   name="message"

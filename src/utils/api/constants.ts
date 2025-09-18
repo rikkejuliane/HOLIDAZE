@@ -3,6 +3,7 @@ export const API_BASE = "https://v2.api.noroff.dev";
 /** Holidaze */
 export const API_HOLIDAZE = `${API_BASE}/holidaze`;
 export const API_VENUES = `${API_HOLIDAZE}/venues`;
+export const API_PROFILES = `${API_HOLIDAZE}/profiles`;
 
 /** Auth */
 export const API_AUTH = `${API_BASE}/auth`;
@@ -10,13 +11,12 @@ export const API_AUTH_LOGIN = `${API_AUTH}/login`;
 export const API_AUTH_REGISTER = `${API_AUTH}/register`;
 export const API_AUTH_KEY = `${API_AUTH}/create-api-key`;
 
-/** Builders (keep payload lean for the list page) */
 export type ListParams = {
-  page?: number;                           // 1-based
-  limit?: number;                          // default 16 (2x8)
-  sort?: `${string}:${"asc" | "desc"}`;    // e.g. "created:desc"
-  owner?: boolean;                         // _owner
-  bookings?: boolean;                      // _bookings
+  page?: number;                           
+  limit?: number;                          
+  sort?: `${string}:${"asc" | "desc"}`;    
+  owner?: boolean;                        
+  bookings?: boolean;                      
 };
 
 export function venuesListURL({

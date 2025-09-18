@@ -113,7 +113,16 @@ export default function BookingConfirmationModal({
               Thank you so much for your booking:
             </p>
           </div>
-        ) : null}
+        ) : (
+          <div className="mb-3">
+            <h3 className="font-noto font-bold text-lg tracking-wide">
+              BOOKING CONFIRMATION
+            </h3>
+            <p className="text-sm font-jakarta text-primary/80 mt-1">
+              Are you sure you want to book this venue?
+            </p>
+          </div>
+        )}
 
         {/* Venue mini header (image + title) */}
         <div className="flex items-center gap-3 mb-3">
@@ -168,17 +177,45 @@ export default function BookingConfirmationModal({
 
         {/* Footer actions */}
         {phase === "confirm" ? (
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-4 flex items-center justify-center gap-5">
             <button
               onClick={handleYes}
               disabled={isConfirming}
-              className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition font-jakarta font-semibold disabled:opacity-50">
-              {isConfirming ? "Booking…" : "Yes"}
+              className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary font-bold disabled:opacity-60">
+              {isConfirming ? "Booking…" : "YES"}
+              <svg
+                width="7"
+                height="12"
+                viewBox="0 0 7 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M1 11L6 6L1 1"
+                  stroke="#FCFEFF"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
+
             <button
               onClick={handleNo}
-              className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary/20 hover:bg-primary/25 transition font-jakarta font-semibold">
-              No
+              className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary/60 font-bold">
+              NO
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 10 10"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M1.53478 8.53531L8.60585 1.46424M1.53478 1.46424L8.60585 8.53531"
+                  stroke="#FCFEFF"
+                  strokeOpacity="0.6"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
             </button>
           </div>
         ) : (
@@ -189,8 +226,21 @@ export default function BookingConfirmationModal({
             <div className="flex items-center">
               <a
                 href={viewBookingHref}
-                className="flex items-center justify-center px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition font-jakarta font-semibold">
+                className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary font-bold">
                 View booking
+                <svg
+                  width="7"
+                  height="12"
+                  viewBox="0 0 7 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M1 11L6 6L1 1"
+                    stroke="#FCFEFF"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </a>
             </div>
           </div>

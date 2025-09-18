@@ -2,31 +2,59 @@
 
 import * as React from "react";
 import { useAuthStatus } from "@/features/auth/hooks/useAuthStatus";
-import { useFavoritesStore } from "@/store/favorites";
+import { useFavoritesForUser, type FavoritesState } from "@/store/favorites";
 
 type Props = {
   venueId: string;
   className?: string;
+  /** Optional: pass username; if omitted we’ll read the `username` cookie on the client */
+  username?: string;
 };
 
-export default function FavoriteHeart({ venueId, className }: Props) {
-  const { loggedIn } = useAuthStatus();
+export default function FavoriteHeart({
+  venueId,
+  className,
+  username: usernameProp,
+}: Props) {
+  const { loggedIn } = useAuthStatus(); // <-- only loggedIn here
   const [mounted, setMounted] = React.useState(false);
   const [notice, setNotice] = React.useState("");
 
-  const isFav = useFavoritesStore((s) => s.isFav(venueId));
-  const toggle = useFavoritesStore((s) => s.toggle);
+  // Resolve a username (prop > cookie > "guest")
+  const [username, setUsername] = React.useState<string>(usernameProp ?? "");
+  React.useEffect(() => {
+    setMounted(true);
+    if (usernameProp) {
+      setUsername(usernameProp);
+      return;
+    }
+    // read "username" from document.cookie on the client
+    const cookieVal = (() => {
+      if (typeof document === "undefined") return "";
+      const match = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("username="));
+      return match ? decodeURIComponent(match.split("=")[1] || "") : "";
+    })();
+    setUsername(cookieVal || "guest");
+  }, [usernameProp]);
 
-  React.useEffect(() => setMounted(true), []);
+  // Per-user favorites store
+  const useFavs = useFavoritesForUser(username || "guest");
+
+  // Type the selector param to avoid implicit any
+  const isFav = useFavs((s: FavoritesState) => s.isFav(venueId));
+  const toggle = useFavs((s: FavoritesState) => s.toggle);
 
   const handleClick = () => {
     if (!loggedIn) return;
     const wasFav = isFav;
     toggle(venueId);
-    const msg = wasFav
-      ? "Removed from favorites."
-      : "This venue is added to your favorites!";
-    setNotice(msg);
+    setNotice(
+      wasFav
+        ? "Removed from favorites."
+        : "This venue is added to your favorites!"
+    );
     setTimeout(() => setNotice(""), 5000);
   };
 
@@ -77,8 +105,9 @@ export default function FavoriteHeart({ venueId, className }: Props) {
           </svg>
         </button>
       )}
+
       {notice && (
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 bg-secondary text-primary text-jakarta px-4 py-2 rounded z-50">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 bg-secondary text-primary font-jakarta px-4 py-2 rounded z-50">
           {notice}
         </div>
       )}
