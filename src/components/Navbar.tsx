@@ -110,7 +110,7 @@ export default function Navbar() {
         {/* RIGHT GRID */}
         <div className="justify-self-end hidden lg:block">
           <nav className="flex items-center gap-14 [&>a]:border-b [&>a]:border-transparent [&>a:hover]:border-primary [&>a]:transition-colors">
-            <Link href="/venues">VENUES</Link>
+            <Link href="/#listings-grid">VENUES</Link>
             <span className="w-px h-[18px] bg-primary" />
             {loggedIn ? (
               <Link href="/profile">PROFILE</Link>
@@ -133,7 +133,7 @@ export default function Navbar() {
               CONTACT
             </Link>
             <span className="h-px w-full bg-primary" />
-            <Link href="/venues" onClick={() => setOpen(false)}>
+            <Link href="/#listings-grid" onClick={() => setOpen(false)}>
               VENUES
             </Link>
             <span className="h-px w-full bg-primary" />

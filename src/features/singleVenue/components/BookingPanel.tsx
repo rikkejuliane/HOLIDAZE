@@ -7,7 +7,7 @@ import GuestsInput from "@/features/singleVenue/components/GuestsInput";
 import BookingSummary from "./BookingsSummary";
 import BookingConfirmationModal from "./BookingConfirmationModal";
 import { createBooking } from "@/utils/api/bookings";
-import { isAuthenticated } from "@/utils/auth/session";
+import { isAuthenticated, getUsername } from "@/utils/auth/session";
 import { ApiError } from "@/utils/api/client";
 
 type Booking = { dateFrom: string; dateTo: string };
@@ -56,6 +56,8 @@ export default function BookingPanel({
   existingBookings = [],
   cleaningFee = 25,
   taxRate = 0.1,
+  ownerName,
+  viewerName,
 }: {
   venueId: string;
   venueName: string;
@@ -65,6 +67,8 @@ export default function BookingPanel({
   existingBookings?: Booking[];
   cleaningFee?: number;
   taxRate?: number;
+  ownerName: string;
+  viewerName?: string | null;
 }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -76,9 +80,14 @@ export default function BookingPanel({
   const [wasConfirmed, setWasConfirmed] = useState(false);
 
   const [authed, setAuthed] = useState<boolean | null>(null);
+
+  const [storedViewerName, setStoredViewerName] = useState<string | null>(null);
   useEffect(() => {
     setAuthed(isAuthenticated());
-  }, []);
+    if (viewerName == null) {
+      setStoredViewerName(getUsername());
+    }
+  }, [viewerName]);
 
   // toast
   const [notice, setNotice] = useState<string | null>(null);
@@ -113,15 +122,23 @@ export default function BookingPanel({
       year: "numeric",
     });
 
-  const canBook =
+  const canBookBase =
     !!range.start &&
     !!range.end &&
     nights > 0 &&
     guests >= 1 &&
     guests <= Math.max(1, maxGuests);
 
+  const effectiveViewerName = viewerName ?? storedViewerName;
+
+  const isOwner =
+    !!effectiveViewerName &&
+    !!ownerName &&
+    effectiveViewerName.trim().toLowerCase() === ownerName.trim().toLowerCase();
+
+  const canBook = canBookBase && !isOwner;
+
   const handleCTA = useCallback(async () => {
-    // Always re-check auth at click-time
     if (!isAuthenticated()) {
       const params = new URLSearchParams(sp?.toString() ?? "");
       if (range.start)
@@ -131,6 +148,13 @@ export default function BookingPanel({
       router.push(`/auth?next=/venues/${venueId}?${params.toString()}`);
       return;
     }
+
+    // block owners
+    if (isOwner) {
+      showNotice("You can’t book your own venue.");
+      return;
+    }
+
     if (!canBook || !range.start || !range.end) {
       showNotice("Please select valid dates and guests to continue.");
       return;
@@ -144,6 +168,7 @@ export default function BookingPanel({
     guests,
     venueId,
     canBook,
+    isOwner,
     showNotice,
   ]);
 
@@ -157,26 +182,32 @@ export default function BookingPanel({
         {authed === null ? (
           <div className="h-[20px] w-[88px]" aria-hidden />
         ) : authed ? (
-          <button
-            type="button"
-            onClick={handleCTA}
-            disabled={isSubmitting || !canBook}
-            className="flex flex-row gap-1.5 items-center font-jakarta font-bold text-primary text-[15px] disabled:opacity-50">
-            BOOK
-            <svg
-              width="7"
-              height="12"
-              viewBox="0 0 7 12"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M1 11L6 6L1 1"
-                stroke="#FCFEFF"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+          isOwner ? (
+            <span className="text-primary/60 font-jakarta font-bold text-[15px]">
+              You own this venue
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCTA}
+              disabled={isSubmitting || !canBook}
+              className="flex flex-row gap-1.5 items-center font-jakarta font-bold text-primary text-[15px] disabled:opacity-50">
+              BOOK
+              <svg
+                width="7"
+                height="12"
+                viewBox="0 0 7 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M1 11L6 6L1 1"
+                  stroke="#FCFEFF"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )
         ) : (
           <a
             href="/auth"
@@ -260,6 +291,13 @@ export default function BookingPanel({
         }}
         onConfirm={async () => {
           if (!range.start || !range.end) return;
+
+          // extra safety
+          if (isOwner) {
+            showNotice("You can’t book your own venue.");
+            return;
+          }
+
           setSubmitting(true);
           try {
             await createBooking({
