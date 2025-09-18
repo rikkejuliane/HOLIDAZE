@@ -69,7 +69,7 @@ export default function Footer() {
               <Link href="/contact">
                 <li>Contact</li>
               </Link>
-              <Link href="#venues">
+              <Link href="/#listings-grid">
                 <li>Venues</li>
               </Link>
             </ul>
