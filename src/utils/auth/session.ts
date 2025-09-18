@@ -18,7 +18,7 @@ export function setSession(token: string, username?: string) {
   localStorage.setItem("token", token);
   if (username) {
     localStorage.setItem("username", username);
-    setUsernameCookie(username); 
+    setUsernameCookie(username);
   }
   setTokenCookie(token);
   window.dispatchEvent(new CustomEvent("auth:changed"));
@@ -39,4 +39,9 @@ export function getAccessToken(): string | null {
 
 export function isAuthenticated(): boolean {
   return !!getAccessToken();
+}
+
+export function getUsername(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("username");
 }

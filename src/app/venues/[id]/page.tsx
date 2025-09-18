@@ -253,6 +253,7 @@ export default async function VenueDetailPage({ params }: Props) {
                   nightlyPrice={venue.price}
                   maxGuests={venue.maxGuests}
                   existingBookings={venue.bookings ?? []}
+                  ownerName={venue.owner?.name ?? ""}
                 />
               </div>
             </form>
