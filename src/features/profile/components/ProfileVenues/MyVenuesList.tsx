@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { Venue, ListMeta } from "@/types/venue";
 import ListingsPagination from "@/features/home/components/ListingsPagination";
 import { getVenuesByProfile, deleteVenueById } from "@/utils/api/venues";
+import BookingsCount from "./BookingsCount";
 
 type Props = { profileName: string };
 
@@ -51,6 +52,9 @@ export default function MyVenuesList({ profileName }: Props) {
           limit: PAGE_SIZE,
           sort: "created",
           sortOrder: "desc",
+          // NOTE: We let <BookingsCount /> lazy-load bookings for type safety.
+          // If you later type your util to accept `bookings?: boolean`,
+          // you can add `bookings: true` back here.
         });
 
         setRows(data ?? []);
@@ -184,11 +188,15 @@ export default function MyVenuesList({ profileName }: Props) {
                     <p className="text-primary/70 w-[25%] min-w-0 truncate">
                       {loc || "—"}
                     </p>
-                    {/* Price / Rating */}
-                    <p className="font-bold w-[210px] shrink-0 truncate">
-                      {typeof v.price === "number" ? `${v.price} / night` : "—"}
-                      {typeof v.rating === "number" ? ` · ★ ${v.rating}` : ""}
-                    </p>
+
+                    {/* Bookings pill (lazy-loads details) */}
+                    <div className="w-[210px] shrink-0">
+                      <BookingsCount
+                        venueId={v.id}
+                        venueName={v.name}
+                        // bookings prop omitted on purpose -> component will fetch
+                      />
+                    </div>
                   </div>
                 </div>
 
