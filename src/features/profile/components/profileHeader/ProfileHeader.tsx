@@ -6,7 +6,7 @@ import VenueManagerToggle from "./VenueManagerToggle";
 
 export default function ProfileHeader({ profile }: { profile: Profile }) {
   return (
-    <section className="pt-[70px] text-primary font-jakarta">
+    <section className="pt-[90px] sm:pt-[70px] text-primary font-jakarta">
       <div className="relative flex flex-col mx-auto max-w-[1055px]">
         {profile.banner?.url && (
           <Image
