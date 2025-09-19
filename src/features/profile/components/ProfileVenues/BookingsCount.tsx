@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { getVenueById } from "@/utils/api/venues";
 
@@ -125,76 +126,83 @@ export default function BookingsCount({
       </button>
 
       {/* Modal */}
-      {open && (
-        <div className="fixed inset-0 z-[95]">
-          {/* backdrop */}
-          <button
-            aria-label="Close bookings modal"
-            onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-black/50"
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="bookings-title"
-            className="absolute left-1/2 top-1/3 w-[92vw] max-w-[740px] -translate-x-1/2 -translate-y-1/2 rounded-[10px] bg-secondary p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] px-5 md:px-30">
-            <div className="mb-4 flex items-center justify-between">
-              <h2
-                id="bookings-title"
-                className="font-noto text-[20px] font-bold text-primary">
-                Bookings: {venueName || "Venue"}
-              </h2>
-              <button
-                aria-label="Close"
-                onClick={() => setOpen(false)}
-                className="text-primary/70 hover:text-primary">
-                ✕
-              </button>
+      {open &&
+        createPortal(
+          <div className="fixed inset-0 z-[1000]">
+            {/* backdrop */}
+            <button
+              aria-label="Close bookings modal"
+              onClick={() => setOpen(false)}
+              className="absolute inset-0 bg-black/50"
+            />
+
+            <div className="fixed inset-0 grid place-items-center p-4 text-primary">
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="bookings-title"
+                className="w-[92vw] max-w-[740px] rounded-[10px] bg-secondary shadow-[0_10px_30px_rgba(0,0,0,0.35)] px-5 md:px-30 py-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2
+                    id="bookings-title"
+                    className="font-noto text-[20px] font-bold text-primary">
+                    Bookings: {venueName || "Venue"}
+                  </h2>
+                  <button
+                    aria-label="Close"
+                    onClick={() => setOpen(false)}
+                    className="text-primary/70 hover:text-primary">
+                    ✕
+                  </button>
+                </div>
+
+                {busy ? (
+                  <p className="text-primary/80 text-sm">Loading…</p>
+                ) : error ? (
+                  <p className="text-red-400 text-sm">{error}</p>
+                ) : !bookings?.length ? (
+                  <p className="text-primary/80 text-sm">No bookings yet.</p>
+                ) : (
+                  <ul className="space-y-3 max-h-[52vh] md:max-h-[55vh] overflow-auto pr-1.5">
+                    {bookings.map((b) => {
+                      const avatarSrc =
+                        b.customer?.avatar?.url ?? "/default-avatar.png";
+                      const avatarAlt = b.customer?.avatar?.alt ?? "Avatar";
+                      const who =
+                        b.customer?.name ||
+                        b.customer?.email ||
+                        "Unknown guest";
+
+                      return (
+                        <li
+                          key={b.id}
+                          className="flex items-center gap-3 border-b border-primary/20 pb-3">
+                          <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-primary/10">
+                            <Image
+                              src={avatarSrc}
+                              alt={avatarAlt}
+                              width={40}
+                              height={40}
+                              unoptimized
+                              className="w-10 h-10 object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold truncate">{who}</p>
+                            <p className="text-sm opacity-80">
+                              {fmtDate(b.dateFrom)} – {fmtDate(b.dateTo)}
+                            </p>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
             </div>
-
-            {busy ? (
-              <p className="text-primary/80 text-sm">Loading…</p>
-            ) : error ? (
-              <p className="text-red-400 text-sm">{error}</p>
-            ) : !bookings?.length ? (
-              <p className="text-primary/80 text-sm">No bookings yet.</p>
-            ) : (
-              <ul className="space-y-3 max-h-[55vh] overflow-auto pr-1.5">
-                {bookings.map((b) => {
-                  const avatarSrc =
-                    b.customer?.avatar?.url ?? "/default-avatar.png";
-                  const avatarAlt = b.customer?.avatar?.alt ?? "Avatar";
-                  const who =
-                    b.customer?.name || b.customer?.email || "Unknown guest";
-
-                  return (
-                    <li
-                      key={b.id}
-                      className="flex items-center gap-3 border-b border-primary/20 pb-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-primary/10">
-                        <Image
-                          src={avatarSrc}
-                          alt={avatarAlt}
-                          width={40}
-                          height={40}
-                          unoptimized
-                          className="w-10 h-10 object-cover"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-bold truncate">{who}</p>
-                        <p className="text-sm opacity-80">
-                          {fmtDate(b.dateFrom)} – {fmtDate(b.dateTo)}
-                        </p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }

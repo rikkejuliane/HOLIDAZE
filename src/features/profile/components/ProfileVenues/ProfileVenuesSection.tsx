@@ -24,7 +24,6 @@ export default function ProfileVenuesSection({
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Venue | null>(null);
 
-  // If user turns off venue manager while "venues" is active, bounce back to bookings
   useEffect(() => {
     if (!isVenueManager && active === "venues") setActive("bookings");
   }, [isVenueManager, active, setActive]);
@@ -37,7 +36,6 @@ export default function ProfileVenuesSection({
     return () => window.removeEventListener("venues:created", onCreated);
   }, [setActive]);
 
-  // OPEN Edit modal when MyVenuesList emits "venues:edit"
   useEffect(() => {
     function onEdit(e: Event) {
       const ve = e as CustomEvent<Venue>;
@@ -53,7 +51,7 @@ export default function ProfileVenuesSection({
       <div className="flex flex-col mx-auto font-jakarta text-primary max-w-[1055px]">
         {/* TABS */}
         <div className="flex h-[55px]" role="tablist" aria-label="Profile tabs">
-          {/* My bookings — fixed bg-primary/20, bold when active */}
+          {/* My bookings  */}
           <button
             role="tab"
             aria-selected={active === "bookings"}
@@ -64,14 +62,12 @@ export default function ProfileVenuesSection({
               "bg-primary/20",
               active === "bookings" ? "font-bold" : "",
             ].join(" ")}>
-            {/* mobile: "BOOKINGS" */}
             <span className="block sm:hidden">BOOKINGS</span>
 
-            {/* tablet+ (≥sm): "MY BOOKINGS" */}
             <span className="hidden sm:block">MY BOOKINGS</span>
           </button>
 
-          {/* Favorites — fixed bg-secondary/20, bold when active */}
+          {/* Favorites  */}
           <button
             role="tab"
             aria-selected={active === "favorites"}
@@ -83,7 +79,6 @@ export default function ProfileVenuesSection({
               "bg-secondary/20",
               active === "favorites" ? "font-bold" : "",
             ].join(" ")}>
-            {/* mobile: heart icon */}
             <svg
               className="block md:hidden"
               width="16"
@@ -97,11 +92,10 @@ export default function ProfileVenuesSection({
               />
             </svg>
 
-            {/* desktop: text */}
             <span className="hidden md:inline">FAVORITES</span>
           </button>
 
-          {/* My venues — only visible if venue manager; fixed bg-primary/9, bold when active */}
+          {/* My venues — only visible if venue manager */}
           {isVenueManager && (
             <button
               role="tab"
@@ -113,15 +107,13 @@ export default function ProfileVenuesSection({
                 "bg-primary/9",
                 active === "venues" ? "font-bold" : "",
               ].join(" ")}>
-              {/* mobile: "VENUES" */}
               <span className="block sm:hidden">VENUES</span>
 
-              {/* tablet+ (≥sm): "MY VENUES" */}
               <span className="hidden sm:block">MY VENUES</span>
             </button>
           )}
 
-          {/* spacer (relative) + create button inside it */}
+          {/* spacer */}
           <div className="flex-1 bg-secondary rounded-t-[10px]">
             <div className="relative">
               {isVenueManager && (
@@ -130,7 +122,6 @@ export default function ProfileVenuesSection({
                   onClick={() => setCreateOpen(true)}
                   aria-haspopup="dialog"
                   className="absolute right-1 sm:right-4 top-4 w-[40px] md:w-[175px] font-jakarta text-[13px] md:text-[15px] font-bold flex flex-row gap-1.5 items-center justify-center">
-                  {/* mobile: only plus icon */}
                   <svg
                     className="block md:hidden"
                     width="16"
@@ -146,7 +137,6 @@ export default function ProfileVenuesSection({
                     />
                   </svg>
 
-                  {/* desktop: text + plus icon */}
                   <span className="hidden md:flex items-center gap-1.5">
                     CREATE NEW VENUE
                     <svg
@@ -173,7 +163,7 @@ export default function ProfileVenuesSection({
         <div
           role="tabpanel"
           className={[
-            "h-[572px] rounded-bl-[10px] rounded-br-[10px] shadow-[0_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] flex flex-col",
+            " h-auto md:h-[572px] rounded-bl-[10px] rounded-br-[10px] shadow-[0_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] flex flex-col",
             active === "bookings"
               ? "bg-primary/20"
               : active === "favorites"
@@ -194,7 +184,7 @@ export default function ProfileVenuesSection({
         </div>
       </div>
 
-      {/* Modal lives at the bottom so it can overlay everything */}
+      {/* Modals */}
       <CreateVenueModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}

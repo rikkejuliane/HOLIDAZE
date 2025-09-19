@@ -1,7 +1,7 @@
-// src/features/profile/components/ProfileVenues/MyVenuesList.tsx
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import type { Venue, ListMeta } from "@/types/venue";
@@ -30,13 +30,11 @@ export default function MyVenuesList({ profileName }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // delete modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [target, setTarget] = useState<Venue | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
   const [modalErr, setModalErr] = useState<string | null>(null);
 
-  // reset pagination when profile changes
   useEffect(() => {
     setPage(1);
   }, [profileName]);
@@ -52,9 +50,6 @@ export default function MyVenuesList({ profileName }: Props) {
           limit: PAGE_SIZE,
           sort: "created",
           sortOrder: "desc",
-          // NOTE: We let <BookingsCount /> lazy-load bookings for type safety.
-          // If you later type your util to accept `bookings?: boolean`,
-          // you can add `bookings: true` back here.
         });
 
         setRows(data ?? []);
@@ -82,7 +77,6 @@ export default function MyVenuesList({ profileName }: Props) {
     fetchData(page);
   }, [fetchData, page]);
 
-  // refresh on "venues:created"
   useEffect(() => {
     function onCreated() {
       setPage(1);
@@ -92,7 +86,6 @@ export default function MyVenuesList({ profileName }: Props) {
     return () => window.removeEventListener("venues:created", onCreated);
   }, [fetchData]);
 
-  // refresh on "venues:updated"
   useEffect(() => {
     function onUpdated() {
       fetchData(page);
@@ -101,7 +94,6 @@ export default function MyVenuesList({ profileName }: Props) {
     return () => window.removeEventListener("venues:updated", onUpdated);
   }, [fetchData, page]);
 
-  // open delete modal
   function askDelete(v: Venue) {
     if (modalBusy) return;
     setTarget(v);
@@ -109,12 +101,10 @@ export default function MyVenuesList({ profileName }: Props) {
     setModalOpen(true);
   }
 
-  // open edit (emit event for parent to handle)
   function openEdit(v: Venue) {
     window.dispatchEvent(new CustomEvent("venues:edit", { detail: v }));
   }
 
-  // confirm deletion (API DELETE)
   async function confirmDelete() {
     if (!target) return;
     setModalBusy(true);
@@ -133,7 +123,6 @@ export default function MyVenuesList({ profileName }: Props) {
 
       setModalOpen(false);
       setTarget(null);
-      // optional broadcast
       window.dispatchEvent(new CustomEvent("venues:deleted"));
     } catch (e) {
       setModalErr(
@@ -167,9 +156,9 @@ export default function MyVenuesList({ profileName }: Props) {
 
           return (
             <div key={v.id} className="flex flex-col">
-              <div className="flex flex-row mt-2.5 justify-between text-lg px-[40px]">
+              <div className="flex flex-row mt-2.5 justify-between text-lg px-[20px] md:px-[40px]">
                 {/* left block (image + columns) */}
-                <div className="flex items-center gap-7.5 flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row md:items-center gap-3 md:gap-7.5 flex-1 min-w-0">
                   <Image
                     src={img}
                     alt={alt}
@@ -179,13 +168,13 @@ export default function MyVenuesList({ profileName }: Props) {
                     className="w-15 h-15 rounded-full object-cover shrink-0"
                   />
 
-                  <div className="flex items-center gap-7.5 flex-1 min-w-0">
+                  <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-7.5 flex-1 min-w-0">
                     {/* Title */}
-                    <p className="font-bold w-[25%] min-w-0 truncate">
+                    <p className="font-bold w-[70%] md:w-[25%] min-w-0 truncate">
                       {v.name || "Untitled venue"}
                     </p>
                     {/* Location */}
-                    <p className="text-primary/70 w-[25%] min-w-0 truncate">
+                    <p className="text-primary/70 w-[70%] md:w-[25%] min-w-0 truncate">
                       {loc || "—"}
                     </p>
 
@@ -194,7 +183,6 @@ export default function MyVenuesList({ profileName }: Props) {
                       <BookingsCount
                         venueId={v.id}
                         venueName={v.name}
-                        // bookings prop omitted on purpose -> component will fetch
                       />
                     </div>
                   </div>
@@ -220,7 +208,6 @@ export default function MyVenuesList({ profileName }: Props) {
 
                   {v.id && (
                     <Link href={`/venues/${v.id}`} aria-label="View venue">
-                      {/* eye icon */}
                       <svg
                         width="29"
                         height="20"
@@ -243,7 +230,6 @@ export default function MyVenuesList({ profileName }: Props) {
                     aria-label="Delete venue"
                     disabled={modalBusy}
                     className="disabled:opacity-50">
-                    {/* trash icon */}
                     <svg
                       width="15"
                       height="20"
@@ -274,92 +260,96 @@ export default function MyVenuesList({ profileName }: Props) {
         />
       </div>
 
-      {/* confirmation modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-[100]">
-          {/* backdrop */}
-          <button
-            aria-label="Close modal"
-            onClick={() => !modalBusy && setModalOpen(false)}
-            className="absolute inset-0 bg-black/50"
-          />
+      {/* delete confirmation modal */}
+      {modalOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[1000]">
+            {/* backdrop */}
+            <button
+              aria-label="Close modal"
+              onClick={() => !modalBusy && setModalOpen(false)}
+              className="absolute inset-0 bg-black/50"
+            />
 
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-title"
-            className="absolute left-1/2 top-1/2 w-[92vw] max-w-[685px] -translate-x-1/2 -translate-y-1/2 rounded-[10px] bg-secondary p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] px-5 md:px-30">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex-1 text-center">
-                <h2
-                  id="delete-title"
-                  className="font-noto text-[20px] font-bold text-primary">
-                  Delete this venue?
-                </h2>
+            <div className="fixed inset-0 grid place-items-center p-4">
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="delete-title"
+                className="w-[92vw] max-w-[685px] rounded-[10px] bg-secondary shadow-[0_10px_30px_rgba(0,0,0,0.35)] px-5 md:px-30 py-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="flex-1 text-center">
+                    <h2
+                      id="delete-title"
+                      className="font-noto text-[20px] font-bold text-primary">
+                      Delete this venue?
+                    </h2>
+                  </div>
+                </div>
+
+                <p className="text-primary text-[14px] font-jakarta text-center mb-4">
+                  Are you sure you want to delete
+                  {target?.name ? (
+                    <>
+                      {" "}
+                      <span className="font-bold">{target.name}</span>
+                    </>
+                  ) : null}
+                  ?
+                </p>
+
+                {modalErr && (
+                  <p className="text-sm text-red-300 text-center mb-2">
+                    {modalErr}
+                  </p>
+                )}
+
+                <div className="mt-2 flex w-full items-center justify-center gap-[30px]">
+                  <button
+                    onClick={confirmDelete}
+                    disabled={modalBusy}
+                    className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary font-bold disabled:opacity-60">
+                    {modalBusy ? "Deleting…" : "YES"}
+                    <svg
+                      width="7"
+                      height="12"
+                      viewBox="0 0 7 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M1 11L6 6L1 1"
+                        stroke="#FCFEFF"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+
+                  <button
+                    onClick={() => !modalBusy && setModalOpen(false)}
+                    className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary/60 font-bold">
+                    NO
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 10 10"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M1.53478 8.53531L8.60585 1.46424M1.53478 1.46424L8.60585 8.53531"
+                        stroke="#FCFEFF"
+                        strokeOpacity="0.6"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
-
-            <p className="text-primary text-[14px] font-jakarta text-center mb-4">
-              Are you sure you want to delete
-              {target?.name ? (
-                <>
-                  {" "}
-                  <span className="font-bold">{target.name}</span>
-                </>
-              ) : null}
-              ?
-            </p>
-
-            {modalErr && (
-              <p className="text-sm text-red-300 text-center mb-2">
-                {modalErr}
-              </p>
-            )}
-
-            <div className="mt-2 flex w-full items-center justify-center gap-[30px]">
-              <button
-                onClick={confirmDelete}
-                disabled={modalBusy}
-                className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary font-bold disabled:opacity-60">
-                {modalBusy ? "Deleting…" : "YES"}
-                <svg
-                  width="7"
-                  height="12"
-                  viewBox="0 0 7 12"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M1 11L6 6L1 1"
-                    stroke="#FCFEFF"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-
-              <button
-                onClick={() => !modalBusy && setModalOpen(false)}
-                className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary/60 font-bold">
-                NO
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 10 10"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M1.53478 8.53531L8.60585 1.46424M1.53478 1.46424L8.60585 8.53531"
-                    stroke="#FCFEFF"
-                    strokeOpacity="0.6"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

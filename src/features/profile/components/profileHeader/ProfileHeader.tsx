@@ -26,7 +26,7 @@ export default function ProfileHeader({ profile }: { profile: Profile }) {
           <p className="text-[15px] text-center pt-[15px]">
             {profile.bio || " "}
           </p>
-          <div className="flex flex-row justify-center items-center pt-[35px] gap-1.5">
+          <div className="flex flex-row justify-center items-center pt-[20px] sm:pt-[35px] gap-1.5">
             <p className="text-[15px] font-bold">VENUE MANAGER</p>
             <VenueManagerToggle
               profileName={profile.name}

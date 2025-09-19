@@ -18,28 +18,22 @@ export type FavoritesState = {
  * It persists to localStorage key: `favorites-store:${username}`
  */
 export function createFavoritesStore(username: string) {
-  // use NO trailing colon to match your existing key
-  const storageKey = `favorites-store:${username}`;
+  const key = username.trim().toLowerCase(); 
+  const storageKey = `favorites-store:${key}`; 
 
   return create<FavoritesState>()(
     persist(
       (set, get) => ({
         favoriteIds: {},
         add: (id) =>
-          set((s) => ({
-            favoriteIds: { ...s.favoriteIds, [id]: Date.now() },
-          })),
+          set((s) => ({ favoriteIds: { ...s.favoriteIds, [id]: Date.now() } })),
         remove: (id) =>
           set((s) => {
             const next = { ...s.favoriteIds };
             delete next[id];
             return { favoriteIds: next };
           }),
-        toggle: (id) => {
-          const { isFav, add, remove } = get();
-          if (isFav(id)) remove(id);
-          else add(id);
-        },
+        toggle: (id) => (get().isFav(id) ? get().remove(id) : get().add(id)),
         isFav: (id) => Boolean(get().favoriteIds[id]),
         clearAll: () => set({ favoriteIds: {} }),
       }),
@@ -63,7 +57,6 @@ export function createFavoritesStore(username: string) {
  *   const toggle = useFavs(s => s.toggle(venueId));
  */
 export function useFavoritesForUser(username: string) {
-  // create the store once per username in this component tree
   const store = useMemo(() => createFavoritesStore(username), [username]);
   return store;
 }
