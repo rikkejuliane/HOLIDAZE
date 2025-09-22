@@ -3,20 +3,24 @@
 import { useRouter } from "next/navigation";
 import { clearSession } from "@/utils/auth/session";
 
-export default function LogoutButton({
-  className = "",
-}: {
-  className?: string;
-}) {
+/**
+ * Logout button.
+ *
+ * - Clears the current session.
+ * - Redirects to `/auth` and refreshes the router.
+ *
+ * @returns A styled logout button element.
+ */
+export default function LogoutButton() {
   const router = useRouter();
-
+  function handleLogout() {
+    clearSession();
+    router.push("/auth");
+    router.refresh();
+  }
   return (
     <button
-      onClick={() => {
-        clearSession(); // clears localStorage + token cookie
-        router.push("/auth"); // send to auth page (or "/" if you prefer)
-        router.refresh(); // refresh RSC so server reads “no token”
-      }}
+      onClick={handleLogout}
       className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary font-bold">
       LOG OUT
       <svg

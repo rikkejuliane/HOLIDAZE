@@ -6,16 +6,24 @@ import { useRegisterForm } from "@/features/auth/hooks/useRegisterForm";
 
 type Mode = "signin" | "signup";
 
+/**
+ * Authentication view with toggleable **Sign in** / **Sign up** panels.
+ *
+ * - Uses `useLoginForm` and `useRegisterForm` hooks for state, validation, and submit.
+ * - Animated overlay switches between modes; buttons set the current mode.
+ * - Shows inline validation errors and small spinners while submitting.
+ * - Displays a transient toast/notice after actions (auto-hides after 5s).
+ *
+ * @returns The authentication UI with sign-in and sign-up forms.
+ */
 export default function AuthView() {
   const [mode, setMode] = useState<Mode>("signin");
   const [notice, setNotice] = useState("");
-
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(""), 5000);
     return () => clearTimeout(timer);
   }, [notice]);
-
   const {
     email: loginEmail,
     setEmail: setLoginEmail,
@@ -25,7 +33,6 @@ export default function AuthView() {
     isSubmitting: isLoggingIn,
     submit: handleLogin,
   } = useLoginForm(setNotice);
-
   const {
     name: regName,
     setName: setRegName,
@@ -40,11 +47,9 @@ export default function AuthView() {
     isSubmitting: isRegistering,
     submit: handleRegister,
   } = useRegisterForm(setNotice, () => setMode("signin"));
-
   const containerClasses =
     `container flex justify-center items-center mx-auto mt-[100px] md:mt-[70px]  ` +
     (mode === "signup" ? "right-panel-active" : "");
-
   return (
     <section className="mb-20">
       <div id="container" className={containerClasses}>
@@ -54,7 +59,6 @@ export default function AuthView() {
             <h1 className="font-noto text-primary text-3xl font-bold pb-4 w-full">
               Sign up
             </h1>
-
             <label htmlFor="name-register" className="sr-only">
               Username
             </label>
@@ -63,7 +67,7 @@ export default function AuthView() {
               name="name"
               placeholder="Username"
               autoComplete="username"
-              className="w-52 h-7 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] text-primary placeholder:text-primary px-2 placeholder:font-jakarta placeholder:text-sm"
+              className="w-52 h-7 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] text-primary placeholder:text-primary px-2 placeholder:font-jakarta placeholder:text-sm"
               value={regName}
               onChange={(e) => setRegName(e.target.value)}
             />
@@ -72,7 +76,6 @@ export default function AuthView() {
                 {regErrors.regName}
               </p>
             )}
-
             <label htmlFor="email-register" className="sr-only">
               Email
             </label>
@@ -82,7 +85,7 @@ export default function AuthView() {
               name="email"
               placeholder="Email"
               autoComplete="email"
-              className="w-52 h-7 px-2 mt-[13px] bg-white/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px]  text-primary placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
+              className="w-52 h-7 px-2 mt-[13px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px]  text-primary placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
               value={regEmail}
               onChange={(e) => setRegEmail(e.target.value)}
             />
@@ -91,7 +94,6 @@ export default function AuthView() {
                 {regErrors.regEmail}
               </p>
             )}
-
             <label htmlFor="password-register" className="sr-only">
               Password
             </label>
@@ -101,11 +103,10 @@ export default function AuthView() {
               name="password"
               placeholder="Password"
               autoComplete="new-password"
-              className="w-52 h-7 px-2 mt-[13px] bg-white/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] text-primary placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
+              className="w-52 h-7 px-2 mt-[13px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] text-primary placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
               value={regPassword}
               onChange={(e) => setRegPassword(e.target.value)}
             />
-
             {/* Confirm password */}
             <label htmlFor="password-confirm-register" className="sr-only">
               Confirm password
@@ -116,7 +117,7 @@ export default function AuthView() {
               name="passwordConfirm"
               placeholder="Confirm password"
               autoComplete="new-password"
-              className="w-52 h-7 px-2 mt-[13px] bg-white/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px text-primary placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
+              className="w-52 h-7 px-2 mt-[13px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px text-primary placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
               value={regPasswordConfirm}
               onChange={(e) => setRegPasswordConfirm(e.target.value)}
               aria-invalid={Boolean(regErrors.regPasswordConfirm) || isMismatch}
@@ -133,7 +134,6 @@ export default function AuthView() {
                 {regErrors.regPasswordConfirm || "Passwords must match."}
               </p>
             )}
-
             <div
               id="spinner-container-register"
               className="flex justify-center h-6 mt-2">
@@ -144,7 +144,6 @@ export default function AuthView() {
                 />
               )}
             </div>
-
             <button
               id="sign-up-button"
               type="submit"
@@ -170,7 +169,6 @@ export default function AuthView() {
             </button>
           </form>
         </div>
-
         {/* Sign In */}
         <div className="form-container sign-in-container">
           <form id="login-form" onSubmit={handleLogin}>
@@ -184,17 +182,15 @@ export default function AuthView() {
               name="email"
               placeholder="Email"
               autoComplete="email"
-              className="w-52 h-7 px-2 mt-[13px] bg-white/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] text-primary placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
+              className="w-52 h-7 px-2 mt-[13px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] text-primary placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
             />
-
             {loginErrors.loginEmail && (
               <p className="input-error w-53 self-center text-left text-imperialRed text-sm mt-0 md:mt-2">
                 {loginErrors.loginEmail}
               </p>
             )}
-
             <label htmlFor="password-login" className="sr-only">
               Password
             </label>
@@ -204,11 +200,10 @@ export default function AuthView() {
               name="password"
               placeholder="Password"
               autoComplete="current-password"
-              className="w-52 h-7 px-2 mt-[13px] bg-white/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] text-primary placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
+              className="w-52 h-7 px-2 mt-[13px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] text-primary placeholder:text-primary placeholder:font-jakarta placeholder:text-sm"
               value={loginPassword}
               onChange={(e) => setLoginPassword(e.target.value)}
             />
-
             <div
               id="spinner-container-login"
               className="flex justify-center h-6 mt-2">
@@ -243,7 +238,6 @@ export default function AuthView() {
             </button>
           </form>
         </div>
-
         {/* Overlay */}
         <div className="overlay-container">
           <div className="overlay">
