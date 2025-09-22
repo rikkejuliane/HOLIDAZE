@@ -185,3 +185,34 @@ export async function updateVenue(
 
   return res.data;
 }
+
+
+// PUBLIC READ (no auth): venues by profile
+export async function getPublicVenuesByProfile(
+  profileName: string,
+  opts?: {
+    page?: number;
+    limit?: number;
+    sort?: "created" | "updated" | "name" | "price" | "rating";
+    sortOrder?: "asc" | "desc";
+  }
+): Promise<{ data: Venue[]; meta: VenuesApiListMeta }> {
+  const params = new URLSearchParams();
+  if (opts?.page) params.set("page", String(opts.page));
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  if (opts?.sort) params.set("sort", opts.sort);
+  if (opts?.sortOrder) params.set("sortOrder", opts.sortOrder);
+
+  return apiFetch<{ data: Venue[]; meta: VenuesApiListMeta }>(
+    `${API_HOLIDAZE}/profiles/${encodeURIComponent(profileName)}/venues${
+      params.size ? `?${params.toString()}` : ""
+    }`,
+    {
+      method: "GET",
+      // IMPORTANT: only API key; no auth token here
+      headers: buildHeaders({ apiKey: true }),
+      cache: "no-store",
+      next: { revalidate: 0 },
+    }
+  );
+}

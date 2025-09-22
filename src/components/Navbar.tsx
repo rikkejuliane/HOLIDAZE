@@ -3,11 +3,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-function hasToken() {
-  if (typeof window === "undefined") return false;
-  return !!localStorage.getItem("token");
-}
-
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);

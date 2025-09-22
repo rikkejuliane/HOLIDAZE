@@ -100,3 +100,31 @@ export async function updateProfile(
   const { data } = await res.json();
   return data as Profile;
 }
+
+// PUBLIC READ (no auth): get a profile by name with optional embeds
+export async function getPublicProfileByName(
+  name: string,
+  opts?: { bookings?: boolean; venues?: boolean }
+): Promise<Profile> {
+  const qs = new URLSearchParams();
+  if (opts?.bookings) qs.set("_bookings", "true");
+  if (opts?.venues) qs.set("_venues", "true");
+
+  const res = await fetch(
+    `${API_PROFILES}/${encodeURIComponent(name)}${qs.toString() ? `?${qs}` : ""}`,
+    {
+      // IMPORTANT: only API key; no auth token here
+      headers: buildServerHeaders({ apiKey: true }),
+      cache: "no-store",
+    }
+  );
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => undefined);
+    // Throw a plainly-typed object (no any)
+    throw { name: "HttpError", message: "getPublicProfileByName failed", status: res.status, body } as const;
+  }
+
+  const { data } = await res.json();
+  return data as Profile;
+}

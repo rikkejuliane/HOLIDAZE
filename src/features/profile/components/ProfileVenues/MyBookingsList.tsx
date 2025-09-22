@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { getBookingsByProfile, deleteBookingById } from "@/utils/api/bookings";
@@ -49,7 +50,6 @@ function formatRange(fromISO: string, toISO: string) {
   const to = new Date(toISO);
 
   if (sameDay(from, to)) return fmtDMY2(from);
-  // want an en dash? replace '-' with '–'
   return `${fmtDMY2(from)} - ${fmtDMY2(to)}`;
 }
 
@@ -62,18 +62,15 @@ export default function BookingsList({ profileName }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [target, setTarget] = useState<BookingWithVenue | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
   const [modalErr, setModalErr] = useState<string | null>(null);
 
-  // keep page=1 when user changes
   useEffect(() => {
     setPage(1);
   }, [profileName]);
 
-  // central fetch we can reuse after deletes
   const fetchData = useCallback(
     async (p: number) => {
       setLoading(true);
@@ -110,7 +107,6 @@ export default function BookingsList({ profileName }: Props) {
     fetchData(page);
   }, [fetchData, page]);
 
-  // open modal
   function askDelete(b: BookingWithVenue) {
     if (modalBusy) return;
     setTarget(b);
@@ -118,7 +114,6 @@ export default function BookingsList({ profileName }: Props) {
     setModalOpen(true);
   }
 
-  // confirm delete from modal
   async function confirmDelete() {
     if (!target) return;
     setModalBusy(true);
@@ -156,7 +151,6 @@ export default function BookingsList({ profileName }: Props) {
       </div>
     );
 
-  // compute once per render for "past" comparison (midnight today)
   const today = new Date();
   const todayStart = new Date(
     today.getFullYear(),
@@ -182,10 +176,10 @@ export default function BookingsList({ profileName }: Props) {
 
           return (
             <div key={b.id} className="flex flex-col">
-              <div className="flex flex-row mt-2.5 justify-between text-lg px-[40px]">
+              <div className="flex flex-row mt-2.5 justify-between text-lg px-[20px] md:px-[40px]">
                 {/* left side */}
                 <div
-                  className={`flex items-center gap-7.5 flex-1 min-w-0 ${textMuted}`}>
+                  className={`flex flex-col sm:flex-row md:items-center gap-3 md:gap-7.5 flex-1 min-w-0 ${textMuted}`}>
                   <Image
                     src={img}
                     alt={alt}
@@ -197,15 +191,15 @@ export default function BookingsList({ profileName }: Props) {
                     }`}
                   />
 
-                  {/* simple 3-column block (Title, Location, Dates) */}
-                  <div className="flex items-center gap-7.5 flex-1 min-w-0">
-                    <p className="font-bold w-[25%] min-w-0 truncate">
+                  {/* Title, Location, Dates */}
+                  <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-7.5 flex-1 min-w-0">
+                    <p className="font-bold w-[70%] md:w-[25%] min-w-0 truncate">
                       {v?.name ?? "Untitled venue"}
                     </p>
-                    <p className="text-primary/70 w-[25%] min-w-0 truncate">
+                    <p className="text-primary/70 w-[70%] md:w-[25%] min-w-0 truncate">
                       {loc || "—"}
                     </p>
-                    {/* Date range column (fixed width, truncates if too long) */}
+                    {/* Date range  */}
                     <p className="font-bold w-[210px] shrink-0 truncate">
                       {dateLabel}
                     </p>
@@ -216,7 +210,6 @@ export default function BookingsList({ profileName }: Props) {
                   className={`flex items-center gap-7.5 shrink-0 ${iconMuted}`}>
                   {v?.id && (
                     <Link href={`/venues/${v.id}`} aria-label="View venue">
-                      {/* eye SVG */}
                       <svg
                         width="29"
                         height="20"
@@ -239,7 +232,6 @@ export default function BookingsList({ profileName }: Props) {
                     aria-label="Delete booking"
                     disabled={modalBusy}
                     className="disabled:opacity-50">
-                    {/* trash SVG */}
                     <svg
                       width="15"
                       height="20"
@@ -270,92 +262,97 @@ export default function BookingsList({ profileName }: Props) {
         />
       </div>
 
-      {/* confirmation modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-[100]">
-          {/* backdrop */}
-          <button
-            aria-label="Close modal"
-            onClick={() => !modalBusy && setModalOpen(false)}
-            className="absolute inset-0 bg-black/50"
-          />
+      {/* confirmation modal (ported to <body>) */}
+      {modalOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[1000]">
+            {/* backdrop */}
+            <button
+              aria-label="Close modal"
+              onClick={() => !modalBusy && setModalOpen(false)}
+              className="absolute inset-0 bg-black/50"
+            />
 
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-title"
-            className="absolute left-1/2 top-1/2 w-[92vw] max-w-[685px] -translate-x-1/2 -translate-y-1/2 rounded-[10px] bg-secondary p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] px-5 md:px-30">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex-1 text-center">
-                <h2
-                  id="delete-title"
-                  className="font-noto text-[20px] font-bold text-primary">
-                  Delete this booking?
-                </h2>
+            {/* centered dialog container */}
+            <div className="fixed inset-0 grid place-items-center p-4">
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="delete-title"
+                className="w-[92vw] max-w-[685px] rounded-[10px] bg-secondary shadow-[0_10px_30px_rgba(0,0,0,0.35)] px-5 md:px-30 py-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="flex-1 text-center">
+                    <h2
+                      id="delete-title"
+                      className="font-noto text-[20px] font-bold text-primary">
+                      Delete this booking?
+                    </h2>
+                  </div>
+                </div>
+
+                <p className="text-primary text-[14px] font-jakarta text-center mb-4">
+                  Are you sure you want to delete your booking
+                  {target?.venue?.name ? (
+                    <>
+                      {" "}
+                      for <span className="font-bold">{target.venue.name}</span>
+                    </>
+                  ) : null}
+                  ?
+                </p>
+
+                {modalErr && (
+                  <p className="text-sm text-red-300 text-center mb-2">
+                    {modalErr}
+                  </p>
+                )}
+
+                <div className="mt-2 flex w-full items-center justify-center gap-[30px]">
+                  <button
+                    onClick={confirmDelete}
+                    disabled={modalBusy}
+                    className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary font-bold disabled:opacity-60">
+                    {modalBusy ? "Deleting…" : "YES"}
+                    <svg
+                      width="7"
+                      height="12"
+                      viewBox="0 0 7 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M1 11L6 6L1 1"
+                        stroke="#FCFEFF"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+
+                  <button
+                    onClick={() => !modalBusy && setModalOpen(false)}
+                    className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary/60 font-bold">
+                    NO
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 10 10"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M1.53478 8.53531L8.60585 1.46424M1.53478 1.46424L8.60585 8.53531"
+                        stroke="#FCFEFF"
+                        strokeOpacity="0.6"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
-
-            <p className="text-primary text-[14px] font-jakarta text-center mb-4">
-              Are you sure you want to delete your booking
-              {target?.venue?.name ? (
-                <>
-                  {" "}
-                  for <span className="font-bold">{target.venue.name}</span>
-                </>
-              ) : null}
-              ?
-            </p>
-
-            {modalErr && (
-              <p className="text-sm text-red-300 text-center mb-2">
-                {modalErr}
-              </p>
-            )}
-
-            <div className="mt-2 flex w-full items-center justify-center gap-[30px]">
-              <button
-                onClick={confirmDelete}
-                disabled={modalBusy}
-                className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary font-bold disabled:opacity-60">
-                {modalBusy ? "Deleting…" : "YES"}
-                <svg
-                  width="7"
-                  height="12"
-                  viewBox="0 0 7 12"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M1 11L6 6L1 1"
-                    stroke="#FCFEFF"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-
-              <button
-                onClick={() => !modalBusy && setModalOpen(false)}
-                className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary/60 font-bold">
-                NO
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 10 10"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M1.53478 8.53531L8.60585 1.46424M1.53478 1.46424L8.60585 8.53531"
-                    stroke="#FCFEFF"
-                    strokeOpacity="0.6"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
