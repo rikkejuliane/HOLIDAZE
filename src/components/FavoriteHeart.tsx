@@ -10,6 +10,21 @@ type Props = {
   username?: string;
 };
 
+/**
+ * Heart (favorite) button for a venue.
+ *
+ * - If logged in: toggles favorite state via the user-scoped favorites store and shows a short toast.
+ * - If logged out: shows a tooltip and a toast prompting the user to log in.
+ * - Resolves the username from `props.username` or falls back to the `username` cookie (defaults to "guest").
+ * - Uses a mounted flag to avoid hydration mismatch before client state is ready.
+ * - Accessible labels/titles reflect the current action (favorite / unfavorite / log in to favorite).
+ *
+ * @param venueId   - The venue id to toggle as favorite.
+ * @param className - Optional wrapper classes to position/size the control.
+ * @param username  - Optional explicit username to scope favorites (overrides cookie).
+ *
+ * @returns The favorite heart control with tooltip/toast behavior.
+ */
 export default function FavoriteHeart({
   venueId,
   className,
@@ -18,16 +33,12 @@ export default function FavoriteHeart({
   const { loggedIn } = useAuthStatus();
   const [mounted, setMounted] = React.useState(false);
   const [notice, setNotice] = React.useState("");
-
-  // timers (typed, no any)
   const authedTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
   const loggedOutTimeoutRef = React.useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
-
-  // Resolve username (prop > cookie > guest)
   const [username, setUsername] = React.useState<string>(usernameProp ?? "");
   React.useEffect(() => {
     setMounted(true);
@@ -44,12 +55,9 @@ export default function FavoriteHeart({
     })();
     setUsername(cookieVal || "guest");
   }, [usernameProp]);
-
-  // Per-user favorites store
   const useFavs = useFavoritesForUser(username || "guest");
   const isFav = useFavs((s: FavoritesState) => s.isFav(venueId));
   const toggle = useFavs((s: FavoritesState) => s.toggle);
-
   const handleClickAuthed = () => {
     const wasFav = isFav;
     toggle(venueId);
@@ -61,15 +69,12 @@ export default function FavoriteHeart({
     if (authedTimeoutRef.current) clearTimeout(authedTimeoutRef.current);
     authedTimeoutRef.current = setTimeout(() => setNotice(""), 3000);
   };
-
   const handleClickLoggedOut = () => {
     setNotice("Log in to favorite this venue");
     if (loggedOutTimeoutRef.current) clearTimeout(loggedOutTimeoutRef.current);
     loggedOutTimeoutRef.current = setTimeout(() => setNotice(""), 2200);
   };
-
   const active = mounted && loggedIn && isFav;
-
   const commonProps = {
     width: 16,
     height: 14,
@@ -82,7 +87,6 @@ export default function FavoriteHeart({
       ? "Favorite venue"
       : "Log in to favorite",
   } as const;
-
   return (
     <>
       <div
@@ -118,8 +122,7 @@ export default function FavoriteHeart({
                 />
               </svg>
             </button>
-
-            {/* Desktop hover tooltip (md+) */}
+            {/* Tooltip */}
             <div
               role="tooltip"
               className="
@@ -127,7 +130,7 @@ export default function FavoriteHeart({
                 absolute -top-6 right-0
                 hidden md:block
                 whitespace-nowrap rounded-md bg-black/70 px-2 py-1
-                text-[11px] text-white opacity-0
+                text-[11px] text-primary opacity-0
                 transition-opacity
                 group-hover:opacity-100
               ">
@@ -136,7 +139,6 @@ export default function FavoriteHeart({
           </div>
         )}
       </div>
-
       {/* Toast */}
       {notice && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 bg-secondary text-primary font-jakarta px-4 py-2 rounded z-50">
