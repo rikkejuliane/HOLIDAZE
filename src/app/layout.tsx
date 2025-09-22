@@ -20,6 +20,16 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Root layout for the Next.js app.
+ *
+ * - Defines global metadata (title, description, Open Graph, favicon).
+ * - Wraps all pages with `<Navbar />` at the top and `<Footer />` at the bottom.
+ * - Applies global styles from `globals.css`.
+ *
+ * @param children - The page content injected by Next.js.
+ * @returns The root HTML structure with global layout elements.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
