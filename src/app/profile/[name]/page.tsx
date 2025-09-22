@@ -5,10 +5,15 @@ import PublicProfileHeader from "@/features/profile/components/ProfilePublic/Pub
 import PublicProfileVenuesSection from "@/features/profile/components/ProfilePublic/PublicProfileVenuesSection";
 
 type RouteParams = { name: string };
-// In Next 15+ Request APIs, params is a Promise you must await
 type Props = { params: Promise<RouteParams> };
 
-// Narrower helper to check for an HTTP-like error with a status code
+/**
+ * Type guard that checks whether an unknown error-like value
+ * carries a numeric `status` field (e.g., API client errors).
+ *
+ * @param err - The unknown value to check.
+ * @returns True if `err` has a numeric `status` property.
+ */
 function hasStatus(err: unknown): err is { status: number } {
   return (
     typeof err === "object" &&
@@ -18,11 +23,24 @@ function hasStatus(err: unknown): err is { status: number } {
   );
 }
 
+/**
+ * Public profile page.
+ *
+ * Tries to fetch a public profile by `name`. If that returns an error and a
+ * session token cookie exists, it retries with an authenticated request.
+ *
+ * - On 404 from either path, renders Next.js `notFound()`.
+ * - Other errors are rethrown to let Next handle them.
+ *
+ * The `params` prop is awaited because the route uses an async params pattern.
+ * Decodes the `name` from the URL before calling the API.
+ *
+ * @param params - The route parameters provided by Next.js.
+ * @returns A server component rendering the profile page, or triggers `notFound()`.
+ */
 export default async function PublicProfilePage({ params }: Props) {
   const { name } = await params;
   const nameFromUrl = decodeURIComponent(name);
-
-  // 1) Try PUBLIC (no auth)
   try {
     const profile = await getPublicProfileByName(nameFromUrl, { venues: true });
     return (
@@ -35,7 +53,6 @@ export default async function PublicProfilePage({ params }: Props) {
       </>
     );
   } catch (err: unknown) {
-    // 2) Fallback: if logged in, try AUTHED
     const token = (await cookies()).get("token")?.value;
     if (token) {
       try {
@@ -56,8 +73,7 @@ export default async function PublicProfilePage({ params }: Props) {
         throw err2;
       }
     }
-
     if (hasStatus(err) && err.status === 404) return notFound();
-    throw err; // surface 401/403/500 during dev
+    throw err;
   }
 }

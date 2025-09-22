@@ -1,17 +1,26 @@
-"use client"; // 👈 since we need React state
+"use client";
 
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+/**
+ * Contact page with a hero background image and a centered contact form.
+ *
+ * Shows fields for first/last name, email, subject, optional booking ID, and message.
+ * After submit, a thank-you message appears with a link back to the home page.
+ */
 export default function ContactPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  /**
+   * Handles form submission by preventing navigation and toggling the submitted state.
+   * @param e Form submit event from the contact form.
+   */
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault(); // prevent page reload
+    e.preventDefault();
     setIsSubmitted(true);
   }
-
   return (
     <section>
       <div className="relative">
@@ -22,9 +31,8 @@ export default function ContactPage() {
           height={767}
           className="w-full h-[745px] object-cover object-center lg:h-auto"
         />
-
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-[421px] h-[499px] bg-zinc-800 rounded-[10px] border border-white/0 backdrop-blur-[5.10px] text-primary px-[40px] overflow-hidden flex items-center justify-center">
+          <div className="w-[421px] h-[499px] bg-secondary rounded-[10px] backdrop-blur-[5.10px] text-primary px-[40px] overflow-hidden flex items-center justify-center">
             {!isSubmitted ? (
               <form
                 onSubmit={handleSubmit}
@@ -32,7 +40,6 @@ export default function ContactPage() {
                 <h1 className="font-noto text-[35px] font-bold text-center py-[20px]">
                   Get in Touch
                 </h1>
-
                 <div className="flex w-full gap-2.5">
                   <label htmlFor="firstName" className="sr-only">
                     First Name
@@ -43,7 +50,7 @@ export default function ContactPage() {
                     type="text"
                     placeholder="First Name"
                     required
-                    className="h-[30px] flex-1 min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
+                    className="h-[30px] flex-1 min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
                   />
                   <label htmlFor="lastName" className="sr-only">
                     Last Name
@@ -54,7 +61,7 @@ export default function ContactPage() {
                     type="text"
                     placeholder="Last Name"
                     required
-                    className="h-[30px] flex-1 min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
+                    className="h-[30px] flex-1 min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
                   />
                 </div>
                 <label htmlFor="email" className="sr-only">
@@ -66,7 +73,7 @@ export default function ContactPage() {
                   type="email"
                   placeholder="Email"
                   required
-                  className="h-[30px] w-full bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
+                  className="h-[30px] w-full bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
                 />
                 <label htmlFor="subject" className="sr-only">
                   Subject
@@ -77,7 +84,7 @@ export default function ContactPage() {
                   type="text"
                   placeholder="Subject"
                   required
-                  className="h-[30px] w-full bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
+                  className="h-[30px] w-full bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
                 />
                 <label htmlFor="bookingId" className="sr-only">
                   Booking ID
@@ -87,7 +94,7 @@ export default function ContactPage() {
                   name="bookingId"
                   type="text"
                   placeholder="Booking ID / Venue"
-                  className="h-[30px] w-full bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
+                  className="h-[30px] w-full bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
                 />
                 <label htmlFor="message" className="sr-only">
                   Message
@@ -98,9 +105,8 @@ export default function ContactPage() {
                   rows={4}
                   placeholder="Message"
                   required
-                  className="h-[158px] w-full bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta resize-none"
+                  className="h-[158px] w-full bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta resize-none"
                 />
-
                 <button
                   type="submit"
                   className="flex flex-row gap-1.5 items-center justify-center text-primary font-jakarta font-bold text-[15px] cursor-pointer">
@@ -129,7 +135,6 @@ export default function ContactPage() {
                   Our customer service team has received your message and will
                   get back to you within 24 hours.
                 </p>
-
                 <Link
                   href="/"
                   className="flex flex-row gap-1.5 items-center justify-center text-primary font-jakarta font-bold text-[15px] cursor-pointer pt-10">
