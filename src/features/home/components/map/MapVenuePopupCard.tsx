@@ -8,9 +8,30 @@ type Props = {
   country?: string;
   price?: number | null;
   basePath?: string;
-  onClose?: () => void; 
+  onClose?: () => void;
 };
 
+/**
+ * MapVenuePopupCard component.
+ *
+ * Compact venue preview used inside Mapbox popups.
+ *
+ * - Shows an optional header image with a gradient overlay and close button.
+ * - Displays venue name, city/country, and a formatted nightly price.
+ * - “View venue” link navigates to `${basePath}/${id}`.
+ * - Invokes `onClose` when the close button is clicked.
+ *
+ * @param id       - Venue identifier.
+ * @param name     - Venue name.
+ * @param img      - Optional image URL to display in the header.
+ * @param city     - Optional city label.
+ * @param country  - Optional country label.
+ * @param price    - Optional nightly price to display.
+ * @param basePath - Base path for the venue details link (default: "/venues").
+ * @param onClose  - Callback fired when the close button is pressed.
+ *
+ * @returns The popup card UI for a single venue.
+ */
 export default function MapVenuePopupCard({
   id,
   name,
@@ -28,8 +49,7 @@ export default function MapVenuePopupCard({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={img} alt={name} className="h-full w-full object-cover" />
           <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-[1] h-20 bg-gradient-to-t from-[#282A2E] to-transparent" />
-
-          {/* CLOSE BUTTON (top-right over the image) */}
+          {/* CLOSE BUTTON */}
           <button
             type="button"
             onClick={onClose}
@@ -53,13 +73,12 @@ export default function MapVenuePopupCard({
           </button>
         </div>
       ) : (
-        // No image case: still provide a close button (top-right of card)
         <button
           type="button"
           onClick={onClose}
           aria-label="Close"
           title="Close"
-          className="absolute right-2 top-2 z-10 inline-flex items-center justify-center rounded-full bg-black/50 p-1.5 ring-1 ring-white/20 hover:bg-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+          className="absolute right-2 top-2 z-10 inline-flex items-center justify-center rounded-full bg-black/50 p-1.5 ring-1 ring-primary/20 hover:bg-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
           <svg
             width="10"
             height="10"
@@ -76,28 +95,23 @@ export default function MapVenuePopupCard({
           </svg>
         </button>
       )}
-
       {/* BOTTOM PANEL */}
       <div className="relative w-[292px] h-[120px] px-4">
-        {/* Title (slightly smaller) */}
         <h2 className="pt-2 truncate font-noto text-lg font-bold text-primary">
           {name}
         </h2>
-
         {/* City, Country */}
         <p className="pt-1 max-w-[200px] truncate font-jakarta text-sm font-light text-primary/60">
           {[city, country].filter(Boolean).join(", ") || "—"}
         </p>
-
-        {/* Price + CTA (text + arrow) */}
+        {/* Price */}
         <div className="pt-4 flex items-center justify-between font-jakarta text-sm leading-tight">
           <span className="text-primary/90">
             {price != null ? `${formatPrice(price)} / per night` : "—"}
           </span>
-
           <a
             href={`${basePath}/${encodeURIComponent(id)}`}
-            className="inline-flex items-center gap-1 font-bold text-white hover:opacity-90">
+            className="inline-flex items-center gap-1 font-bold text-primary hover:opacity-90">
             View venue
             <svg
               width="7"
@@ -120,6 +134,14 @@ export default function MapVenuePopupCard({
   );
 }
 
+/**
+ * Formats a number as a currency string (USD, no decimals).
+ *
+ * Falls back to a simple `$<n>` string if `Intl.NumberFormat` fails.
+ *
+ * @param n - Numeric price to format.
+ * @returns A user-friendly currency string.
+ */
 function formatPrice(n: number) {
   try {
     return new Intl.NumberFormat("en-US", {

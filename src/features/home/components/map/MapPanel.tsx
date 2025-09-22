@@ -5,7 +5,6 @@ import type { Venue } from "@/types/venue";
 import mapboxgl from "mapbox-gl";
 import { createRoot, type Root } from "react-dom/client";
 import "mapbox-gl/dist/mapbox-gl.css";
-
 import MapVenuePopupCard from "@/features/home/components/map/MapVenuePopupCard";
 import {
   extractCoordsFromVenue,
@@ -31,6 +30,14 @@ type Point = {
 };
 type Bundle = { marker: mapboxgl.Marker; popup: mapboxgl.Popup; root: Root };
 
+/**
+ * scheduleUnmount helper.
+ *
+ * Schedules a React root `unmount()` on the next tick to avoid
+ * interfering with Mapbox’s popup teardown timing.
+ *
+ * @param root - The React Root associated with a popup’s DOM container.
+ */
 function scheduleUnmount(root: Root) {
   setTimeout(() => {
     try {
@@ -39,6 +46,26 @@ function scheduleUnmount(root: Root) {
   }, 0);
 }
 
+/**
+ * MapPanel component.
+ *
+ * Interactive Mapbox map that plots venue markers and shows a React-powered
+ * popup card (`MapVenuePopupCard`) on marker click/hover.
+ *
+ * Features:
+ * - Uses venue lat/lng when available; otherwise geocodes city/country (cached).
+ * - Merges direct coordinates with geocoded results; caps geocoding per render.
+ * - Cleans up markers/popups/React roots on re-render and unmount.
+ * - Auto-zooms/centers to fit all markers; special handling for single-point zoom.
+ * - Popup open adjusts map center with padding/offset for short/tall viewports.
+ *
+ * Env:
+ * - `NEXT_PUBLIC_MAPBOX_TOKEN` (required for map + geocoding).
+ * - `NEXT_PUBLIC_MAPBOX_STYLE_URL` (optional, defaults to `mapbox://styles/mapbox/dark-v11`).
+ *
+ * @param items - Optional list of venues to plot.
+ * @returns The map panel with venue markers and popups.
+ */
 export default function MapPanel({ items = [] }: Props) {
   const mapNode = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -210,7 +237,7 @@ export default function MapPanel({ items = [] }: Props) {
 
     points.forEach((p) => {
       const el = document.createElement("div");
-      el.className = "w-3 h-3 rounded-full ring-2 ring-white/50";
+      el.className = "w-3 h-3 rounded-full ring-2 ring-primary/50";
       (el.style as CSSStyleDeclaration).backgroundColor =
         "var(--color-imperialRed, #e63946)";
       (el.style as CSSStyleDeclaration).cursor = "pointer";
@@ -218,10 +245,8 @@ export default function MapPanel({ items = [] }: Props) {
       const marker = new mapboxgl.Marker({ element: el, anchor: "center" })
         .setLngLat(p.coords)
         .addTo(map);
-
       const container = document.createElement("div");
       const root = createRoot(container);
-
       const popup = new mapboxgl.Popup({
         offset: 18,
         anchor: "bottom",
@@ -230,7 +255,6 @@ export default function MapPanel({ items = [] }: Props) {
         className: "no-tip clean",
         focusAfterOpen: false,
       } as mapboxgl.PopupOptions).setDOMContent(container);
-
       root.render(
         <MapVenuePopupCard
           id={p.id}
@@ -243,15 +267,17 @@ export default function MapPanel({ items = [] }: Props) {
           onClose={() => popup.remove()}
         />
       );
-
       popup.on("open", () => {
         const viewH = map.getContainer()?.clientHeight ?? 0;
         const popupH = container.offsetHeight || 220;
-        const isShort = viewH > 0 && viewH <= 360; 
+        const isShort = viewH > 0 && viewH <= 360;
         if (isShort) {
           const bottomPad = 0;
-          const topPad = Math.min(popupH + 24, Math.max(0, viewH - bottomPad - 8));
-      
+          const topPad = Math.min(
+            popupH + 24,
+            Math.max(0, viewH - bottomPad - 8)
+          );
+
           map.easeTo({
             center: p.coords,
             padding: { top: topPad, bottom: bottomPad, left: 0, right: 0 },
@@ -268,13 +294,10 @@ export default function MapPanel({ items = [] }: Props) {
           });
         }
       });
-
       marker.setPopup(popup);
-
       bundlesRef.current.push({ marker, popup, root });
       bounds.extend(p.coords);
     });
-
     if (!bounds.isEmpty()) {
       if (points.length === 1) {
         map.easeTo({ center: points[0].coords, zoom: 12, duration: 500 });
@@ -283,7 +306,6 @@ export default function MapPanel({ items = [] }: Props) {
       }
     }
   }, [points]);
-
   return (
     <div className="h-[300px] xl:h-[636px] w-full overflow-hidden overscroll-contain">
       <div ref={mapNode} className="h-full w-full" />
