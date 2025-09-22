@@ -6,6 +6,7 @@ import Image from "next/image";
 import MediaMapPanel from "@/features/singleVenue/components/MediaMapPanel";
 import BookingPanel from "@/features/singleVenue/components/BookingPanel";
 import FavoriteHeartWithToast from "@/components/FavoriteHeartWithToast";
+import { cookies } from "next/headers";
 
 type Props = { params: { id: string } };
 
@@ -17,6 +18,9 @@ export default async function VenueDetailPage({ params }: Props) {
     venue = await getVenueById(id, { owner: true, bookings: true });
   } catch {}
   if (!venue) return notFound();
+
+  const cookieStore = await cookies();
+  const isLoggedIn = Boolean(cookieStore.get("token")?.value);
 
   return (
     <section className="mt-[90px] sm:mt-[70px] mb-20">
@@ -209,31 +213,59 @@ export default async function VenueDetailPage({ params }: Props) {
             <div className="w-full sm:w-[199px] h-36 bg-secondary rounded-3xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] p-4 flex flex-col font-jakarta text-primary text-xs">
               <h2 className="font-bold pb-4">HOST</h2>
               <div className="flex flex-row gap-1.5 items-center">
-                <Link
-                  href={
-                    venue.owner?.name
-                      ? `/profile/${encodeURIComponent(venue.owner.name)}`
-                      : "#"
-                  }
-                  className="flex flex-row gap-1.5 items-center hover:underline"
-                  aria-disabled={!venue.owner?.name}>
-                  <Image
-                    src={venue.owner?.avatar?.url || "/placeholder-avatar.jpg"}
-                    alt={venue.owner?.avatar?.alt || "Host profile picture"}
-                    width={36}
-                    height={36}
-                    unoptimized
-                    className="w-9 h-9 rounded-full object-cover"
-                  />
-                  {/* HOST PROFILE PICTURE */}
-                  <p className="font-bold">
-                    {venue.owner?.name ?? "Unknown Host"}
-                  </p>
-                </Link>
+                {isLoggedIn && venue.owner?.name ? (
+                  <Link
+                    href={`/profile/${encodeURIComponent(venue.owner.name)}`}
+                    className="flex flex-row gap-1.5 items-center hover:underline"
+                    aria-label={`View ${venue.owner.name}'s profile`}>
+                    <Image
+                      src={
+                        venue.owner?.avatar?.url || "/placeholder-avatar.jpg"
+                      }
+                      alt={venue.owner?.avatar?.alt || "Host profile picture"}
+                      width={36}
+                      height={36}
+                      unoptimized
+                      className="w-9 h-9 rounded-full object-cover"
+                    />
+                    <p className="font-bold">{venue.owner?.name}</p>
+                  </Link>
+                ) : (
+                  <div className="relative group flex flex-col gap-0.5">
+                    <div className="flex flex-row gap-1.5 items-center cursor-not-allowed opacity-80">
+                      <Image
+                        src={
+                          venue.owner?.avatar?.url || "/placeholder-avatar.jpg"
+                        }
+                        alt={venue.owner?.avatar?.alt || "Host profile picture"}
+                        width={36}
+                        height={36}
+                        unoptimized
+                        className="w-9 h-9 rounded-full object-cover"
+                      />
+                      <p className="font-bold">
+                        {venue.owner?.name ?? "Unknown Host"}
+                      </p>
+                    </div>
+
+                   
+
+                    {/* Desktop hover tooltip */}
+                    <div
+                      role="tooltip"
+                      className="hidden md:block pointer-events-none absolute -top-2 left-0 translate-y-[-2px] whitespace-nowrap rounded-md bg-black/70 px-2 py-1 text-[11px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+                      Log in to view host profile
+                    </div>
+                  </div>
+                )}
               </div>
               <p className="text-[10px] font-medium pt-[12px]">
                 {venue.owner?.email ?? "No email available"}
               </p>
+               {/* Mobile inline hint */}
+               <span className="lg:hidden text-[11px] text-primary/70 mt-1">
+                      Log in to view host profile
+                    </span>
             </div>
           </div>
 
