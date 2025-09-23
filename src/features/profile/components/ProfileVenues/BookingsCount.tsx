@@ -10,7 +10,6 @@ type CustomerLike =
   | { name?: string; email?: string; avatar?: AvatarLike }
   | null
   | undefined;
-
 type BookingLike = {
   id: string;
   dateFrom?: string;
@@ -18,9 +17,7 @@ type BookingLike = {
   guests?: number;
   customer?: CustomerLike;
 };
-
 type VenueMaybeBookings = { bookings?: BookingLike[] | null };
-
 type Props = {
   venueId: string;
   venueName?: string | null;
@@ -29,6 +26,12 @@ type Props = {
   labelPlural?: string;
 };
 
+/**
+ * Formats a date string into a short, locale-aware label (e.g., "05 Sep 2025").
+ *
+ * @param d - ISO/RFC date string (optional).
+ * @returns Formatted date; "—" if empty; original string on parse failure.
+ */
 function fmtDate(d?: string) {
   if (!d) return "—";
   try {
@@ -42,6 +45,22 @@ function fmtDate(d?: string) {
   }
 }
 
+/**
+ * BookingsCount — renders a compact bookings counter button and an on-demand modal list.
+ *
+ * Connected to: `getVenueById(venueId, { bookings: true })` (lazy-fetch when `bookings` prop is `undefined`).
+ *
+ * @remarks
+ * - Disabled while loading or when count is 0; opens modal only if count > 0.
+ * - If `bookings` is `null` or `[]`, no fetch occurs.
+ * - Modal is accessible (`role="dialog"`, `aria-modal`) and closes via backdrop or ✕.
+ *
+ * @param props.venueId - Venue ID used for API fetch.
+ * @param props.venueName - Optional title text in modal header.
+ * @param props.bookings - Preloaded bookings; `undefined` triggers fetch.
+ * @param props.labelSingular - Singular label (default: "booking").
+ * @param props.labelPlural - Plural label (default: "bookings").
+ */
 export default function BookingsCount({
   venueId,
   venueName,
@@ -55,10 +74,8 @@ export default function BookingsCount({
   const [bookings, setBookings] = useState<BookingLike[] | null | undefined>(
     preloaded
   );
-
   useEffect(() => {
     let cancelled = false;
-
     async function load() {
       if (preloaded !== undefined) return;
       setBusy(true);
@@ -76,26 +93,21 @@ export default function BookingsCount({
         if (!cancelled) setBusy(false);
       }
     }
-
     load();
     return () => {
       cancelled = true;
     };
   }, [venueId, preloaded]);
-
   useEffect(() => {
     setBookings(preloaded);
   }, [preloaded]);
-
   const count = useMemo(
     () => (Array.isArray(bookings) ? bookings.length : 0),
     [bookings]
   );
-
   function onOpen() {
     if (count > 0) setOpen(true);
   }
-
   return (
     <>
       <button
@@ -124,18 +136,16 @@ export default function BookingsCount({
           />
         </svg>
       </button>
-
-      {/* Modal */}
+      {/* MODAL */}
       {open &&
         createPortal(
           <div className="fixed inset-0 z-[1000]">
-            {/* backdrop */}
+            {/* BACKDROP */}
             <button
               aria-label="Close bookings modal"
               onClick={() => setOpen(false)}
               className="absolute inset-0 bg-black/50"
             />
-
             <div className="fixed inset-0 grid place-items-center p-4 text-primary">
               <div
                 role="dialog"
@@ -155,7 +165,6 @@ export default function BookingsCount({
                     ✕
                   </button>
                 </div>
-
                 {busy ? (
                   <p className="text-primary/80 text-sm">Loading…</p>
                 ) : error ? (
@@ -172,7 +181,6 @@ export default function BookingsCount({
                         b.customer?.name ||
                         b.customer?.email ||
                         "Unknown guest";
-
                       return (
                         <li
                           key={b.id}

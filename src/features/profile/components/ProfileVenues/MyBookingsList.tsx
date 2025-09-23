@@ -10,7 +10,6 @@ import type { ListMeta } from "@/types/venue";
 import ListingsPagination from "@/features/home/components/ListingsPagination";
 
 type Props = { profileName: string };
-
 type BookingWithVenue = Booking & {
   venue?: {
     id?: string;
@@ -19,7 +18,6 @@ type BookingWithVenue = Booking & {
     location?: { city?: string; country?: string };
   };
 };
-
 type ApiListMeta = {
   isFirstPage: boolean;
   isLastPage: boolean;
@@ -30,6 +28,10 @@ type ApiListMeta = {
   totalCount: number;
 };
 
+/**
+ * Returns true if two dates fall on the same local calendar day.
+ * Compares year, month, and date components only (time is ignored).
+ */
 function sameDay(a: Date, b: Date) {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -38,6 +40,12 @@ function sameDay(a: Date, b: Date) {
   );
 }
 
+/**
+ * Formats a Date as DD.MM.YY (two-digit day, month; two-digit year).
+ *
+ * @example
+ * fmtDMY2(new Date('2025-03-09')) // "09.03.25"
+ */
 function fmtDMY2(d: Date) {
   const dd = String(d.getDate()).padStart(2, "0");
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -45,32 +53,48 @@ function fmtDMY2(d: Date) {
   return `${dd}.${mm}.${yy}`;
 }
 
+/**
+ * Formats a booking's date range as "DD.MM.YY - DD.MM.YY".
+ * If both dates are the same day, returns a single "DD.MM.YY".
+ *
+ * @param fromISO - Start date (ISO string)
+ * @param toISO   - End date (ISO string)
+ */
 function formatRange(fromISO: string, toISO: string) {
   const from = new Date(fromISO);
   const to = new Date(toISO);
-
   if (sameDay(from, to)) return fmtDMY2(from);
   return `${fmtDMY2(from)} - ${fmtDMY2(to)}`;
 }
 
+/**
+ * BookingsList — paginated list of the current user's bookings with inline delete.
+ *
+ * Connected to:
+ * - getBookingsByProfile(profileName, { page, limit, sort, sortOrder }) to fetch data.
+ * - deleteBookingById(bookingId) to remove a booking.
+ * - ListingsPagination for page navigation UI.
+ *
+ * Behavior:
+ * - Loads bookings on mount and whenever `profileName` or `page` changes.
+ * - Shows venue preview (image, title, location) and formatted stay dates.
+ * - Opens a confirm dialog (portal) before deletion.
+ * - After delete: if the last item on the last page is removed, it navigates to the previous page; otherwise it refetches the current page.
+ */
 export default function BookingsList({ profileName }: Props) {
   const PAGE_SIZE = 6;
-
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState<BookingWithVenue[]>([]);
   const [meta, setMeta] = useState<ListMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [modalOpen, setModalOpen] = useState(false);
   const [target, setTarget] = useState<BookingWithVenue | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
   const [modalErr, setModalErr] = useState<string | null>(null);
-
   useEffect(() => {
     setPage(1);
   }, [profileName]);
-
   const fetchData = useCallback(
     async (p: number) => {
       setLoading(true);
@@ -81,9 +105,7 @@ export default function BookingsList({ profileName }: Props) {
           sort: "created",
           sortOrder: "desc",
         });
-
         setRows((data ?? []) as BookingWithVenue[]);
-
         const m = meta as ApiListMeta;
         setMeta({
           currentPage: m.currentPage,
@@ -102,7 +124,6 @@ export default function BookingsList({ profileName }: Props) {
     },
     [profileName]
   );
-
   useEffect(() => {
     fetchData(page);
   }, [fetchData, page]);
@@ -114,22 +135,30 @@ export default function BookingsList({ profileName }: Props) {
     setModalOpen(true);
   }
 
+  /**
+   * Confirms and performs deletion of the selected booking.
+   *
+   * Connected to: deleteBookingById(target.id)
+   *
+   * Behavior:
+   * - Deletes the booking.
+   * - If the removed row was the only item on the last page and `page > 1`,
+   *   moves to the previous page; otherwise re-fetches the current page.
+   * - Closes the modal on success; shows an error message on failure.
+   */
   async function confirmDelete() {
     if (!target) return;
     setModalBusy(true);
     setModalErr(null);
     try {
       await deleteBookingById(target.id);
-
       const isOnlyRow = rows.length === 1;
       const isLastPage = meta?.currentPage === meta?.pageCount;
-
       if (isOnlyRow && isLastPage && page > 1) {
         setPage(page - 1);
       } else {
         await fetchData(page);
       }
-
       setModalOpen(false);
       setTarget(null);
     } catch (e) {
@@ -140,7 +169,6 @@ export default function BookingsList({ profileName }: Props) {
       setModalBusy(false);
     }
   }
-
   if (loading)
     return <div className="p-8 text-primary/70">Loading bookings…</div>;
   if (error) return <div className="p-8 text-red-400">{error}</div>;
@@ -150,14 +178,12 @@ export default function BookingsList({ profileName }: Props) {
         You don’t have any bookings yet.
       </div>
     );
-
   const today = new Date();
   const todayStart = new Date(
     today.getFullYear(),
     today.getMonth(),
     today.getDate()
   );
-
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 flex flex-col">
@@ -170,14 +196,12 @@ export default function BookingsList({ profileName }: Props) {
             .join(", ");
           const dateLabel = formatRange(b.dateFrom, b.dateTo);
           const isPast = new Date(b.dateTo) < todayStart;
-
           const textMuted = isPast ? "text-primary/60" : "";
           const iconMuted = isPast ? "opacity-60" : "";
-
           return (
             <div key={b.id} className="flex flex-col">
               <div className="flex flex-row mt-2.5 justify-between text-lg px-[20px] md:px-[40px]">
-                {/* left side */}
+                {/* LEFT SIDE */}
                 <div
                   className={`flex flex-col sm:flex-row md:items-center gap-3 md:gap-7.5 flex-1 min-w-0 ${textMuted}`}>
                   <Image
@@ -190,8 +214,7 @@ export default function BookingsList({ profileName }: Props) {
                       isPast ? "grayscale opacity-60" : ""
                     }`}
                   />
-
-                  {/* Title, Location, Dates */}
+                  {/* TITLE, LOCATION AND DATES */}
                   <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-7.5 flex-1 min-w-0">
                     <p className="font-bold w-[70%] md:w-[25%] min-w-0 truncate">
                       {v?.name ?? "Untitled venue"}
@@ -199,13 +222,12 @@ export default function BookingsList({ profileName }: Props) {
                     <p className="text-primary/70 w-[70%] md:w-[25%] min-w-0 truncate">
                       {loc || "—"}
                     </p>
-                    {/* Date range  */}
+                    {/* DATE RANGE  */}
                     <p className="font-bold w-[210px] shrink-0 truncate">
                       {dateLabel}
                     </p>
                   </div>
                 </div>
-
                 <div
                   className={`flex items-center gap-7.5 shrink-0 ${iconMuted}`}>
                   {v?.id && (
@@ -226,7 +248,6 @@ export default function BookingsList({ profileName }: Props) {
                       </svg>
                     </Link>
                   )}
-
                   <button
                     onClick={() => askDelete(b)}
                     aria-label="Delete booking"
@@ -246,14 +267,12 @@ export default function BookingsList({ profileName }: Props) {
                   </button>
                 </div>
               </div>
-
               <span className="border-b border-primary/30 w-full pt-2.5"></span>
             </div>
           );
         })}
       </div>
-
-      {/* pagination */}
+      {/* PAGINATION */}
       <div className="pb-2">
         <ListingsPagination
           meta={meta}
@@ -261,19 +280,16 @@ export default function BookingsList({ profileName }: Props) {
           isLoading={loading}
         />
       </div>
-
-      {/* confirmation modal (ported to <body>) */}
+      {/* CONFIRMATION MODAL */}
       {modalOpen &&
         createPortal(
           <div className="fixed inset-0 z-[1000]">
-            {/* backdrop */}
+            {/* BACKDROP */}
             <button
               aria-label="Close modal"
               onClick={() => !modalBusy && setModalOpen(false)}
               className="absolute inset-0 bg-black/50"
             />
-
-            {/* centered dialog container */}
             <div className="fixed inset-0 grid place-items-center p-4">
               <div
                 role="dialog"
@@ -289,7 +305,6 @@ export default function BookingsList({ profileName }: Props) {
                     </h2>
                   </div>
                 </div>
-
                 <p className="text-primary text-[14px] font-jakarta text-center mb-4">
                   Are you sure you want to delete your booking
                   {target?.venue?.name ? (
@@ -300,13 +315,11 @@ export default function BookingsList({ profileName }: Props) {
                   ) : null}
                   ?
                 </p>
-
                 {modalErr && (
                   <p className="text-sm text-red-300 text-center mb-2">
                     {modalErr}
                   </p>
                 )}
-
                 <div className="mt-2 flex w-full items-center justify-center gap-[30px]">
                   <button
                     onClick={confirmDelete}
@@ -327,7 +340,6 @@ export default function BookingsList({ profileName }: Props) {
                       />
                     </svg>
                   </button>
-
                   <button
                     onClick={() => !modalBusy && setModalOpen(false)}
                     className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary/60 font-bold">

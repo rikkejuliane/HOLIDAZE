@@ -14,20 +14,45 @@ type Props = {
   isVenueManager: boolean;
 };
 
+/**
+ * ProfileVenuesSection — Tabbed hub for a user's bookings, favorites, and (if applicable) their venues.
+ *
+ * Purpose:
+ * Renders a three-tab panel (BOOKINGS, FAVORITES, MY VENUES) and mounts the matching list
+ * component for the active tab. Also mounts creation/edit modals for venues.
+ *
+ * Connected to:
+ * - useProfileTabs() — controls which tab is active.
+ * - <MyBookingsList />, <MyFavoritesList />, <MyVenuesList /> — panel content.
+ * - <CreateVenueModal />, <EditVenueModal /> — venue create/edit dialogs.
+ * - Window CustomEvents:
+ *   - "venues:created" → switches the active tab to "venues".
+ *   - "venues:edit"    → opens the edit modal for a provided Venue payload.
+ *
+ * Behavior:
+ * - Hides the "MY VENUES" tab and creation CTA when `isVenueManager` is false.
+ * - Forces the active tab to "BOOKINGS" when user isn’t a venue manager.
+ *
+ * Props:
+ * - profileName: string — current profile identifier; forwarded to child lists.
+ * - isVenueManager: boolean — gates the venues tab and create/edit flows.
+ *
+ * Accessibility:
+ * - Implements a proper tabs pattern with role="tablist"/"tab"/"tabpanel".
+ * - Dialogs are rendered as modal layers.
+ */
+
 export default function ProfileVenuesSection({
   profileName,
   isVenueManager,
 }: Props) {
   const { active, setActive } = useProfileTabs();
   const [createOpen, setCreateOpen] = useState(false);
-
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Venue | null>(null);
-
   useEffect(() => {
     if (!isVenueManager && active === "venues") setActive("bookings");
   }, [isVenueManager, active, setActive]);
-
   useEffect(() => {
     function onCreated() {
       setActive("venues");
@@ -35,7 +60,6 @@ export default function ProfileVenuesSection({
     window.addEventListener("venues:created", onCreated);
     return () => window.removeEventListener("venues:created", onCreated);
   }, [setActive]);
-
   useEffect(() => {
     function onEdit(e: Event) {
       const ve = e as CustomEvent<Venue>;
@@ -45,13 +69,12 @@ export default function ProfileVenuesSection({
     window.addEventListener("venues:edit", onEdit);
     return () => window.removeEventListener("venues:edit", onEdit);
   }, []);
-
   return (
     <section className="mt-5 mb-20">
       <div className="flex flex-col mx-auto font-jakarta text-primary max-w-[1055px]">
         {/* TABS */}
         <div className="flex h-[55px]" role="tablist" aria-label="Profile tabs">
-          {/* My bookings  */}
+          {/* MY BOOKINGS  */}
           <button
             role="tab"
             aria-selected={active === "bookings"}
@@ -63,11 +86,9 @@ export default function ProfileVenuesSection({
               active === "bookings" ? "font-bold" : "",
             ].join(" ")}>
             <span className="block sm:hidden">BOOKINGS</span>
-
             <span className="hidden sm:block">MY BOOKINGS</span>
           </button>
-
-          {/* Favorites  */}
+          {/* FAVORITES */}
           <button
             role="tab"
             aria-selected={active === "favorites"}
@@ -91,11 +112,9 @@ export default function ProfileVenuesSection({
                 fill="#FCFEFF"
               />
             </svg>
-
             <span className="hidden md:inline">FAVORITES</span>
           </button>
-
-          {/* My venues — only visible if venue manager */}
+          {/* MY VENUES — only visible if venue manager */}
           {isVenueManager && (
             <button
               role="tab"
@@ -108,12 +127,10 @@ export default function ProfileVenuesSection({
                 active === "venues" ? "font-bold" : "",
               ].join(" ")}>
               <span className="block sm:hidden">VENUES</span>
-
               <span className="hidden sm:block">MY VENUES</span>
             </button>
           )}
-
-          {/* spacer */}
+          {/* SPACER*/}
           <div className="flex-1 bg-secondary rounded-t-[10px]">
             <div className="relative">
               {isVenueManager && (
@@ -136,7 +153,6 @@ export default function ProfileVenuesSection({
                       strokeLinecap="round"
                     />
                   </svg>
-
                   <span className="hidden md:flex items-center gap-1.5">
                     CREATE NEW VENUE
                     <svg
@@ -158,7 +174,6 @@ export default function ProfileVenuesSection({
             </div>
           </div>
         </div>
-
         {/* PANEL */}
         <div
           role="tabpanel"
@@ -173,18 +188,15 @@ export default function ProfileVenuesSection({
           {active === "bookings" && (
             <MyBookingsList profileName={profileName} />
           )}
-
           {active === "favorites" && (
             <MyFavoritesList profileName={profileName} />
           )}
-
           {active === "venues" && isVenueManager && (
             <MyVenuesList profileName={profileName} />
           )}
         </div>
       </div>
-
-      {/* Modals */}
+      {/* MODALS */}
       <CreateVenueModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}

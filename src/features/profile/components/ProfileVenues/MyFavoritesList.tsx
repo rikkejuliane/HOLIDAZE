@@ -19,18 +19,28 @@ type VenueLite = {
   media?: { url: string; alt?: string }[];
   location?: { city?: string; country?: string };
 };
-
 type Props = { profileName: string };
-
 type PersistHelpers<T> = {
   hasHydrated: () => boolean;
   onFinishHydration: (cb: (state: T) => void) => () => void;
 };
-
 type PersistedStore<T> = UseBoundStore<StoreApi<T>> & {
   persist?: Partial<PersistHelpers<T>>;
 };
 
+/**
+ * Fetches a lightweight Venue by id (name, media, location).
+ *
+ * Connected to:
+ * - apiFetch(`${API_HOLIDAZE}/venues/${id}`) with buildHeaders({ apiKey: true })
+ *
+ * Behavior:
+ * - Returns the venue payload (`VenueLite`) on success.
+ * - Throws on network/API error; caller handles errors (including 404).
+ *
+ * @param id - Venue id to fetch.
+ * @returns VenueLite
+ */
 async function getVenueById(id: string): Promise<VenueLite> {
   const res = await apiFetch<{ data: VenueLite }>(
     `${API_HOLIDAZE}/venues/${id}`,
@@ -42,18 +52,33 @@ async function getVenueById(id: string): Promise<VenueLite> {
   return res.data;
 }
 
+/**
+ * MyFavoritesList — paginated list of the signed-in user's favorite venues.
+ *
+ * Connected to:
+ * - useFavoritesForUser(userKey) — reads and mutates favorites in a persisted zustand store.
+ * - ListingsPagination — page navigation UI.
+ * - getVenueById(id) — fetches details for each favorite id on the current page.
+ * - createPortal — confirmation dialog rendered to <body>.
+ *
+ * Behavior:
+ * - Waits for the favorites store to hydrate before rendering (client-only).
+ * - Paginates favorite *ids* (PAGE_SIZE = 6), then fetches their VenueLite data in parallel.
+ * - If an id returns 404, it is removed from the favorites store automatically.
+ * - Shows empty, loading, and error states.
+ * - Provides a modal to confirm removing a favorite; after removal, adjusts pagination if the last item on the last page is removed.
+ *
+ * Props:
+ * - profileName: used to key the per-user favorites store.
+ */
 export default function MyFavoritesList({ profileName }: Props) {
   const PAGE_SIZE = 6;
-
   const userKey = profileName.trim().toLowerCase();
-
   const useFavs = useFavoritesForUser(userKey);
   const favoriteIdsMap = useFavs((s: FavoritesState) => s.favoriteIds);
   const removeFav = useFavs((s: FavoritesState) => s.remove);
-
   const favsStore = useFavs as PersistedStore<FavoritesState>;
   const [hydrated, setHydrated] = useState<boolean>(false);
-
   useEffect(() => {
     const has = favsStore.persist?.hasHydrated?.() ?? false;
     setHydrated(has);
@@ -69,49 +94,38 @@ export default function MyFavoritesList({ profileName }: Props) {
     () => Object.keys(favoriteIdsMap ?? {}),
     [favoriteIdsMap]
   );
-
   const [page, setPage] = useState<number>(1);
   const [rows, setRows] = useState<VenueLite[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState<ReturnType<typeof buildMeta> | null>(null);
-
-  // modal
   const [open, setOpen] = useState<boolean>(false);
   const [target, setTarget] = useState<VenueLite | null>(null);
   const [busy, setBusy] = useState<boolean>(false);
   const [err, setErr] = useState<string | null>(null);
-
   useEffect(() => {
     const total = ids.length;
     const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
     if (page > pageCount) setPage(pageCount);
   }, [ids, page]);
-
   useEffect(() => {
     if (!hydrated) return;
-
     let alive = true;
     setLoading(true);
     setError(null);
-
     const start = (page - 1) * PAGE_SIZE;
     const currentIds = ids.slice(start, start + PAGE_SIZE);
-
     Promise.allSettled(currentIds.map((id) => getVenueById(id)))
       .then((results) => {
         if (!alive) return;
-
         const ok: VenueLite[] = [];
         let removedCount = 0;
-
         results.forEach((res, idx) => {
           const id = currentIds[idx];
           if (res.status === "fulfilled" && res.value) {
             ok.push(res.value);
           } else {
             const reason: unknown = (res as PromiseRejectedResult).reason;
-
             let status: number | undefined;
             if (typeof reason === "object" && reason !== null) {
               type MaybeStatus = {
@@ -127,19 +141,15 @@ export default function MyFavoritesList({ profileName }: Props) {
                 r.cause?.status ??
                 r.data?.status;
             }
-
             if (status === 404) {
               removedCount += 1;
               removeFav(id);
             }
           }
         });
-
         setRows(ok);
-
         const newTotal = Math.max(0, ids.length - removedCount);
         setMeta(buildMeta(newTotal, page, PAGE_SIZE));
-
         if (ok.length === 0 && currentIds.length > 0) {
           setError("Couldn’t load favorites");
         }
@@ -150,12 +160,19 @@ export default function MyFavoritesList({ profileName }: Props) {
       .finally(() => {
         if (alive) setLoading(false);
       });
-
     return () => {
       alive = false;
     };
   }, [hydrated, ids, page, removeFav]);
 
+  /**
+   * Opens the confirmation dialog to remove a venue from favorites.
+   *
+   * - Skips if a previous removal is still in progress (`busy`).
+   * - Stores the target venue and clears any prior modal error.
+   *
+   * @param v - The favorite venue the user wants to remove.
+   */
   function askRemove(v: VenueLite) {
     if (busy) return;
     setTarget(v);
@@ -163,6 +180,17 @@ export default function MyFavoritesList({ profileName }: Props) {
     setOpen(true);
   }
 
+  /**
+   * Confirms and removes the selected venue from the favorites store.
+   *
+   * Connected to: useFavoritesForUser(userKey).remove(id)
+   *
+   * Behavior:
+   * - Removes the target id from the store immediately.
+   * - Recalculates total favorites and, if necessary, navigates to the previous page
+   *   when the last item on the last page is removed.
+   * - Closes the modal on success; shows an error in the modal on failure.
+   */
   async function confirmRemove() {
     if (!target) return;
     setBusy(true);
@@ -180,7 +208,6 @@ export default function MyFavoritesList({ profileName }: Props) {
       setBusy(false);
     }
   }
-
   if (!hydrated)
     return <div className="p-8 text-primary/70">Loading favorites…</div>;
   if (loading)
@@ -192,7 +219,6 @@ export default function MyFavoritesList({ profileName }: Props) {
         You don’t have any favorites yet.
       </div>
     );
-
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 flex flex-col">
@@ -202,7 +228,6 @@ export default function MyFavoritesList({ profileName }: Props) {
           const loc = [v.location?.city, v.location?.country]
             .filter(Boolean)
             .join(", ");
-
           return (
             <div key={v.id} className="flex flex-col">
               <div className="flex flex-row mt-2.5 justify-between text-lg px-[20px] md:px-[40px]">
@@ -224,7 +249,6 @@ export default function MyFavoritesList({ profileName }: Props) {
                     </p>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-7.5 shrink-0">
                   <Link href={`/venues/${v.id}`} aria-label="View venue">
                     <svg
@@ -242,7 +266,6 @@ export default function MyFavoritesList({ profileName }: Props) {
                       />
                     </svg>
                   </Link>
-
                   <button
                     onClick={() => askRemove(v)}
                     aria-label="Remove favorite"
@@ -267,7 +290,6 @@ export default function MyFavoritesList({ profileName }: Props) {
           );
         })}
       </div>
-
       <div className="pb-2">
         <ListingsPagination
           meta={meta}
@@ -275,18 +297,16 @@ export default function MyFavoritesList({ profileName }: Props) {
           isLoading={loading}
         />
       </div>
-
-      {/* confirmation modal */}
+      {/* CONFIRMATION MODAL */}
       {open &&
         createPortal(
           <div className="fixed inset-0 z-[1000]">
-            {/* backdrop */}
+            {/* BACKDROP */}
             <button
               aria-label="Close modal"
               onClick={() => !busy && setOpen(false)}
               className="absolute inset-0 bg-black/50"
             />
-
             <div className="fixed inset-0 grid place-items-center p-4">
               <div
                 role="dialog"
