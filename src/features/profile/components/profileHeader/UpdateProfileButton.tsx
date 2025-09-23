@@ -7,9 +7,23 @@ import UpdateProfileModal from "./UpdateProfileModal";
 
 type Props = { profile: Profile };
 
+/**
+ * UpdateProfileButton component.
+ *
+ * Renders a button overlay on the profile avatar to trigger
+ * the profile update modal. The button is styled differently
+ * for desktop (overlay on hover) and mobile (fixed position).
+ *
+ * Features:
+ * - Displays the current avatar or a placeholder image.
+ * - Opens `UpdateProfileModal` when clicked.
+ * - Uses state to manage modal visibility.
+ *
+ * @param profile - The profile data including avatar info.
+ * @returns A button that opens the profile update modal.
+ */
 export default function UpdateProfileButton({ profile }: Props) {
   const [open, setOpen] = React.useState(false);
-
   return (
     <>
       <div className="absolute top-30 left-1/2 -translate-x-1/2 w-[150px] h-[150px] z-20">
@@ -22,7 +36,6 @@ export default function UpdateProfileButton({ profile }: Props) {
             unoptimized
             className="h-full w-full object-cover"
           />
-
           <button
             onClick={() => setOpen(true)}
             className="
@@ -31,8 +44,7 @@ export default function UpdateProfileButton({ profile }: Props) {
               bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity
               font-jakarta text-[15px] text-primary font-bold
             "
-            aria-label="Update profile"
-          >
+            aria-label="Update profile">
             UPDATE PROFILE
             <svg
               className="ml-1.5"
@@ -51,12 +63,10 @@ export default function UpdateProfileButton({ profile }: Props) {
           </button>
         </div>
       </div>
-
       <div className="absolute top-2 left-2 md:hidden z-20">
         <button
           onClick={() => setOpen(true)}
-          className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary font-bold"
-        >
+          className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary font-bold">
           UPDATE PROFILE
           <svg
             width="7"
@@ -73,8 +83,11 @@ export default function UpdateProfileButton({ profile }: Props) {
           </svg>
         </button>
       </div>
-
-      <UpdateProfileModal open={open} onClose={() => setOpen(false)} profile={profile} />
+      <UpdateProfileModal
+        open={open}
+        onClose={() => setOpen(false)}
+        profile={profile}
+      />
     </>
   );
 }

@@ -1,4 +1,3 @@
-// src/features/profile-public/components/PublicProfileVenuesSection.tsx
 "use client";
 
 import PublicVenuesList from "./PublicVenueList";
@@ -8,6 +7,27 @@ type Props = {
   isVenueManager: boolean;
 };
 
+/**
+ * PublicProfileVenuesSection component.
+ *
+ * Renders a single “VENUES” tab shell (to match the site’s tab styling) and
+ * either:
+ * - the public venues list for the given `profileName`, or
+ * - an empty-state message when the user isn’t a venue manager.
+ *
+ * Connected to:
+ * - `PublicVenuesList` — performs the actual fetching/rendering of the profile’s venues.
+ * - `PublicProfilePage` (route page) — parent that supplies `profileName` and
+ *   `isVenueManager` from server-side profile lookups.
+ *
+ * Accessibility:
+ * - Uses `role="tablist"`, `role="tab"`, and `role="tabpanel"` to convey the
+ *   tabbed structure to assistive tech (even though there is only one tab here).
+ *
+ * @param profileName - The profile slug whose venues should be shown.
+ * @param isVenueManager - If `true`, render the venues list; otherwise show an empty state.
+ * @returns The public profile “Venues” section.
+ */
 export default function PublicProfileVenuesSection({
   profileName,
   isVenueManager,
@@ -15,7 +35,6 @@ export default function PublicProfileVenuesSection({
   return (
     <section className="mt-5 mb-20">
       <div className="flex flex-col mx-auto font-jakarta text-primary max-w-[1055px]">
-        {/* Single 'tab' shell to match your existing look */}
         <div className="flex h-[55px]" role="tablist" aria-label="Profile tabs">
           <button
             role="tab"
@@ -26,14 +45,12 @@ export default function PublicProfileVenuesSection({
               "bg-primary/9 font-bold",
             ].join(" ")}
           >
-            <span className="block sm:hidden">VENUES</span>
-            <span className="hidden sm:block">VENUES</span>
+            <span className="block">VENUES</span>
           </button>
 
-          {/* spacer */}
+          {/* SPACER */}
           <div className="flex-1 bg-secondary rounded-t-[10px]" />
         </div>
-
         <div
           role="tabpanel"
           className={[

@@ -11,7 +11,10 @@ type Props = {
   profile: Profile;
 };
 
-// API defaults  — used when fields are left empty
+/**
+ * Default fallback images used when the user leaves avatar/banner URL empty.
+ * These ensure the API always receives a valid image object.
+ */
 const DEFAULT_AVATAR_URL =
   "https://images.unsplash.com/photo-1579547945413-497e1b99dac0?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=400&w=400";
 const DEFAULT_AVATAR_ALT = "A blurry multi-colored rainbow background";
@@ -19,6 +22,33 @@ const DEFAULT_BANNER_URL =
   "https://images.unsplash.com/photo-1579547945413-497e1b99dac0?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=210&w=1055";
 const DEFAULT_BANNER_ALT = "A blurry multi-colored rainbow background";
 
+/**
+ * UpdateProfileModal component.
+ *
+ * A controlled modal for editing a user's `bio`, `avatar`, and `banner`.
+ * When submitted, it trims inputs, applies sensible defaults for missing
+ * image URLs, calls the profile API, closes, and refreshes the page.
+ *
+ * Connected to:
+ * - `UpdateProfileButton` — opens this modal.
+ * - `updateProfile(name, payload)` — API call used on submit.
+ * - `ProfileHeader` — shows updated data after `router.refresh()`.
+ *
+ * Behavior:
+ * - Resets form fields whenever `open` toggles to `true`.
+ * - Backdrop click and “CANCEL” call `onClose`.
+ * - Uses fallback images if avatar/banner URL is blank.
+ * - Shows a simple error message if the API rejects.
+ *
+ * Accessibility:
+ * - Backdrop close button has `aria-label="Close modal"`.
+ * - Form controls are labeled via `<label htmlFor=…>`.
+ *
+ * @param open - Whether the modal is shown.
+ * @param onClose - Close handler (also used after successful submit).
+ * @param profile - Source of initial field values.
+ * @returns The profile edit modal UI, or `null` when `open` is `false`.
+ */
 export default function UpdateProfileModal({ open, onClose, profile }: Props) {
   const router = useRouter();
   const [bio, setBio] = React.useState(profile.bio ?? "");
@@ -28,7 +58,6 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
   const [bannerAlt, setBannerAlt] = React.useState(profile.banner?.alt ?? "");
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
-
   React.useEffect(() => {
     if (open) {
       setBio(profile.bio ?? "");
@@ -39,23 +68,19 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
       setErr(null);
     }
   }, [open, profile]);
-
   if (!open) return null;
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setErr(null);
-
     try {
       const bioTrim = bio.trim();
       const avatarUrlTrim = avatarUrl.trim();
       const avatarAltTrim = (avatarAlt || "").trim();
       const bannerUrlTrim = bannerUrl.trim();
       const bannerAltTrim = (bannerAlt || "").trim();
-
       const payload = {
-        bio: bioTrim, 
+        bio: bioTrim,
         avatar: {
           url: avatarUrlTrim || DEFAULT_AVATAR_URL,
           alt: avatarUrlTrim ? avatarAltTrim || null : DEFAULT_AVATAR_ALT,
@@ -65,7 +90,6 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
           alt: bannerUrlTrim ? bannerAltTrim || null : DEFAULT_BANNER_ALT,
         },
       };
-
       await updateProfile(profile.name, payload);
       onClose();
       router.refresh();
@@ -75,19 +99,18 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
       setBusy(false);
     }
   }
-
   return (
     <div className="fixed inset-0 z-[100]">
-      {/* backdrop */}
+      {/* BACKDROP */}
       <button
         aria-label="Close modal"
         onClick={onClose}
         className="absolute inset-0 bg-black/50"
       />
 
-      {/* dialog */}
+      {/* CONTENT */}
       <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-[685px] -translate-x-1/2 -translate-y-1/2 rounded-[10px] bg-secondary p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] px-5 md:px-30">
-        {/* heading */}
+        {/* HEADING */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex-1 text-center">
             <h2 className="font-noto text-[35px] font-bold text-primary">
@@ -95,11 +118,12 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
             </h2>
           </div>
         </div>
-
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
-          {/* Avatar URL */}
+          {/* AVATAR URL */}
           <div className="flex flex-col w-full">
-            <label htmlFor="avatarUrl" className="font-jakarta font-bold text-xs">
+            <label
+              htmlFor="avatarUrl"
+              className="font-jakarta font-bold text-xs">
               Avatar URL
             </label>
             <input
@@ -109,13 +133,14 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
               placeholder="Avatar URL (https://…)"
               value={avatarUrl}
               onChange={(e) => setAvatarUrl(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
-          {/* Avatar alt */}
+          {/* AVATAR ALT */}
           <div className="flex flex-col w-full">
-            <label htmlFor="avatarAlt" className="font-jakarta font-bold text-xs">
+            <label
+              htmlFor="avatarAlt"
+              className="font-jakarta font-bold text-xs">
               Avatar alt
             </label>
             <input
@@ -125,13 +150,14 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
               placeholder="Avatar alt text"
               value={avatarAlt}
               onChange={(e) => setAvatarAlt(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
-          {/* Banner URL */}
+          {/* BANNER URL */}
           <div className="flex flex-col w-full">
-            <label htmlFor="bannerUrl" className="font-jakarta font-bold text-xs">
+            <label
+              htmlFor="bannerUrl"
+              className="font-jakarta font-bold text-xs">
               Banner URL
             </label>
             <input
@@ -141,13 +167,14 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
               placeholder="Banner URL (https://…)"
               value={bannerUrl}
               onChange={(e) => setBannerUrl(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
-          {/* Banner alt */}
+          {/* BANNER ALT */}
           <div className="flex flex-col w-full">
-            <label htmlFor="bannerAlt" className="font-jakarta font-bold text-xs">
+            <label
+              htmlFor="bannerAlt"
+              className="font-jakarta font-bold text-xs">
               Banner alt
             </label>
             <input
@@ -157,11 +184,10 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
               placeholder="Banner alt text"
               value={bannerAlt}
               onChange={(e) => setBannerAlt(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
-          {/* Bio */}
+          {/* BIO */}
           <div className="flex flex-col w-full">
             <label htmlFor="bio" className="font-jakarta font-bold text-xs">
               Bio
@@ -173,13 +199,11 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={4}
-              className="min-h-[90px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 py-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="min-h-[90px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 py-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
-          {err && <p className="text-sm text-red-300">{err}</p>}
-
-          {/* Buttons row */}
+          {err && <p className="text-sm text-imperialRed">{err}</p>}
+          {/* CTA */}
           <div className="mt-2 flex w-full items-center justify-center gap-[30px]">
             <button
               type="submit"
@@ -200,7 +224,6 @@ export default function UpdateProfileModal({ open, onClose, profile }: Props) {
                 />
               </svg>
             </button>
-
             <button
               type="button"
               onClick={onClose}

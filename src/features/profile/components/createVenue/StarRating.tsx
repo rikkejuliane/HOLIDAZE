@@ -1,5 +1,18 @@
 import * as React from "react";
 
+/**
+ * StarRating component.
+ *
+ * Controlled, accessible star rating input rendered as a row of buttons
+ * (1..`max`). Uses `role="radiogroup"` with each star as `role="radio"`.
+ *
+ * Connected to: `CreateVenueModal` (for selecting a venue rating).
+ *
+ * @param value    - Current selected rating (1..max). Use 0 for “no rating”.
+ * @param onChange - Invoked with the next rating when a star is clicked.
+ * @param max      - Total number of stars to render (default: 5).
+ * @returns The star rating control.
+ */
 export function StarRating({
   value,
   onChange,
@@ -34,6 +47,15 @@ export function StarRating({
   );
 }
 
+/**
+ * StarIcon.
+ *
+ * Presentational SVG star that switches appearance based on `filled`.
+ * Uses `currentColor` so parent classes control color.
+ *
+ * @param filled - When true, renders a filled/starred appearance.
+ * @returns SVG element of a single star.
+ */
 function StarIcon({ filled }: { filled: boolean }) {
   return (
     <svg
