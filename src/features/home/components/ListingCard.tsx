@@ -6,20 +6,36 @@ import type { Venue } from "@/types/venue";
 
 type Props = {
   venue: Venue;
-  onClick?: (id: string) => void; // optional
+  onClick?: (id: string) => void;
 };
 
+/**
+ * ListingCard component.
+ *
+ * A card-style UI element displaying a venue's image, name, location,
+ * guest capacity, rating, and price per night. Includes a "Book Venue"
+ * link that navigates to the venue's detail page.
+ *
+ * Features:
+ * - Shows the first image from `venue.media` or a placeholder if none.
+ * - Displays venue name, city/country, max guests, rating, and formatted price.
+ * - Calls `onClick(venue.id)` when the card is clicked (if provided).
+ * - "Book Venue" link navigates to `/venues/{venue.id}`.
+ *
+ * @param venue   - The venue data to display.
+ * @param onClick - Optional callback fired with the venue ID when the card is clicked.
+ *
+ * @returns The listing card UI for a single venue.
+ */
 export default function ListingCard({ venue, onClick }: Props) {
   const img = venue.media?.[0]?.url ?? null;
-
   return (
     <article
       className="relative w-[292px] h-[350px] rounded-3xl overflow-hidden drop-shadow-lg"
       aria-label={venue.name}
       onClick={() => onClick?.(venue.id)}>
-      {/* IMAGE AREA (top 14rem) */}
+      {/* IMAGE */}
       <div className="relative w-[292px] h-[230px] overflow-hidden rounded-tl-3xl rounded-tr-3xl">
-        {" "}
         {img ? (
           <Image
             src={img}
@@ -34,7 +50,7 @@ export default function ListingCard({ venue, onClick }: Props) {
             No image
           </div>
         )}
-        {/* bottom fade */}
+        {/* BOTTOM FADE */}
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#282A2E] to-transparent z-[1]" />
       </div>
 
@@ -58,7 +74,6 @@ export default function ListingCard({ venue, onClick }: Props) {
           <span>{venue.maxGuests ?? "—"} guests</span>
           <span aria-hidden>|</span>
           <span className="inline-flex items-center gap-1">
-            {/* star svg */}
             <svg
               width="12"
               height="11"
@@ -85,7 +100,7 @@ export default function ListingCard({ venue, onClick }: Props) {
           </div>
           <Link
             href={`/venues/${encodeURIComponent(venue.id)}`}
-            className="inline-flex items-center gap-1 text-white font-bold hover:opacity-90 cursor-pointer">
+            className="inline-flex items-center gap-1 text-primary font-bold hover:opacity-90 cursor-pointer">
             BOOK VENUE
             <svg
               width="7"
@@ -107,6 +122,13 @@ export default function ListingCard({ venue, onClick }: Props) {
   );
 }
 
+/**
+ * Formats a nightly price in USD with no decimals (e.g., "$1,250").
+ * Falls back to `$<n>` if formatting fails.
+ *
+ * @param n - Price to format.
+ * @returns A user-friendly currency string.
+ */
 function formatPrice(n: number) {
   try {
     return new Intl.NumberFormat("en-US", {
