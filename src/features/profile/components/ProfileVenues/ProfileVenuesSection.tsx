@@ -41,7 +41,6 @@ type Props = {
  * - Implements a proper tabs pattern with role="tablist"/"tab"/"tabpanel".
  * - Dialogs are rendered as modal layers.
  */
-
 export default function ProfileVenuesSection({
   profileName,
   isVenueManager,

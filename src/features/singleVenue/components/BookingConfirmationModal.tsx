@@ -16,27 +16,30 @@ type SummaryView = {
   totalLabel: string;
   totalAmount: string;
 };
-
 type Props = {
   open: boolean;
   onClose: () => void;
-
-  // Content
   venueName: string;
   venueImg?: { url?: string; alt?: string };
   summary: SummaryView;
-
-  // Actions
-  /** Called when user clicks "Yes" on the confirm step. Should perform the real booking. */
   onConfirm?: () => Promise<void> | void;
-
-  /** Optional: tells parent a booking succeeded (useful to trigger refresh outside). */
-  onConfirmed?: () => void; // ✅ NEW
-
-  /** Where "View booking" should go after confirmation */
+  onConfirmed?: () => void;
   viewBookingHref?: string;
 };
 
+/** BookingConfirmationModal — two-phase booking dialog (confirm → confirmed).
+ * @param open Controls visibility.
+ * @param onClose Close handler (backdrop/“NO”/X in confirmed).
+ * @param venueName Venue title shown in the header.
+ * @param venueImg Optional 48×48 thumbnail { url, alt }.
+ * @param summary Preformatted labels/amounts for the cost breakdown.
+ * @param onConfirm Optional async action to create the booking.
+ * @param onConfirmed Optional callback fired after a successful confirm.
+ * @param viewBookingHref Link shown in the confirmed state (default: "/profile").
+ * @returns JSX.Element|null
+ * @remarks Resets to “confirm” every time `open` becomes true. Close “X” shows only in the confirmed phase.
+ * @see onConfirm — typically wired to your API call (e.g., createBooking()).
+ */
 export default function BookingConfirmationModal({
   open,
   onClose,
@@ -44,49 +47,43 @@ export default function BookingConfirmationModal({
   venueImg,
   summary,
   onConfirm,
-  onConfirmed, // ✅ NEW
+  onConfirmed,
   viewBookingHref = "/profile",
 }: Props) {
   const [phase, setPhase] = useState<"confirm" | "confirmed">("confirm");
   const [isConfirming, setIsConfirming] = useState(false);
-
-  // Reset phase when reopened
   useEffect(() => {
     if (open) {
       setPhase("confirm");
       setIsConfirming(false);
     }
   }, [open]);
-
   if (!open) return null;
-
   const handleYes = async () => {
     if (!onConfirm) {
       setPhase("confirmed");
-      onConfirmed?.(); // ✅ fire immediately if no async confirm provided
+      onConfirmed?.();
       return;
     }
     try {
       setIsConfirming(true);
       await onConfirm();
       setPhase("confirmed");
-      onConfirmed?.(); // ✅ notify parent after success
+      onConfirmed?.();
     } finally {
       setIsConfirming(false);
     }
   };
-
   const handleNo = () => onClose();
-
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
       <div className="relative w-full max-w-md rounded-3xl bg-secondary shadow-[0px_8px_24px_rgba(0,0,0,0.45)] p-5 text-primary">
-        {/* Close X — only in CONFIRMED phase, top-right */}
+        {/* CLOSE X — only in CONFIRMED phase */}
         {phase === "confirmed" && (
           <button
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-4 top-4 p-1 rounded hover:bg-white/10 transition">
+            className="absolute right-4 top-4 p-1 rounded hover:bg-primary/10 transition">
             <svg
               width="10"
               height="10"
@@ -102,8 +99,7 @@ export default function BookingConfirmationModal({
             </svg>
           </button>
         )}
-
-        {/* Header */}
+        {/* HEADER */}
         {phase === "confirmed" ? (
           <div className="mb-3">
             <h3 className="font-noto font-bold text-lg tracking-wide">
@@ -123,8 +119,7 @@ export default function BookingConfirmationModal({
             </p>
           </div>
         )}
-
-        {/* Venue mini header (image + title) */}
+        {/* IMAGE AND TITLE */}
         <div className="flex items-center gap-3 mb-3">
           <div className="w-12 h-12 rounded-xl overflow-hidden bg-black/20">
             {venueImg?.url ? (
@@ -140,8 +135,7 @@ export default function BookingConfirmationModal({
           </div>
           <h4 className="font-noto font-bold text-base">{venueName}</h4>
         </div>
-
-        {/* Summary */}
+        {/* SUMMARY */}
         <div className="text-sm font-jakarta space-y-1.5">
           <div className="flex justify-between">
             <span>Check in</span>
@@ -174,8 +168,7 @@ export default function BookingConfirmationModal({
             <span>{summary.totalAmount}</span>
           </div>
         </div>
-
-        {/* Footer actions */}
+        {/* FOOTER ACTIONS */}
         {phase === "confirm" ? (
           <div className="mt-4 flex items-center justify-center gap-5">
             <button
@@ -197,7 +190,6 @@ export default function BookingConfirmationModal({
                 />
               </svg>
             </button>
-
             <button
               onClick={handleNo}
               className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary/60 font-bold">
