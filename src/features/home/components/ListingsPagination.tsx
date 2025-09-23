@@ -1,4 +1,3 @@
-// src/features/home/components/ListingsPagination.tsx
 "use client";
 
 import type { ListMeta } from "@/types/venue";
@@ -9,35 +8,51 @@ type Props = {
   isLoading?: boolean;
 };
 
+/**
+ * ListingsPagination component.
+ *
+ * Compact pagination control with previous/next buttons and a condensed page
+ * number row (with ellipses). Returns `null` when there is only one page.
+ *
+ * Behavior:
+ * - Derives visible page items via `getPageItems(currentPage, pageCount)`.
+ * - Disables navigation while `isLoading` or when at the ends.
+ * - Ignores clicks to the current page or out-of-range pages.
+ *
+ * Accessibility:
+ * - `aria-label="Pagination"` on the container.
+ * - Uses `aria-current="page"` on the active page button.
+ * - Buttons have focus-visible rings for keyboard users.
+ *
+ * @param meta         - Pagination metadata (current/prev/next/last).
+ * @param onPageChange - Called with the desired page number.
+ * @param isLoading    - When true, disables all interactions.
+ * @returns The pagination UI or `null` if not needed.
+ */
 export default function ListingsPagination({
   meta,
   onPageChange,
   isLoading,
 }: Props) {
   if (!meta || !meta.pageCount || meta.pageCount <= 1) return null;
-
   const { currentPage, pageCount, isFirstPage, isLastPage } = meta;
   const pages = getPageItems(currentPage, pageCount);
-
   const go = (p: number) => {
     if (isLoading) return;
     if (p < 1 || p > pageCount || p === currentPage) return;
     onPageChange(p);
   };
-
   return (
     <nav
       aria-label="Pagination"
-      className="mt-6 flex items-center justify-center gap-4 font-jakarta text-[15px] font-semibold text-primary"
-    >
+      className="mt-6 flex items-center justify-center gap-4 font-jakarta text-[15px] font-semibold text-primary">
       {/* Prev */}
       <button
         type="button"
         onClick={() => go(meta.previousPage ?? Math.max(1, currentPage - 1))}
         aria-label="Previous page"
         disabled={isLoading || isFirstPage}
-        className="w-8 h-8 inline-flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-      >
+        className="w-8 h-8 inline-flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
         <svg
           width="8"
           height="13"
@@ -45,8 +60,7 @@ export default function ListingsPagination({
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           aria-hidden="true"
-          className="shrink-0 pointer-events-none"
-        >
+          className="shrink-0 pointer-events-none">
           <path
             d="M7 1L1 6.5L7 12"
             stroke="#FCFEFF"
@@ -55,7 +69,6 @@ export default function ListingsPagination({
           />
         </svg>
       </button>
-
       {/* Number row with ellipses */}
       <div className="flex items-center gap-2">
         {pages.map((p, i) =>
@@ -63,8 +76,7 @@ export default function ListingsPagination({
             <span
               key={`dots-${i}`}
               aria-hidden
-              className="px-2 opacity-70 select-none cursor-default"
-            >
+              className="px-2 opacity-70 select-none cursor-default">
               …
             </span>
           ) : (
@@ -74,8 +86,7 @@ export default function ListingsPagination({
               onClick={() => go(p)}
               aria-current={p === currentPage ? "page" : undefined}
               className="relative w-8 h-8 inline-flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              disabled={isLoading || p === currentPage}
-            >
+              disabled={isLoading || p === currentPage}>
               {/* circle under the selected number */}
               {p === currentPage && (
                 <span
@@ -90,15 +101,13 @@ export default function ListingsPagination({
           )
         )}
       </div>
-
       {/* Next */}
       <button
         type="button"
         onClick={() => go(meta.nextPage ?? currentPage + 1)}
         aria-label="Next page"
         disabled={isLoading || isLastPage}
-        className="w-8 h-8 inline-flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-      >
+        className="w-8 h-8 inline-flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
         <svg
           width="8"
           height="13"
@@ -106,8 +115,7 @@ export default function ListingsPagination({
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           aria-hidden="true"
-          className="shrink-0 pointer-events-none"
-        >
+          className="shrink-0 pointer-events-none">
           <path
             d="M1 12L7 6.5L1 1"
             stroke="#FCFEFF"
@@ -120,17 +128,19 @@ export default function ListingsPagination({
   );
 }
 
-/** Produces sequences like:
- * page=1  -> [1, 2, …, total]
- * middle  -> [1, …, p-1, p, p+1, …, total]
- * end     -> [1, …, total-2, total-1, total]
- * small totals (<=7) -> all pages
+/**
+ * Computes a condensed list of page items for pagination.
+ *
+ * - If `total <= 7`, returns all page numbers.
+ * - Otherwise, returns a compact array with `…` sentinel(s) around the current page.
+ *
+ * @param current - Current page (1-based).
+ * @param total   - Total number of pages.
+ * @returns An array of page numbers and the string `"…"` as separators.
  */
 function getPageItems(current: number, total: number): (number | "…")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
   if (current <= 3) return [1, 2, 3, "…", total];
   if (current >= total - 2) return [1, "…", total - 2, total - 1, total];
-
   return [1, "…", current - 1, current, current + 1, "…", total];
 }
