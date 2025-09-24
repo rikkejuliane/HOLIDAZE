@@ -64,11 +64,11 @@ export default function ContactPage() {
                     className="h-[30px] flex-1 min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] placeholder:text-primary placeholder:font-jakarta"
                   />
                 </div>
-                <label htmlFor="email" className="sr-only">
+                <label htmlFor="e-mail" className="sr-only">
                   Email
                 </label>
                 <input
-                  id="email"
+                  id="e-mail"
                   name="email"
                   type="email"
                   placeholder="Email"
