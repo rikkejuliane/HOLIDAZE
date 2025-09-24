@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { Suspense } from "react";
 import HeroFilters from "./HeroFilters";
 
 /**
@@ -33,9 +32,7 @@ export default function HeroHome() {
         </h1>
       </div>
       <div className="absolute -bottom-80 sm:-bottom-44 lg:bottom-4 left-0 right-0 px-4 flex justify-center">
-        <Suspense fallback={null}>
           <HeroFilters />
-        </Suspense>
       </div>
     </div>
   );
