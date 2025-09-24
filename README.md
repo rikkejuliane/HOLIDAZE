@@ -28,11 +28,10 @@ This project was developed as part of my **Project Exam 2** at Noroff, showcasin
 ![Home Demo](https://github.com/user-attachments/assets/f82dedb7-c9ad-44c1-8124-83231e786e8b)  
 
 **Auth:**   
-![Auth demo](https://github.com/user-attachments/assets/4ffaaad9-6647-4e8f-b8ed-4dd70730f573)
+![Auth Demo](https://github.com/user-attachments/assets/27e3dfce-ba5b-498c-9272-8f1355693456)
 
 **Profile:**  
-![Profile](https://github.com/user-attachments/assets/583f10df-3269-449d-b257-8835150d9eb2)
-
+![Profile Demo](https://github.com/user-attachments/assets/583f10df-3269-449d-b257-8835150d9eb2) 
 
 
 ## User Stories 👤 
