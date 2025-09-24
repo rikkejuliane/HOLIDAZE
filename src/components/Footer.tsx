@@ -20,6 +20,8 @@ export default function Footer() {
             alt="Holidaze logo"
             width={379}
             height={81}
+            className="w-[379px] h-[81px]"
+            sizes="379px"
           />
           <div aria-labelledby="newsletter-heading">
             <h3

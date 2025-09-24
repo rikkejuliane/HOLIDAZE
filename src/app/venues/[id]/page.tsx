@@ -8,7 +8,7 @@ import BookingPanel from "@/features/singleVenue/components/BookingPanel";
 import FavoriteHeartWithToast from "@/components/FavoriteHeartWithToast";
 import { cookies } from "next/headers";
 
-type Props = { params: { id: string } };
+type Props = { params: Promise<{ id: string }> };
 
 /**
  * Venue detail page.
@@ -22,7 +22,7 @@ type Props = { params: { id: string } };
  * @returns Server component rendering the venue page, or triggers `notFound()`.
  */
 export default async function VenueDetailPage({ params }: Props) {
-  const { id } = params;
+  const { id } = await params;
   let venue: Venue | null = null;
   try {
     venue = await getVenueById(id, { owner: true, bookings: true });
@@ -30,6 +30,11 @@ export default async function VenueDetailPage({ params }: Props) {
   if (!venue) return notFound();
   const cookieStore = await cookies();
   const isLoggedIn = Boolean(cookieStore.get("token")?.value);
+  const rawUsername = cookieStore.get("username")?.value;
+  const viewerName = rawUsername ? decodeURIComponent(rawUsername) : null;
+  const norm = (s?: string | null) => (s ?? "").trim().toLowerCase();
+  const isMyVenue =
+    !!viewerName && norm(viewerName) === norm(venue.owner?.name);
   return (
     <section className="mt-[90px] sm:mt-[70px] mb-20">
       <div className="flex flex-col xl:flex-row gap-[45px] items-stretch md:items-center">
@@ -164,7 +169,7 @@ export default async function VenueDetailPage({ params }: Props) {
                   </div>
                   <p className="">PARKING:</p>
                 </div>
-                <p>{venue.meta?.wifi ? "YES" : "NO"}</p>
+                <p>{venue.meta?.parking ? "YES" : "NO"}</p>
               </div>
               {/* BREAKFAST */}
               <div className="flex flex-row justify-between pb-[3px]">
@@ -185,7 +190,7 @@ export default async function VenueDetailPage({ params }: Props) {
                   </div>
                   <p className="">BREAKFAST:</p>
                 </div>
-                <p>{venue.meta?.wifi ? "YES" : "NO"}</p>
+                <p>{venue.meta?.breakfast ? "YES" : "NO"}</p>
               </div>
               {/* PETS */}
               <div className="flex flex-row justify-between pb-[3px]">
@@ -206,7 +211,7 @@ export default async function VenueDetailPage({ params }: Props) {
                   </div>
                   <p className="">PETS:</p>
                 </div>
-                <p>{venue.meta?.wifi ? "YES" : "NO"}</p>
+                <p>{venue.meta?.pets ? "YES" : "NO"}</p>
               </div>
             </div>
             {/* HOST */}
@@ -215,7 +220,11 @@ export default async function VenueDetailPage({ params }: Props) {
               <div className="flex flex-row gap-1.5 items-center">
                 {isLoggedIn && venue.owner?.name ? (
                   <Link
-                    href={`/profile/${encodeURIComponent(venue.owner.name)}`}
+                    href={
+                      isMyVenue
+                        ? "/profile"
+                        : `/profile/${encodeURIComponent(venue.owner.name)}`
+                    }
                     className="flex flex-row gap-1.5 items-center hover:underline"
                     aria-label={`View ${venue.owner.name}'s profile`}>
                     <Image

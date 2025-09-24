@@ -60,6 +60,8 @@ export default function Navbar() {
                 width={145}
                 height={32}
                 priority
+                className="w-[145px] h-[32px]"
+                sizes="145px"
               />
             </Link>
             {/* MOBILE NAV */}

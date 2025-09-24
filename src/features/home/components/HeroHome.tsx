@@ -20,6 +20,7 @@ export default function HeroHome() {
         alt="Ai generated image of a woman sitting in an infinity pool looking over snowey mountains"
         width={1440}
         height={767}
+        priority
         className="w-full h-[745px] object-cover object-center sm:h-auto"
       />
       <div className="absolute top-80 sm:top-28 md:top-28 lg:top-45 xl:top-60 left-1/2 -translate-x-1/2 w-full">
