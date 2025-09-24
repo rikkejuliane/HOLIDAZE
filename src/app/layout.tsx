@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Holidaze",
     description: "Find and book venues around the world.",
-    url: "https://yourdomain.com",
+    url: "https://holidaze-rikkejuliane.netlify.app/",
     siteName: "Holidaze",
     locale: "en_US",
     type: "website",
