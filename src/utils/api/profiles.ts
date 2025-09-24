@@ -12,6 +12,16 @@ export type Profile = {
   _count?: { venues: number; bookings: number };
 };
 
+/**
+ * Fetch a **private** profile by name (server-side) using a Bearer token.
+ * Optionally embeds bookings/venues via `_bookings` / `_venues` query params.
+ *
+ * @param name   Profile name to fetch.
+ * @param token  Bearer token to authorize the request.
+ * @param opts   { bookings?: boolean; venues?: boolean }
+ * @returns The resolved {@link Profile}.
+ * @throws  Error when the HTTP response is not OK (includes status code).
+ */
 export async function getProfileByName(
   name: string,
   token: string,
@@ -20,14 +30,12 @@ export async function getProfileByName(
   const qs = new URLSearchParams();
   if (opts?.bookings) qs.set("_bookings", "true");
   if (opts?.venues) qs.set("_venues", "true");
-
   const res = await fetch(
     `${API_PROFILES}/${encodeURIComponent(name)}${
       qs.toString() ? `?${qs}` : ""
     }`,
     { headers: buildServerHeaders({ token, apiKey: true }), cache: "no-store" }
   );
-
   if (!res.ok) {
     console.error("Profiles GET failed", res.status, await res.text());
     throw new Error(`getProfileByName failed: ${res.status}`);
@@ -36,6 +44,17 @@ export async function getProfileByName(
   return data as Profile;
 }
 
+/**
+ * Update the **current** user's profile (client-side).
+ * Requires an auth token (read from `localStorage`) and API key header.
+ * Accepts partial updates for bio / venueManager / avatar / banner.
+ * Provides friendlier error messages for invalid/unreachable image URLs.
+ *
+ * @param name   Profile name to update.
+ * @param body   Partial fields to update.
+ * @returns The updated {@link Profile}.
+ * @throws  Error with a user-friendly message if the update fails.
+ */
 export async function updateProfile(
   name: string,
   body: {
@@ -50,11 +69,9 @@ export async function updateProfile(
     headers: buildHeaders({ apiKey: true, authToken: true, contentType: true }),
     body: JSON.stringify(body),
   });
-
   if (!res.ok) {
     let userMsg = "Couldn’t save your changes. Please try again.";
     try {
-      // API shape: { errors: [{ message }], status, statusCode }
       const data: { errors?: Array<{ message?: string }> } = await res
         .clone()
         .json();
@@ -62,8 +79,6 @@ export async function updateProfile(
         .map((e) => e.message ?? "")
         .filter(Boolean)
         .join(" ");
-
-      // Try to identify the offending URL + which field it belongs to
       const urlMatch = raw.match(/https?:\/\/[^\s"']+/i);
       const offendingUrl = urlMatch?.[0];
       const which =
@@ -72,7 +87,6 @@ export async function updateProfile(
           : offendingUrl && body.banner?.url === offendingUrl
           ? "Banner URL"
           : undefined;
-
       if (/image is not accessible/i.test(raw)) {
         let host = "";
         try {
@@ -91,17 +105,22 @@ export async function updateProfile(
       } else if (res.status === 403) {
         userMsg = "You don’t have permission to update this profile.";
       }
-    } catch {
-      // keep userMsg fallback above
-    }
+    } catch {}
     throw new Error(userMsg);
   }
-
   const { data } = await res.json();
   return data as Profile;
 }
 
-// PUBLIC READ (no auth): get a profile by name with optional embeds
+/**
+ * Fetch a **public** profile by name (no auth). Uses API key only.
+ * Optionally embeds bookings/venues via `_bookings` / `_venues`.
+ *
+ * @param name  Profile name to fetch.
+ * @param opts  { bookings?: boolean; venues?: boolean }
+ * @returns The resolved {@link Profile}.
+ * @throws  A plain typed object `{ name, message, status, body }` on failure.
+ */
 export async function getPublicProfileByName(
   name: string,
   opts?: { bookings?: boolean; venues?: boolean }
@@ -109,22 +128,24 @@ export async function getPublicProfileByName(
   const qs = new URLSearchParams();
   if (opts?.bookings) qs.set("_bookings", "true");
   if (opts?.venues) qs.set("_venues", "true");
-
   const res = await fetch(
-    `${API_PROFILES}/${encodeURIComponent(name)}${qs.toString() ? `?${qs}` : ""}`,
+    `${API_PROFILES}/${encodeURIComponent(name)}${
+      qs.toString() ? `?${qs}` : ""
+    }`,
     {
-      // IMPORTANT: only API key; no auth token here
       headers: buildServerHeaders({ apiKey: true }),
       cache: "no-store",
     }
   );
-
   if (!res.ok) {
     const body = await res.text().catch(() => undefined);
-    // Throw a plainly-typed object (no any)
-    throw { name: "HttpError", message: "getPublicProfileByName failed", status: res.status, body } as const;
+    throw {
+      name: "HttpError",
+      message: "getPublicProfileByName failed",
+      status: res.status,
+      body,
+    } as const;
   }
-
   const { data } = await res.json();
   return data as Profile;
 }

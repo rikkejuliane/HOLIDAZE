@@ -21,25 +21,39 @@ type ApiListMeta = {
   totalCount: number;
 };
 
+/**
+ * MyVenuesList — paginated management view of the current user's venues.
+ *
+ * Connected to:
+ * - getVenuesByProfile(profileName, { page, limit, sort, sortOrder }) — loads rows.
+ * - deleteVenueById(id) — removes a venue after confirmation.
+ * - ListingsPagination — page navigation.
+ * - BookingsCount — lazy bookings pill per venue.
+ * - createPortal — delete-confirmation modal rendered to <body>.
+ * - Window events: listens for "venues:created" / "venues:updated", dispatches "venues:deleted".
+ *
+ * Behavior:
+ * - Keeps local pagination state (PAGE_SIZE = 6).
+ * - Resets to page 1 when profileName changes or a venue is created.
+ * - On delete, automatically steps back a page if you removed the only item on the last page.
+ *
+ * Props:
+ * - profileName: identifies which user's venues to list.
+ */
 export default function MyVenuesList({ profileName }: Props) {
   const PAGE_SIZE = 6;
-
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState<Venue[]>([]);
   const [meta, setMeta] = useState<ListMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [modalOpen, setModalOpen] = useState(false);
   const [target, setTarget] = useState<Venue | null>(null);
   const [modalBusy, setModalBusy] = useState(false);
   const [modalErr, setModalErr] = useState<string | null>(null);
-
   useEffect(() => {
     setPage(1);
   }, [profileName]);
-
-  // central fetch
   const fetchData = useCallback(
     async (p: number) => {
       setLoading(true);
@@ -51,9 +65,7 @@ export default function MyVenuesList({ profileName }: Props) {
           sort: "created",
           sortOrder: "desc",
         });
-
         setRows(data ?? []);
-
         const m = meta as ApiListMeta;
         setMeta({
           currentPage: m.currentPage,
@@ -72,11 +84,9 @@ export default function MyVenuesList({ profileName }: Props) {
     },
     [profileName]
   );
-
   useEffect(() => {
     fetchData(page);
   }, [fetchData, page]);
-
   useEffect(() => {
     function onCreated() {
       setPage(1);
@@ -85,7 +95,6 @@ export default function MyVenuesList({ profileName }: Props) {
     window.addEventListener("venues:created", onCreated);
     return () => window.removeEventListener("venues:created", onCreated);
   }, [fetchData]);
-
   useEffect(() => {
     function onUpdated() {
       fetchData(page);
@@ -94,6 +103,15 @@ export default function MyVenuesList({ profileName }: Props) {
     return () => window.removeEventListener("venues:updated", onUpdated);
   }, [fetchData, page]);
 
+  /**
+   * askDelete — opens the delete-confirmation modal for a venue.
+   *
+   * Behavior:
+   * - Ignores requests while the modal is busy.
+   * - Captures the target venue and resets any prior modal error.
+   *
+   * @param v - The venue the user intends to delete.
+   */
   function askDelete(v: Venue) {
     if (modalBusy) return;
     setTarget(v);
@@ -101,26 +119,44 @@ export default function MyVenuesList({ profileName }: Props) {
     setModalOpen(true);
   }
 
+  /**
+   * openEdit — emits a global event to open the edit flow for a venue.
+   *
+   * Connected to: window.dispatchEvent("venues:edit", { detail: v })
+   *
+   * @param v - The venue to edit.
+   */
   function openEdit(v: Venue) {
     window.dispatchEvent(new CustomEvent("venues:edit", { detail: v }));
   }
 
+  /**
+   * confirmDelete — deletes the selected venue and reconciles pagination.
+   *
+   * Connected to:
+   * - deleteVenueById(target.id)
+   * - fetchData(page) to refresh the current view
+   * - window.dispatchEvent("venues:deleted") on success
+   *
+   * Behavior:
+   * - If the last remaining row on the last page is removed, navigates to the previous page.
+   * - Otherwise refreshes the current page.
+   * - Closes the modal and clears the target on success.
+   * - Shows a modal-local error on failure.
+   */
   async function confirmDelete() {
     if (!target) return;
     setModalBusy(true);
     setModalErr(null);
     try {
       await deleteVenueById(target.id);
-
       const isOnlyRow = rows.length === 1;
       const isLastPage = meta?.currentPage === meta?.pageCount;
-
       if (isOnlyRow && isLastPage && page > 1) {
         setPage(page - 1);
       } else {
         await fetchData(page);
       }
-
       setModalOpen(false);
       setTarget(null);
       window.dispatchEvent(new CustomEvent("venues:deleted"));
@@ -132,7 +168,6 @@ export default function MyVenuesList({ profileName }: Props) {
       setModalBusy(false);
     }
   }
-
   if (loading)
     return <div className="p-8 text-primary/70">Loading venues…</div>;
   if (error) return <div className="p-8 text-red-400">{error}</div>;
@@ -143,7 +178,6 @@ export default function MyVenuesList({ profileName }: Props) {
         <span className="font-bold">Create New Venue</span> to add one.
       </div>
     );
-
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 flex flex-col">
@@ -157,7 +191,7 @@ export default function MyVenuesList({ profileName }: Props) {
           return (
             <div key={v.id} className="flex flex-col">
               <div className="flex flex-row mt-2.5 justify-between text-lg px-[20px] md:px-[40px]">
-                {/* left block (image + columns) */}
+                {/* LEFT SIDE */}
                 <div className="flex flex-col sm:flex-row md:items-center gap-3 md:gap-7.5 flex-1 min-w-0">
                   <Image
                     src={img}
@@ -167,28 +201,22 @@ export default function MyVenuesList({ profileName }: Props) {
                     unoptimized
                     className="w-15 h-15 rounded-full object-cover shrink-0"
                   />
-
                   <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-7.5 flex-1 min-w-0">
-                    {/* Title */}
+                    {/* TITLE */}
                     <p className="font-bold w-[70%] md:w-[25%] min-w-0 truncate">
                       {v.name || "Untitled venue"}
                     </p>
-                    {/* Location */}
+                    {/* LOCATION */}
                     <p className="text-primary/70 w-[70%] md:w-[25%] min-w-0 truncate">
                       {loc || "—"}
                     </p>
-
-                    {/* Bookings pill (lazy-loads details) */}
+                    {/* BOOKINGS */}
                     <div className="w-[210px] shrink-0">
-                      <BookingsCount
-                        venueId={v.id}
-                        venueName={v.name}
-                      />
+                      <BookingsCount venueId={v.id} venueName={v.name} />
                     </div>
                   </div>
                 </div>
-
-                {/* actions */}
+                {/* ACTIONS */}
                 <div className="flex items-center gap-7.5 shrink-0">
                   {/* EDIT */}
                   <button aria-label="Edit venue" onClick={() => openEdit(v)}>
@@ -205,7 +233,6 @@ export default function MyVenuesList({ profileName }: Props) {
                       />
                     </svg>
                   </button>
-
                   {v.id && (
                     <Link href={`/venues/${v.id}`} aria-label="View venue">
                       <svg
@@ -224,7 +251,7 @@ export default function MyVenuesList({ profileName }: Props) {
                       </svg>
                     </Link>
                   )}
-
+                  {/* DELETE*/}
                   <button
                     onClick={() => askDelete(v)}
                     aria-label="Delete venue"
@@ -244,14 +271,12 @@ export default function MyVenuesList({ profileName }: Props) {
                   </button>
                 </div>
               </div>
-
               <span className="border-b border-primary/30 w-full pt-2.5"></span>
             </div>
           );
         })}
       </div>
-
-      {/* pagination */}
+      {/* PAGINATION */}
       <div className="pb-2">
         <ListingsPagination
           meta={meta}
@@ -259,18 +284,16 @@ export default function MyVenuesList({ profileName }: Props) {
           isLoading={loading}
         />
       </div>
-
-      {/* delete confirmation modal */}
+      {/* DELETE CONFIRMATION MODAL */}
       {modalOpen &&
         createPortal(
           <div className="fixed inset-0 z-[1000]">
-            {/* backdrop */}
+            {/* BACKDROP */}
             <button
               aria-label="Close modal"
               onClick={() => !modalBusy && setModalOpen(false)}
               className="absolute inset-0 bg-black/50"
             />
-
             <div className="fixed inset-0 grid place-items-center p-4">
               <div
                 role="dialog"
@@ -286,7 +309,6 @@ export default function MyVenuesList({ profileName }: Props) {
                     </h2>
                   </div>
                 </div>
-
                 <p className="text-primary text-[14px] font-jakarta text-center mb-4">
                   Are you sure you want to delete
                   {target?.name ? (
@@ -297,13 +319,11 @@ export default function MyVenuesList({ profileName }: Props) {
                   ) : null}
                   ?
                 </p>
-
                 {modalErr && (
                   <p className="text-sm text-red-300 text-center mb-2">
                     {modalErr}
                   </p>
                 )}
-
                 <div className="mt-2 flex w-full items-center justify-center gap-[30px]">
                   <button
                     onClick={confirmDelete}
@@ -324,7 +344,6 @@ export default function MyVenuesList({ profileName }: Props) {
                       />
                     </svg>
                   </button>
-
                   <button
                     onClick={() => !modalBusy && setModalOpen(false)}
                     className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary/60 font-bold">

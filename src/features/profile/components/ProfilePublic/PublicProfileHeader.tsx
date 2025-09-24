@@ -1,11 +1,25 @@
 import Image from "next/image";
 import type { Profile } from "@/utils/api/profiles";
 
+/**
+ * PublicProfileHeader component.
+ *
+ * Renders a public user profile header with optional banner, name, bio.
+ * Must be logged in to see other hosts profiles.
+ *
+ * Layout:
+ * - Full-width banner image (if provided) with rounded corners.
+ * - Card with name, bio, and role information.
+ * - Centered avatar overlapping the banner and card.
+ *
+ * @param profile - The profile data to display.
+ * @returns The public profile header section.
+ */
 export default function PublicProfileHeader({ profile }: { profile: Profile }) {
   return (
     <section className="pt-[90px] sm:pt-[70px] text-primary font-jakarta">
       <div className="relative flex flex-col mx-auto max-w-[1055px]">
-        {/* Banner */}
+        {/* BANNER */}
         {profile.banner?.url && (
           <Image
             src={profile.banner.url}
@@ -16,8 +30,7 @@ export default function PublicProfileHeader({ profile }: { profile: Profile }) {
             className="object-cover w-[1055px] h-[210px] rounded-tl-[10px] rounded-tr-[10px] brightness-80"
           />
         )}
-
-        {/* Card */}
+        {/* CARD */}
         <div className="h-[210px] bg-secondary rounded-bl-[10px] rounded-br-[10px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)]">
           <h1 className="font-bold text-[20px] text-center pt-[65px]">
             {profile.name}
@@ -32,8 +45,7 @@ export default function PublicProfileHeader({ profile }: { profile: Profile }) {
             </p>
           </div>
         </div>
-
-        {/* Absolute avatar (read-only) */}
+        {/* AVATAR */}
         <div className="absolute top-30 left-1/2 -translate-x-1/2 w-[150px] h-[150px] z-20">
           <div className="relative h-full w-full rounded-full overflow-hidden shadow-[0_6px_20px_rgba(0,0,0,0.35)]">
             <Image

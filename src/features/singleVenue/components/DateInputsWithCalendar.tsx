@@ -6,13 +6,24 @@ import DateRangePopover from "@/components/date/DateRangePopover";
 type Range = { start?: Date; end?: Date };
 type Booking = { dateFrom: string; dateTo: string };
 
-function toISODate(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
+/** DateInputsWithCalendar — paired read-only inputs that open a range picker.
+ * Renders “CHECK IN / CHECK OUT” fields and a popover calendar (DateRangePopover).
+ * Calls `onRangeChange` whenever the internal range changes.
+ *
+ * @param props.existingBookings Optional list of booked spans (ISO strings) that
+ *   will be shown as unavailable in the calendar.
+ * @param props.minNights Minimum number of nights the user must select (default 1).
+ * @param props.onRangeChange Callback fired with `{ start?: Date; end?: Date }`
+ *   whenever the selected range updates.
+ *
+ * @remarks
+ * - The popover is toggled by clicking either input.
+ * - Unavailable ranges are computed from `existingBookings` and passed down.
+ * - Inputs are read-only and display localized short-date labels.
+ * - Past dates are disallowed (`allowPast = false`).
+ *
+ * @returns JSX with two inputs and a conditional calendar popover.
+ */
 export default function DateInputsWithCalendar({
   existingBookings = [],
   minNights = 1,
@@ -22,13 +33,14 @@ export default function DateInputsWithCalendar({
   minNights?: number;
   onRangeChange?: (range: { start?: Date; end?: Date }) => void;
 }) {
-  const [range, setRange] = useState<Range>({ start: undefined, end: undefined });
+  const [range, setRange] = useState<Range>({
+    start: undefined,
+    end: undefined,
+  });
   const [openCal, setOpenCal] = useState(false);
-
   useEffect(() => {
     onRangeChange?.(range);
   }, [range, onRangeChange]);
-
   const unavailableRanges = useMemo(
     () =>
       (existingBookings ?? []).map((b) => ({
@@ -37,7 +49,6 @@ export default function DateInputsWithCalendar({
       })),
     [existingBookings]
   );
-
   const checkInStr =
     range.start &&
     range.start.toLocaleDateString(undefined, {
@@ -45,7 +56,6 @@ export default function DateInputsWithCalendar({
       month: "short",
       year: "numeric",
     });
-
   const checkOutStr =
     range.end &&
     range.end.toLocaleDateString(undefined, {
@@ -53,7 +63,6 @@ export default function DateInputsWithCalendar({
       month: "short",
       year: "numeric",
     });
-
   return (
     <div className="relative w-full">
       <div className="flex gap-3 w-full">
@@ -75,7 +84,6 @@ export default function DateInputsWithCalendar({
             className="w-full h-[46px] bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-3 pt-6 pb-2 text-sm text-white placeholder-primary focus:outline-none [appearance:none] [&::-webkit-calendar-picker-indicator]:hidden cursor-pointer"
           />
         </div>
-
         {/* CHECK OUT */}
         <div className="relative flex-1 min-w-0">
           <label
@@ -95,7 +103,6 @@ export default function DateInputsWithCalendar({
           />
         </div>
       </div>
-
       {openCal && (
         <div className="absolute z-50  md:left-0 xl:-left-1/2 bottom-97 md:bottom-107 text-primary">
           <DateRangePopover

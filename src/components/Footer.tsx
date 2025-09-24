@@ -1,6 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 
+/**
+ * Site footer.
+ *
+ * - Contains the logo, newsletter signup form, and site-wide navigation links.
+ * - Sections: **Site Map**, **Info**, and **Contact Us**.
+ * - Displays a decorative image and copyright.
+ *
+ * @returns The footer UI shown across all pages.
+ */
 export default function Footer() {
   return (
     <footer className="min-h-[725px] border border-[rgba(255,255,255,0.02)] bg-[rgba(255,255,255,0.09)] backdrop-blur-[5.1px]">
@@ -11,6 +20,8 @@ export default function Footer() {
             alt="Holidaze logo"
             width={379}
             height={81}
+            className="w-[379px] h-[81px]"
+            sizes="379px"
           />
           <div aria-labelledby="newsletter-heading">
             <h3
@@ -53,8 +64,7 @@ export default function Footer() {
             </form>
           </div>
         </div>
-
-        <span className="block max-w-[1290px] min-w-[300px] h-px bg-white mt-[54px]"></span>
+        <span className="block max-w-[1290px] min-w-[300px] h-px bg-primary mt-[54px]"></span>
         <div className="flex flex-col lg:flex-row gap-[70px] xl:gap-[148px] mt-26 items-center text-center lg:text-left">
           {/* SITE MAP */}
           <div className="font-jakarta text-[20px]">
@@ -74,7 +84,6 @@ export default function Footer() {
               </Link>
             </ul>
           </div>
-
           {/* INFO */}
           <div className="font-jakarta text-[20px]">
             <h3 className=" text-primary font-bold pb-[30px]">INFO</h3>
@@ -93,7 +102,6 @@ export default function Footer() {
               </li>
             </ul>
           </div>
-
           {/* CONTACT */}
           <div className="font-jakarta text-[20px]">
             <h3 className=" text-primary font-bold pb-[30px]">CONTACT US</h3>
@@ -110,7 +118,6 @@ export default function Footer() {
             height={350}
           />
         </div>
-
         <div className="text-center lg:text-left my-4 lg:my-0">
           <p className="text-primary text-[20px]">
             &copy; {new Date().getFullYear()} Holidaze. All rights reserved.

@@ -3,17 +3,24 @@
 import { useEffect, useState } from "react";
 
 /**
- * Minimal client-side auth check.
- * Returns true if a token-like value is found in cookies or localStorage.
- * Works with your existing setTokenCookie() approach.
+ * Tracks whether a user is currently authenticated.
+ *
+ * Checks for:
+ * - A `token` cookie in `document.cookie`.
+ * - An `auth_token` entry in `localStorage`.
+ *
+ * If either is present, `loggedIn` is set to `true`.
+ * On error or if neither is present, `loggedIn` is `false`.
+ *
+ * @returns An object with a single property:
+ * - `loggedIn`: boolean indicating authentication status.
  */
 export function useAuthStatus() {
   const [loggedIn, setLoggedIn] = useState(false);
-
   useEffect(() => {
     try {
       const cookie = typeof document !== "undefined" ? document.cookie : "";
-      const hasTokenCookie = /(?:^|; )token=/.test(cookie); // adjust if your cookie name differs
+      const hasTokenCookie = /(?:^|; )token=/.test(cookie);
       const lsToken =
         typeof window !== "undefined"
           ? localStorage.getItem("auth_token")
@@ -23,6 +30,5 @@ export function useAuthStatus() {
       setLoggedIn(false);
     }
   }, []);
-
   return { loggedIn };
 }

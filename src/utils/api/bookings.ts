@@ -5,14 +5,12 @@ import type { Booking } from "../../types/bookings";
 
 type CreateBookingInput = {
   venueId: string;
-  dateFrom: string; // ISO
-  dateTo: string; // ISO
+  dateFrom: string;
+  dateTo: string;
   guests: number;
 };
-
 type ApiEnvelope<T> = { data: T; meta?: unknown };
 
-// Optional: typed list meta for pagination (matches Holidaze meta)
 export type ApiListMeta = {
   isFirstPage: boolean;
   isLastPage: boolean;
@@ -23,17 +21,23 @@ export type ApiListMeta = {
   totalCount: number;
 };
 
+/**
+ * Create a new booking for a venue.
+ * Requires auth (uses `buildHeaders({ authToken: true })`).
+ *
+ * @param input - Booking payload: `venueId`, ISO `dateFrom`/`dateTo`, and `guests`.
+ * @returns The created {@link Booking}.
+ * @throws Error if the API responds with a non-OK status.
+ */
 export async function createBooking(
   input: CreateBookingInput
 ): Promise<Booking> {
   const headers = buildHeaders({
     apiKey: true,
-    authToken: true, // <-- requires token in localStorage
+    authToken: true,
     contentType: true,
   });
-
   const body = JSON.stringify(input);
-
   const res = await apiFetch<ApiEnvelope<Booking>>(`${API_HOLIDAZE}/bookings`, {
     method: "POST",
     headers,
@@ -43,8 +47,14 @@ export async function createBooking(
 }
 
 /**
- * Global bookings list (all users).
- * Use ONLY where appropriate (e.g., admin). Not for "My bookings".
+ * Fetch bookings (optionally with venue/customer) for the authenticated user scope.
+ * Note: This hits the global `/bookings` endpoint — not the profile-scoped one.
+ *
+ * @param opts.withVenue - Include venue details (`_venue=true`).
+ * @param opts.withCustomer - Include customer details (`_customer=true`).
+ * @param opts.page - Page number.
+ * @param opts.limit - Page size.
+ * @returns API envelope with an array of {@link Booking}.
  */
 export async function getMyBookings(opts?: {
   withVenue?: boolean;
@@ -70,8 +80,15 @@ export async function getMyBookings(opts?: {
 }
 
 /**
- * Profile-scoped bookings (the one you want for "My bookings").
- * Example: GET /holidaze/profiles/:name/bookings?_venue=true&page=1&limit=6
+ * Fetch bookings for a specific profile (used for “My bookings” UI).
+ * Always includes venue details (`_venue=true`) for display.
+ *
+ * @param profileName - Profile/username.
+ * @param opts.page - Page number.
+ * @param opts.limit - Page size.
+ * @param opts.sort - Sort field (e.g., `"created"`).
+ * @param opts.sortOrder - `"asc"` or `"desc"`.
+ * @returns `{ data: Booking[]; meta: ApiListMeta }`.
  */
 export async function getBookingsByProfile(
   profileName: string,
@@ -100,6 +117,14 @@ export async function getBookingsByProfile(
   );
 }
 
+/**
+ * Delete a booking by its id.
+ * Requires auth.
+ *
+ * @param id - Booking id.
+ * @returns Resolves when deletion succeeds.
+ * @throws Error if the API responds with a non-OK status.
+ */
 export async function deleteBookingById(id: string): Promise<void> {
   await apiFetch<void>(`${API_HOLIDAZE}/bookings/${id}`, {
     method: "DELETE",

@@ -1,4 +1,3 @@
-// src/utils/api/venues.ts
 import type { ListResponse, Venue } from "@/types/venue";
 import { apiFetch } from "./client";
 import { API_VENUES } from "./constants";
@@ -8,15 +7,20 @@ import { buildHeaders } from "./headers";
 type SortableField = "created" | "updated" | "name" | "price" | "rating";
 type SingleResponse<T> = { data: T };
 
-// ---------- LIST ----------
 /**
  * Fetch a paginated list of venues.
+ *
+ * @param page       1-based page index (default 1).
+ * @param limit      Page size (default 12).
+ * @param sort       Sort field (created | updated | name | price | rating).
+ * @param sortOrder  Sort direction ("asc" | "desc", default "desc").
+ * @returns Promise resolving to a {@link ListResponse} of {@link Venue}.
  */
 export async function fetchVenues({
   page = 1,
   limit = 12,
-  sort = "created", // change to "updated" if your API sets it
-  sortOrder = "desc", // newest first
+  sort = "created",
+  sortOrder = "desc",
 }: {
   page?: number;
   limit?: number;
@@ -35,10 +39,12 @@ export async function fetchVenues({
   });
 }
 
-// ---------- SEARCH ----------
 /**
- * Search venues by query (name/description).
- * The API may return either { data: Venue[] } or a raw array of venues.
+ * Search venues by free-text query (name/description).
+ * Normalizes API responses that may be `{ data: Venue[] }` or `Venue[]`.
+ *
+ * @param query  Search string.
+ * @returns Promise resolving to an array of {@link Venue}.
  */
 type SearchResponse = { data: Venue[] } | Venue[];
 
@@ -49,13 +55,13 @@ export async function searchVenuesRaw(query: string): Promise<Venue[]> {
   return Array.isArray(res) ? res : res.data ?? [];
 }
 
-// ---------- SINGLE ----------
 /**
- * Retrieve a single venue by id.
- * Pass `{ owner: true, bookings: true }` to include relations.
+ * Fetch a single venue by id, optionally embedding relations.
  *
- * API: GET /holidaze/venues/:id[?_owner=true&_bookings=true]
- * Response: { data: Venue, meta: {} }
+ * @param id    Venue id (required).
+ * @param opts  `{ owner?: boolean; bookings?: boolean }` to include `_owner` / `_bookings`.
+ * @returns Promise resolving to the {@link Venue}.
+ * @throws  Error if `id` is missing or the venue is not found.
  */
 export async function getVenueById(
   id: string,
@@ -72,11 +78,12 @@ export async function getVenueById(
   return res.data;
 }
 
-// ---------- CREATE ----------
 /**
- * Create a new venue.
- * API: POST /holidaze/venues
- * Requires: apiKey + auth token
+ * Create a new venue (authenticated).
+ * Requires API key and Bearer token; sends JSON body.
+ *
+ * @param input  {@link CreateVenueInput} payload.
+ * @returns Promise resolving to the created {@link Venue}.
  */
 export type CreateVenueInput = {
   name: string;
@@ -108,17 +115,22 @@ export async function createVenue(input: CreateVenueInput): Promise<Venue> {
     authToken: true,
     contentType: true,
   });
-
   const res = await apiFetch<SingleResponse<Venue>>(API_VENUES, {
     method: "POST",
     headers,
     body: JSON.stringify(input),
   });
-
   return res.data;
 }
 
-// --- VENUES BY PROFILE ---
+/**
+ * Fetch venues owned by a specific profile (authenticated/private read).
+ * Use {@link getPublicVenuesByProfile} for public access without a token.
+ *
+ * @param profileName  Profile/username.
+ * @param opts         Pagination & sorting options `{ page, limit, sort, sortOrder }`.
+ * @returns Promise resolving to `{ data: Venue[]; meta: VenuesApiListMeta }`.
+ */
 export type VenuesApiListMeta = {
   isFirstPage: boolean;
   isLastPage: boolean;
@@ -143,7 +155,6 @@ export async function getVenuesByProfile(
   if (opts?.limit) params.set("limit", String(opts.limit));
   if (opts?.sort) params.set("sort", opts.sort);
   if (opts?.sortOrder) params.set("sortOrder", opts.sortOrder);
-
   return apiFetch<{ data: Venue[]; meta: VenuesApiListMeta }>(
     `${API_HOLIDAZE}/profiles/${encodeURIComponent(profileName)}/venues${
       params.size ? `?${params.toString()}` : ""
@@ -157,18 +168,28 @@ export async function getVenuesByProfile(
   );
 }
 
-// --- DELETE MY VENUE ---
+/**
+ * Delete one of **your** venues by id (authenticated).
+ *
+ * @param id  Venue id (required).
+ * @returns Promise resolving to `void` on success.
+ * @throws  Error if `id` is missing or deletion fails.
+ */
 export async function deleteVenueById(id: string): Promise<void> {
   if (!id) throw new Error("deleteVenueById: id is required");
-
   await apiFetch<void>(`${API_VENUES}/${encodeURIComponent(id)}`, {
     method: "DELETE",
     headers: buildHeaders({ apiKey: true, authToken: true }),
   });
 }
 
-
-// --- UPDATE VENUE ---
+/**
+ * Update a venue by id (authenticated). Sends the full payload via PUT.
+ *
+ * @param id     Venue id (required).
+ * @param input  {@link UpdateVenueInput} payload.
+ * @returns Promise resolving to the updated {@link Venue}.
+ */
 export type UpdateVenueInput = CreateVenueInput;
 
 export async function updateVenue(
@@ -176,18 +197,28 @@ export async function updateVenue(
   input: UpdateVenueInput
 ): Promise<Venue> {
   if (!id) throw new Error("updateVenue: id is required");
-
-  const res = await apiFetch<{ data: Venue }>(`${API_VENUES}/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    headers: buildHeaders({ apiKey: true, authToken: true, contentType: true }),
-    body: JSON.stringify(input),
-  });
-
+  const res = await apiFetch<{ data: Venue }>(
+    `${API_VENUES}/${encodeURIComponent(id)}`,
+    {
+      method: "PUT",
+      headers: buildHeaders({
+        apiKey: true,
+        authToken: true,
+        contentType: true,
+      }),
+      body: JSON.stringify(input),
+    }
+  );
   return res.data;
 }
 
-
-// PUBLIC READ (no auth): venues by profile
+/**
+ * Public read: fetch venues by profile **without** auth (API key only).
+ *
+ * @param profileName  Profile/username.
+ * @param opts         Pagination & sorting options `{ page, limit, sort, sortOrder }`.
+ * @returns Promise resolving to `{ data: Venue[]; meta: VenuesApiListMeta }`.
+ */
 export async function getPublicVenuesByProfile(
   profileName: string,
   opts?: {
@@ -202,14 +233,12 @@ export async function getPublicVenuesByProfile(
   if (opts?.limit) params.set("limit", String(opts.limit));
   if (opts?.sort) params.set("sort", opts.sort);
   if (opts?.sortOrder) params.set("sortOrder", opts.sortOrder);
-
   return apiFetch<{ data: Venue[]; meta: VenuesApiListMeta }>(
     `${API_HOLIDAZE}/profiles/${encodeURIComponent(profileName)}/venues${
       params.size ? `?${params.toString()}` : ""
     }`,
     {
       method: "GET",
-      // IMPORTANT: only API key; no auth token here
       headers: buildHeaders({ apiKey: true }),
       cache: "no-store",
       next: { revalidate: 0 },

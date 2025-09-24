@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
+/**
+ * About section with hero image, headline, info blocks, and CTA link.
+ */
 export default function About() {
   return (
     <section className="mb-20">
@@ -65,7 +68,9 @@ export default function About() {
       </div>
 
       <div>
-        <Link href="/#listings-grid" className="font-jakarta text-[15px] font-bold text-primary flex flex-row items-center justify-center gap-1.5 pt-[100px]">
+        <Link
+          href="/#listings-grid"
+          className="font-jakarta text-[15px] font-bold text-primary flex flex-row items-center justify-center gap-1.5 pt-[100px]">
           SEE OUR VENUES
           <svg
             width="7"

@@ -3,28 +3,33 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
+/**
+ * Site navigation bar.
+ *
+ * - Displays the Holidaze logo centered with navigation links on left/right.
+ * - Switches between desktop (inline nav) and mobile (hamburger + dropdown) layouts.
+ * - Tracks login state from `localStorage` (`token`) and updates on storage,
+ *   visibility, or a custom `auth:changed` event.
+ * - Shows **PROFILE** if logged in, otherwise **LOGIN**.
+ *
+ * @returns The responsive navigation bar.
+ */
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
-
   useEffect(() => {
     const sync = () => setLoggedIn(!!localStorage.getItem("token"));
     sync();
-
     const onStorage = (e: StorageEvent) => {
       if (!e.key || e.key === "token") sync();
     };
     const onVis = () => {
       if (document.visibilityState === "visible") sync();
     };
-
-    // 🔹 listen to our same-tab event
     const onAuthChanged = () => sync();
-
     window.addEventListener("storage", onStorage);
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("auth:changed", onAuthChanged as EventListener);
-
     return () => {
       window.removeEventListener("storage", onStorage);
       document.removeEventListener("visibilitychange", onVis);
@@ -34,7 +39,6 @@ export default function Navbar() {
       );
     };
   }, []);
-
   return (
     <header className="absolute top-0 left-0 right-0 z-50 bg-transparent px-10px lg:px-[74px] max-w-[1440px] mx-auto">
       <div className="mx-auto grid grid-cols-1 lg:grid-cols-3 items-center h-[70px] pt-[40px] sm:pt-0 text-primary font-jakarta text-lg font-bold">
@@ -46,7 +50,6 @@ export default function Navbar() {
             <Link href="/contact">CONTACT</Link>
           </nav>
         </div>
-
         {/* CENTER GRID */}
         <div className="col-start-1 lg:col-start-2 col-end-2 lg:col-end-3 justify-self-center">
           <div className="flex items-center gap-4">
@@ -57,17 +60,17 @@ export default function Navbar() {
                 width={145}
                 height={32}
                 priority
+                className="w-[145px] h-[32px]"
+                sizes="145px"
               />
             </Link>
-
             {/* MOBILE NAV */}
             <span className="w-px h-[18px] bg-primary lg:hidden" />
             <button
               aria-label="Toggle menu"
-              className="h-10 w-10 grid place-items-center rounded-md hover:bg-white/10 lg:hidden"
+              className="h-10 w-10 grid place-items-center rounded-md hover:bg-primary/10 lg:hidden"
               onClick={() => setOpen((v) => !v)}>
               {!open ? (
-                // Hamburger
                 <svg
                   width="18"
                   height="12"
@@ -82,7 +85,6 @@ export default function Navbar() {
                   />
                 </svg>
               ) : (
-                // X
                 <svg
                   width="10"
                   height="10"
@@ -101,7 +103,6 @@ export default function Navbar() {
             </button>
           </div>
         </div>
-
         {/* RIGHT GRID */}
         <div className="justify-self-end hidden lg:block">
           <nav className="flex items-center gap-14 [&>a]:border-b [&>a]:border-transparent [&>a:hover]:border-primary [&>a]:transition-colors">
@@ -115,10 +116,9 @@ export default function Navbar() {
           </nav>
         </div>
       </div>
-
       {/* MOBILE DROPDOWN */}
       {open && (
-        <div className="lg:hidden absolute top-[90px] sm:top-[70px] w-[320px] left-1/2 -translate-x-1/2 sm:left-auto sm:right-[120px] sm:translate-x-0 rounded-[10px] border border-white/5 bg-white/10 backdrop-blur-sm text-primary font-jakarta text-lg font-bold">
+        <div className="lg:hidden absolute top-[90px] sm:top-[70px] w-[320px] left-1/2 -translate-x-1/2 sm:left-auto sm:right-[120px] sm:translate-x-0 rounded-[10px] border border-primary/5 bg-secondary/50 backdrop-blur-sm text-primary font-jakarta text-lg font-bold">
           <nav className="px-6 py-4 flex flex-col gap-3">
             <Link href="/about" onClick={() => setOpen(false)}>
               ABOUT

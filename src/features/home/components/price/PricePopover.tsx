@@ -3,23 +3,49 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
-  /** Selected min (undefined => 0) */
   minValue?: number;
-  /** Selected max (undefined => no upper limit, i.e., 10k+ $) */
   maxValue?: number;
-  /** Fires live while dragging */
   onChange: (min?: number, max?: number) => void;
   onClose: () => void;
-  /** Slider config */
-  min?: number;  // default 0
-  max?: number;  // default 10000
-  step?: number; // default 50
+  min?: number;
+  max?: number;
+  step?: number;
 };
 
+/**
+ * Formats the right-side axis label for the slider (e.g., `2k+ $`, `1,250+ $`).
+ *
+ * @param max - The maximum bound displayed.
+ * @returns A human-friendly string for the upper price hint.
+ */
 function rightLabel(max: number) {
-  return max >= 1000 && max % 1000 === 0 ? `${max / 1000}k+ $` : `${max.toLocaleString()}+ $`;
+  return max >= 1000 && max % 1000 === 0
+    ? `${max / 1000}k+ $`
+    : `${max.toLocaleString()}+ $`;
 }
 
+/**
+ * PricePopover component.
+ *
+ * Dual-thumb price range slider inside a popover.
+ *
+ * Features:
+ * - Initializes from `minValue`/`maxValue` or falls back to `min`/`max`.
+ * - Clamps values within `[min, max]` and enforces `step`.
+ * - Keyboard support on each thumb (Arrow keys, PageUp/Down, Home/End).
+ * - Outside click and Escape key close the popover via `onClose`.
+ * - Calls `onChange(min, max)` on every update; uses `undefined` for open bounds.
+ *
+ * @param minValue  - Current minimum price (optional).
+ * @param maxValue  - Current maximum price (optional).
+ * @param onChange  - Callback receiving the updated `(min, max)` values.
+ * @param onClose   - Callback to close the popover.
+ * @param min       - Lowest selectable value (default: 0).
+ * @param max       - Highest selectable value (default: 10000).
+ * @param step      - Increment step size (default: 50).
+ *
+ * @returns The popover UI for selecting a price range.
+ */
 export default function PricePopover({
   minValue,
   maxValue,
@@ -31,13 +57,14 @@ export default function PricePopover({
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-
-  // Local controlled values (visual). If maxValue is undefined, show thumb at max.
-  const [minLocal, setMinLocal] = useState<number>(typeof minValue === "number" ? minValue : min);
-  const [maxLocal, setMaxLocal] = useState<number>(typeof maxValue === "number" ? maxValue : max);
+  const [minLocal, setMinLocal] = useState<number>(
+    typeof minValue === "number" ? minValue : min
+  );
+  const [maxLocal, setMaxLocal] = useState<number>(
+    typeof maxValue === "number" ? maxValue : max
+  );
   const [dragging, setDragging] = useState<null | "min" | "max">(null);
 
-  // Sync with external changes (URL back/forward, etc.)
   useEffect(() => {
     setMinLocal(typeof minValue === "number" ? minValue : min);
   }, [minValue, min]);
@@ -45,12 +72,12 @@ export default function PricePopover({
     setMaxLocal(typeof maxValue === "number" ? maxValue : max);
   }, [maxValue, max]);
 
-  // Close on outside / ESC
   useEffect(() => {
     function onDoc(e: MouseEvent) {
       if (!wrapRef.current) return;
       if (!wrapRef.current.contains(e.target as Node)) onClose();
     }
+
     function onEsc(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
@@ -64,9 +91,14 @@ export default function PricePopover({
 
   const range = max - min;
   const displayMax = typeof maxValue === "number" ? maxLocal : max;
-
-  const pctMin = useMemo(() => ((minLocal - min) / range) * 100, [minLocal, min, range]);
-  const pctMax = useMemo(() => ((displayMax - min) / range) * 100, [displayMax, min, range]);
+  const pctMin = useMemo(
+    () => ((minLocal - min) / range) * 100,
+    [minLocal, min, range]
+  );
+  const pctMax = useMemo(
+    () => ((displayMax - min) / range) * 100,
+    [displayMax, min, range]
+  );
 
   function roundToStep(raw: number) {
     const steps = Math.round((raw - min) / step);
@@ -75,7 +107,6 @@ export default function PricePopover({
   }
 
   function commit(nextMin: number, nextMax: number) {
-    // Far-right max => no upper limit
     const upper = nextMax >= max ? undefined : nextMax;
     const lower = Math.max(min, Math.min(nextMin, upper ?? max));
     onChange(lower <= min ? undefined : lower, upper);
@@ -90,13 +121,14 @@ export default function PricePopover({
   }
 
   function pickHandle(clientX: number) {
-    // Choose the closest thumb to where the user clicked
     const rect = trackRef.current?.getBoundingClientRect();
     if (!rect) return "max" as const;
     const x = clientX - rect.left;
     const minX = (pctMin / 100) * rect.width;
     const maxX = (pctMax / 100) * rect.width;
-    return Math.abs(x - minX) <= Math.abs(x - maxX) ? ("min" as const) : ("max" as const);
+    return Math.abs(x - minX) <= Math.abs(x - maxX)
+      ? ("min" as const)
+      : ("max" as const);
   }
 
   function onPointerDown(e: React.PointerEvent) {
@@ -134,24 +166,40 @@ export default function PricePopover({
     setDragging(null);
   }
 
-  // Keyboard support (like MUI): arrows, PageUp/Down, Home/End
   function onThumbKeyDown(which: "min" | "max", e: React.KeyboardEvent) {
     const delta =
-      e.key === "ArrowRight" || e.key === "ArrowUp" ? step :
-      e.key === "ArrowLeft"  || e.key === "ArrowDown" ? -step :
-      e.key === "PageUp" ? step * 10 :
-      e.key === "PageDown" ? -step * 10 :
-      0;
+      e.key === "ArrowRight" || e.key === "ArrowUp"
+        ? step
+        : e.key === "ArrowLeft" || e.key === "ArrowDown"
+        ? -step
+        : e.key === "PageUp"
+        ? step * 10
+        : e.key === "PageDown"
+        ? -step * 10
+        : 0;
 
     if (e.key === "Home") {
-      if (which === "min") { setMinLocal(min); commit(min, maxLocal); }
-      else { setMaxLocal(Math.max(minLocal + step, min)); commit(minLocal, Math.max(minLocal + step, min)); }
-      e.preventDefault(); return;
+      if (which === "min") {
+        setMinLocal(min);
+        commit(min, maxLocal);
+      } else {
+        setMaxLocal(Math.max(minLocal + step, min));
+        commit(minLocal, Math.max(minLocal + step, min));
+      }
+      e.preventDefault();
+      return;
     }
     if (e.key === "End") {
-      if (which === "min") { const m = Math.min(maxLocal - step, max); setMinLocal(m); commit(m, maxLocal); }
-      else { setMaxLocal(max); commit(minLocal, max); }
-      e.preventDefault(); return;
+      if (which === "min") {
+        const m = Math.min(maxLocal - step, max);
+        setMinLocal(m);
+        commit(m, maxLocal);
+      } else {
+        setMaxLocal(max);
+        commit(minLocal, max);
+      }
+      e.preventDefault();
+      return;
     }
 
     if (delta !== 0) {
@@ -173,26 +221,23 @@ export default function PricePopover({
   return (
     <div
       ref={wrapRef}
-      className="absolute z-50 w-[260px] rounded-xl border border-white/10 bg-background/80 backdrop-blur-xl p-4 text-primary shadow-lg"
+      className="absolute z-50 w-[260px] rounded-xl border border-primary/10 bg-background/80 backdrop-blur-xl p-4 text-primary shadow-lg"
       role="dialog"
-      aria-label="Select price range"
-    >
-      {/* Track */}
+      aria-label="Select price range">
       <div
         ref={trackRef}
-        className="relative mx-1 mt-3 mb-2 h-1.5 rounded bg-white/20"
+        className="relative mx-1 mt-3 mb-2 h-1.5 rounded bg-primary/20"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-      >
-        {/* Selected band */}
+        onPointerUp={onPointerUp}>
         <div
           className="absolute h-1.5 rounded bg-current"
-          style={{ left: `${pctMin}%`, width: `${Math.max(0, pctMax - pctMin)}%` }}
+          style={{
+            left: `${pctMin}%`,
+            width: `${Math.max(0, pctMax - pctMin)}%`,
+          }}
           aria-hidden
         />
-
-        {/* Min thumb */}
         <button
           type="button"
           role="slider"
@@ -202,11 +247,9 @@ export default function PricePopover({
           aria-valuenow={minLocal}
           tabIndex={0}
           onKeyDown={(e) => onThumbKeyDown("min", e)}
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-4 w-4 rounded-full bg-current border-2 border-white/70 cursor-grab focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-4 w-4 rounded-full bg-current border-2 border-primary/70 cursor-grab focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           style={{ left: `${pctMin}%` }}
         />
-
-        {/* Max thumb (when unlimited we still render at far right) */}
         <button
           type="button"
           role="slider"
@@ -216,12 +259,10 @@ export default function PricePopover({
           aria-valuenow={displayMax}
           tabIndex={0}
           onKeyDown={(e) => onThumbKeyDown("max", e)}
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-4 w-4 rounded-full bg-current border-2 border-white/70 cursor-grab focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-4 w-4 rounded-full bg-current border-2 border-primary/70 cursor-grab focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           style={{ left: `${pctMax}%` }}
         />
       </div>
-
-      {/* Range labels */}
       <div className="mt-1 flex justify-between text-xs opacity-90 select-none">
         <span>0</span>
         <span>{rightLabel(max)}</span>

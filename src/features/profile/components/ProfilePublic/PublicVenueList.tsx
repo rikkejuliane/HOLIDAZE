@@ -19,19 +19,29 @@ type ApiListMeta = {
   totalCount: number;
 };
 
+/**
+ * PublicVenueList component.
+ *
+ * Lists a host’s venues with simple pagination (server-paginated).
+ *
+ * Connected to:
+ * - `getVenuesByProfile` — fetches venues for the public profile.
+ * - `ListingsPagination` — renders the pagination controls.
+ * - `PublicProfileVenuesSection` — parent section that shows this list.
+ *
+ * @param profileName - The public profile’s slug to fetch venues for.
+ * @returns A paginated list of venues (or an empty/loading/error state).
+ */
 export default function PublicVenuesList({ profileName }: Props) {
   const PAGE_SIZE = 6;
-
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState<Venue[]>([]);
   const [meta, setMeta] = useState<ListMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     setPage(1);
   }, [profileName]);
-
   const fetchData = useCallback(
     async (p: number) => {
       setLoading(true);
@@ -43,9 +53,7 @@ export default function PublicVenuesList({ profileName }: Props) {
           sort: "created",
           sortOrder: "desc",
         });
-
         setRows(data ?? []);
-
         const m = meta as ApiListMeta;
         setMeta({
           currentPage: m.currentPage,
@@ -64,21 +72,18 @@ export default function PublicVenuesList({ profileName }: Props) {
     },
     [profileName]
   );
-
   useEffect(() => {
     fetchData(page);
   }, [fetchData, page]);
-
   if (loading)
     return <div className="p-8 text-primary/70">Loading venues…</div>;
-  if (error) return <div className="p-8 text-red-400">{error}</div>;
+  if (error) return <div className="p-8 text-imperialRed">{error}</div>;
   if (!rows.length)
     return (
       <div className="p-8 text-primary/80">
         This host hasn’t listed any venues yet.
       </div>
     );
-
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 flex flex-col">
@@ -88,11 +93,10 @@ export default function PublicVenuesList({ profileName }: Props) {
           const loc = [v.location?.city, v.location?.country]
             .filter(Boolean)
             .join(", ");
-
           return (
             <div key={v.id} className="flex flex-col font-jakarta">
               <div className="flex flex-row mt-2.5 justify-between text-lg px-[20px] md:px-[40px]">
-                {/* left block (image + columns) */}
+                {/* IMAGE AND COLIMNS */}
                 <div className="flex flex-col sm:flex-row md:items-center gap-3 md:gap-7.5 flex-1 min-w-0">
                   <Image
                     src={img}
@@ -102,31 +106,27 @@ export default function PublicVenuesList({ profileName }: Props) {
                     unoptimized
                     className="w-15 h-15 rounded-full object-cover shrink-0"
                   />
-
                   <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-7.5 flex-1 min-w-0">
-                    {/* Title */}
+                    {/* TITLE */}
                     <p className="font-bold w-[70%] md:w-[25%] min-w-0 truncate">
                       {v.name || "Untitled venue"}
                     </p>
-
-                    {/* Location */}
+                    {/* LOCATION */}
                     <p className="text-primary/70 w-[70%] md:w-[25%] min-w-0 truncate">
                       {loc || "—"}
                     </p>
-
-                    {/* Max guests pill */}
+                    {/* GUESTS */}
                     <div className="w-[210px] shrink-0">
                       <div className="inline-flex items-center gap-2">
                         <span className="">
                           {typeof v.maxGuests === "number" ? v.maxGuests : "—"}
                         </span>
-                        <span >guests</span>
+                        <span>guests</span>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/* actions: only 'View' */}
+                {/* VIEW */}
                 <div className="flex items-center gap-7.5 shrink-0">
                   {v.id && (
                     <Link href={`/venues/${v.id}`} aria-label="View venue">
@@ -135,8 +135,7 @@ export default function PublicVenuesList({ profileName }: Props) {
                         height="20"
                         viewBox="0 0 29 20"
                         fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
+                        xmlns="http://www.w3.org/2000/svg">
                         <path
                           fillRule="evenodd"
                           clipRule="evenodd"
@@ -149,14 +148,12 @@ export default function PublicVenuesList({ profileName }: Props) {
                   )}
                 </div>
               </div>
-
               <span className="border-b border-primary/30 w-full pt-2.5"></span>
             </div>
           );
         })}
       </div>
-
-      {/* pagination */}
+      {/* PAGINATION */}
       <div className="pb-2">
         <ListingsPagination
           meta={meta}

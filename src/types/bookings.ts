@@ -1,11 +1,12 @@
 export type Booking = {
   id: string;
-  dateFrom: string; // ISO string
-  dateTo: string;   // ISO string
+  dateFrom: string;
+  dateTo: string;   
   guests: number;
   created: string;
   updated: string;
 };
+
 
 export type BookingWithVenue = Booking & {
   venue?: {
@@ -18,6 +19,7 @@ export type BookingWithVenue = Booking & {
     rating?: number;
   };
 };
+
 
 export type BookingWithCustomer = Booking & {
   customer?: {

@@ -1,6 +1,17 @@
 import Image from "next/image";
 import HeroFilters from "./HeroFilters";
 
+/**
+ * HeroHome component.
+ *
+ * Full-bleed hero banner with a background image, two-line headline,
+ * and the `HeroFilters` bar positioned near the bottom of the hero.
+ *
+ * - Uses absolute positioning to center the headline responsively.
+ * - Pins the filter form so it overlaps the hero at smaller breakpoints.
+ *
+ * @returns The homepage hero section with search filters.
+ */
 export default function HeroHome() {
   return (
     <div className="relative overflow-x-clip">
@@ -9,6 +20,7 @@ export default function HeroHome() {
         alt="Ai generated image of a woman sitting in an infinity pool looking over snowey mountains"
         width={1440}
         height={767}
+        priority
         className="w-full h-[745px] object-cover object-center sm:h-auto"
       />
       <div className="absolute top-80 sm:top-28 md:top-28 lg:top-45 xl:top-60 left-1/2 -translate-x-1/2 w-full">

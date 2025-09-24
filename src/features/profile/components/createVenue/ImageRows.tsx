@@ -2,6 +2,20 @@ import * as React from "react";
 
 type Row = { url: string; alt: string };
 
+/**
+ * ImageRows component.
+ *
+ * Small editor for a list of image entries (URL + alt text).
+ * Enforces at least one row and caps rows at `max` (default: 4).
+ *
+ * Used by: `CreateVenueModal` to collect media items.
+ *
+ * @param rows     - Current list of image rows.
+ * @param onChange - Called with the next rows array after add/remove/edit.
+ * @param max      - Maximum number of rows allowed (default: 4).
+ *
+ * @returns The image list editor UI.
+ */
 export function ImageRows({
   rows,
   onChange,
@@ -22,7 +36,6 @@ export function ImageRows({
   function updateRow(i: number, patch: Partial<Row>) {
     onChange(rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
   }
-
   return (
     <div className="flex flex-col w-full">
       <label className="font-jakarta font-bold text-xs">Images</label>
@@ -36,14 +49,14 @@ export function ImageRows({
               placeholder="Image URL"
               value={row.url}
               onChange={(e) => updateRow(i, { url: e.target.value })}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary outline-none"
             />
             <input
               type="text"
               placeholder="Alt text (optional)"
               value={row.alt}
               onChange={(e) => updateRow(i, { alt: e.target.value })}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary outline-none"
             />
             <button
               type="button"

@@ -8,6 +8,16 @@ import GuestsPopover from "./guests/GuestsPopover";
 
 type Range = { start?: Date; end?: Date };
 
+/**
+ * Formats a date range for the input display (e.g., "12 Jan – 15 Jan").
+ *
+ * - No dates → "Add dates"
+ * - Start only → start date
+ * - Start + end → "start – end"
+ *
+ * @param r - The current date range.
+ * @returns A human-friendly label for the date input.
+ */
 function formatRange(r: Range) {
   const fmt: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
   if (!r.start && !r.end) return "Add dates";
@@ -19,18 +29,44 @@ function formatRange(r: Range) {
   }
   return "Add dates";
 }
+
+/**
+ * Converts a Date to `YYYY-MM-DD` (UTC-insensitive) for URL params.
+ *
+ * @param d - The date to format.
+ * @returns ISO-like date string without time (e.g., "2025-09-23").
+ */
 function toISODate(d: Date) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+
+/**
+ * Formats a number as a USD price label without decimals (e.g., "$1,250").
+ *
+ * @param n - The numeric value to format.
+ * @returns A price string or `undefined` if `n` is not a valid number.
+ */
 function fmtPriceUSD(n?: number) {
   if (typeof n !== "number" || isNaN(n)) return undefined;
   return `$${new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 0,
   }).format(n)}`;
 }
+
+/**
+ * Builds the price input display text.
+ *
+ * - No min/max → "Maximum Budget"
+ * - With min/max → "$<min> – $<max>" or "$<min> – <cap>k+ $" when `max` is open.
+ *
+ * @param min - Minimum price (optional).
+ * @param max - Maximum price (optional).
+ * @param cap - Upper cap used for open-ended display (default 10000).
+ * @returns A human-friendly price range label.
+ */
 function formatPriceInput(min?: number, max?: number, cap = 10000) {
   if (min == null && max == null) return "Maximum Budget";
   const left = min == null ? "$0" : fmtPriceUSD(min);
@@ -38,18 +74,31 @@ function formatPriceInput(min?: number, max?: number, cap = 10000) {
   return `${left} – ${right}`;
 }
 
+/**
+ * HeroFilters component.
+ *
+ * Top-of-hero search controls that write filters to the URL:
+ * - Free-text search (`q`)
+ * - Date range (`start`, `end`) via `DateRangePopover`
+ * - Price range (`priceMin`, `priceMax`) via `PricePopover`
+ * - Guests (`guests`) via `GuestsPopover`
+ *
+ * Behavior:
+ * - Hydrates initial state from current `searchParams`.
+ * - Submitting resets `page=1` and navigates to `#listings-grid`.
+ * - Popovers are toggled via read-only inputs; values are formatted for display.
+ *
+ * @returns The hero filter form UI.
+ */
 export default function HeroFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const q = searchParams.get("q") ?? "";
   const startStr = searchParams.get("start");
   const endStr = searchParams.get("end");
   const priceMinStr = searchParams.get("priceMin");
   const priceMaxStr = searchParams.get("priceMax");
   const guestsStr = searchParams.get("guests");
-
-  // Dates
   const [range, setRange] = useState<Range>(() => ({
     start: startStr ? new Date(startStr) : undefined,
     end: endStr ? new Date(endStr) : undefined,
@@ -63,7 +112,6 @@ export default function HeroFilters() {
     });
   }, [startStr, endStr]);
 
-  // Price
   const [priceOpen, setPriceOpen] = useState(false);
   const [priceMin, setPriceMin] = useState<number | undefined>(
     priceMinStr ? Number(priceMinStr) : undefined
@@ -77,7 +125,6 @@ export default function HeroFilters() {
     setPriceMax(priceMaxStr ? Number(priceMaxStr) : undefined);
   }, [priceMinStr, priceMaxStr]);
 
-  // Guests
   const [guestsOpen, setGuestsOpen] = useState(false);
   const [guests, setGuests] = useState<number | undefined>(
     guestsStr ? Number(guestsStr) : undefined
@@ -91,12 +138,10 @@ export default function HeroFilters() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const nextQ = String(fd.get("search") ?? "").trim();
-
     const sp = new URLSearchParams(searchParams.toString());
 
     if (nextQ) sp.set("q", nextQ);
     else sp.delete("q");
-
     if (range.start && range.end) {
       sp.set("start", toISODate(range.start));
       sp.set("end", toISODate(range.end));
@@ -104,19 +149,15 @@ export default function HeroFilters() {
       sp.delete("start");
       sp.delete("end");
     }
-
     if (typeof priceMin === "number" && !isNaN(priceMin) && priceMin > 0) {
       sp.set("priceMin", String(priceMin));
     } else sp.delete("priceMin");
-
     if (typeof priceMax === "number" && !isNaN(priceMax)) {
       sp.set("priceMax", String(priceMax));
     } else sp.delete("priceMax");
-
     if (typeof guests === "number" && guests > 0) {
       sp.set("guests", String(guests));
     } else sp.delete("guests");
-
     sp.set("page", "1");
     router.push(`?${sp.toString()}#listings-grid`, { scroll: true });
   }
@@ -131,7 +172,7 @@ export default function HeroFilters() {
   return (
     <form
       onSubmit={onSubmit}
-      className="w-[300px] sm:w-[550px] lg:w-[1290px] h-[480px] sm:h-45 lg:h-20 bg-white/10 rounded-[10px] border border-white/0 backdrop-blur-[5.10px] flex flex-col sm:flex-row justify-around sm:flex-wrap lg:justify-between items-center text-primary px-[39px] cursor-pointer">
+      className="w-[300px] sm:w-[550px] lg:w-[1290px] h-[480px] sm:h-45 lg:h-20 bg-primary/10 rounded-[10px] border border-primary/0 backdrop-blur-[5.10px] flex flex-col sm:flex-row justify-around sm:flex-wrap lg:justify-between items-center text-primary px-[39px] cursor-pointer">
       {/* Search */}
       <div className="flex flex-col">
         <fieldset>
@@ -205,7 +246,6 @@ export default function HeroFilters() {
             </svg>
           </div>
         </fieldset>
-
         {openCal && (
           <div className="absolute -left-8 sm:-left-80 lg:left-0 bottom-[395px] lg:bottom-[450px]">
             <DateRangePopover
@@ -254,7 +294,6 @@ export default function HeroFilters() {
             </svg>
           </div>
         </fieldset>
-
         {priceOpen && (
           <div className="absolute -left-8 lg:left-0  bottom-[135px] lg:bottom-[150px]">
             <PricePopover
@@ -309,7 +348,6 @@ export default function HeroFilters() {
             </svg>
           </div>
         </fieldset>
-
         {guestsOpen && (
           <div className="absolute -left-3 lg:left-0 bottom-[120px]">
             <GuestsPopover

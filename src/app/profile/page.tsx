@@ -4,6 +4,17 @@ import ProfileHeader from "@/features/profile/components/profileHeader/ProfileHe
 import { getProfileByName } from "@/utils/api/profiles";
 import ProfileVenuesSection from "@/features/profile/components/ProfileVenues/ProfileVenuesSection";
 
+/**
+ * Profile page for the currently authenticated user.
+ *
+ * - Reads `token` and `username` cookies to identify the user.
+ * - Redirects to `/auth` if either cookie is missing.
+ * - Fetches the full profile (with bookings and venues) from the API.
+ * - Renders a profile header and the user’s venues section.
+ *
+ * @returns A server component rendering the authenticated user’s profile page,
+ * or triggers a redirect to `/auth` if not authenticated.
+ */
 export default async function ProfilePage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;

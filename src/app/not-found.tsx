@@ -1,7 +1,16 @@
-
 import Link from "next/link";
 import Image from "next/image";
 
+/**
+ * Custom 404 page.
+ *
+ * - Displays a full-screen hero image with overlay text and a playful
+ *   “trip to nowhere” message.
+ * - Informs the user that the page doesn’t exist.
+ * - Provides a link back to the homepage.
+ *
+ * @returns A React component rendering the custom 404 page.
+ */
 export default function NotFound() {
   return (
     <section>
@@ -32,7 +41,9 @@ export default function NotFound() {
             </p>
           </div>
           <div>
-            <Link href="/" className="text-jakarta font-bold text-primary text-[15px] flex flex-row items-center justify-center gap-[6px] mt-4">
+            <Link
+              href="/"
+              className="text-jakarta font-bold text-primary text-[15px] flex flex-row items-center justify-center gap-[6px] mt-4">
               <svg
                 width="7"
                 height="12"

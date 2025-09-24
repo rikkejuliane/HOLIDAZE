@@ -9,6 +9,23 @@ type Props = {
   initialOn: boolean;
 };
 
+/**
+ * VenueManagerToggle component.
+ *
+ * Renders a toggle button to enable/disable venue manager status.
+ * When clicked, it shows a confirmation modal before applying the change.
+ *
+ * Features:
+ * - Displays current status (on/off) with a styled toggle switch.
+ * - Opens a confirmation modal on click, asking the user to confirm the change.
+ * - Calls `updateProfile` API to save the new status.
+ * - Handles loading state and error messages.
+ * - Refreshes the page to reflect changes after a successful update.
+ *
+ * @param profileName - The profile name used for the API call.
+ * @param initialOn - Initial venue manager status (true/false).
+ * @returns A toggle button with confirmation modal functionality.
+ */
 export default function VenueManagerToggle({ profileName, initialOn }: Props) {
   const [on, setOn] = React.useState<boolean>(initialOn);
   const [open, setOpen] = React.useState(false);
@@ -40,10 +57,9 @@ export default function VenueManagerToggle({ profileName, initialOn }: Props) {
       setBusy(false);
     }
   }
-
   return (
     <>
-      {/* The toggle */}
+      {/* TOGGLE */}
       <button
         type="button"
         aria-pressed={on}
@@ -66,16 +82,15 @@ export default function VenueManagerToggle({ profileName, initialOn }: Props) {
         />
       </button>
 
-      {/* Confirmation modal */}
+      {/* CONFIRMATION MODAL */}
       {open && (
         <div className="fixed inset-0 z-[100]">
-          {/* backdrop */}
+          {/* BACKDROP */}
           <button
             aria-label="Close modal"
             onClick={() => !busy && setOpen(false)}
             className="absolute inset-0 bg-black/50"
           />
-
           <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-[685px] -translate-x-1/2 -translate-y-1/2 rounded-[10px] bg-secondary p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] px-5 md:px-30">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex-1 text-center">
@@ -86,17 +101,14 @@ export default function VenueManagerToggle({ profileName, initialOn }: Props) {
                 </h2>
               </div>
             </div>
-
             <p className="text-primary text-[14px] font-jakarta text-center mb-4">
               {nextValue
                 ? "Are you sure you want to become a venue manager?"
                 : "Are you sure you don’t want to be a venue manager anymore?"}
             </p>
-
             {err && (
               <p className="text-sm text-red-300 text-center mb-2">{err}</p>
             )}
-
             <div className="mt-2 flex w-full items-center justify-center gap-[30px]">
               <button
                 onClick={confirmChange}
@@ -117,7 +129,6 @@ export default function VenueManagerToggle({ profileName, initialOn }: Props) {
                   />
                 </svg>
               </button>
-
               <button
                 onClick={() => !busy && setOpen(false)}
                 className="flex flex-row items-center gap-1.5 font-jakarta text-[15px] text-primary/60 font-bold">

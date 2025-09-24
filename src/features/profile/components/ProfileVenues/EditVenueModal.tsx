@@ -9,16 +9,31 @@ import { AmenityToggle } from "../createVenue/AmenityToggle";
 import { ImageRows } from "../createVenue/ImageRows";
 
 type Props = { open: boolean; onClose: () => void; venue: Venue | null };
-
 type EditBuildResult =
   | { ok: true; payload: UpdateVenueInput }
   | { ok: false; error: string };
 
+/**
+ * EditVenueModal — modal UI for editing an existing venue.
+ *
+ * Connected to:
+ * - buildCreateVenuePayload(...) for validation/normalization.
+ * - updateVenue(venue.id, payload) to persist changes.
+ * - window.dispatchEvent(new CustomEvent("venues:updated")) after save.
+ *
+ * Behavior:
+ * - Hydrates form fields from `venue` whenever the modal opens.
+ * - Shows a temporary toast (`notice`) for success/error.
+ * - Closes shortly after a successful save.
+ *
+ * @param props.open       Controls visibility; when false, returns null.
+ * @param props.onClose    Called to dismiss the modal.
+ * @param props.venue      Venue being edited; required if `open` is true.
+ */
 export default function EditVenueModal({ open, onClose, venue }: Props) {
   const [busy, setBusy] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
   const hideTimerRef = React.useRef<number | null>(null);
-
   const clearNotice = React.useCallback(() => {
     setNotice(null);
     if (hideTimerRef.current) {
@@ -27,6 +42,12 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
     }
   }, []);
 
+  /**
+   * Displays a toast message and auto-hides it after 5 seconds.
+   * Replaces any existing message and resets the hide timer.
+   *
+   * @param msg - Message text to display.
+   */
   function showNotice(msg: string) {
     setNotice(msg);
     if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
@@ -35,7 +56,6 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
       hideTimerRef.current = null;
     }, 5000);
   }
-
   const [name, setName] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [price, setPrice] = React.useState<string>("");
@@ -44,25 +64,20 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
   const [media, setMedia] = React.useState<Array<{ url: string; alt: string }>>(
     [{ url: "", alt: "" }]
   );
-
   const [wifi, setWifi] = React.useState(false);
   const [parking, setParking] = React.useState(false);
   const [breakfast, setBreakfast] = React.useState(false);
   const [pets, setPets] = React.useState(false);
-
   const [address, setAddress] = React.useState("");
   const [zip, setZip] = React.useState("");
   const [city, setCity] = React.useState("");
   const [country, setCountry] = React.useState("");
   const [lat, setLat] = React.useState<string>("");
   const [lng, setLng] = React.useState<string>("");
-
   React.useEffect(() => {
     if (!open || !venue) return;
-
     setBusy(false);
     clearNotice();
-
     setName(venue.name ?? "");
     setDescription(venue.description ?? "");
     setPrice(
@@ -76,18 +91,15 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
         : ""
     );
     setRating(typeof venue.rating === "number" ? venue.rating : 0);
-
     const m = (venue.media ?? []).map((x) => ({
       url: x?.url ?? "",
       alt: x?.alt ?? "",
     }));
     setMedia(m.length ? m : [{ url: "", alt: "" }]);
-
     setWifi(Boolean(venue.meta?.wifi));
     setParking(Boolean(venue.meta?.parking));
     setBreakfast(Boolean(venue.meta?.breakfast));
     setPets(Boolean(venue.meta?.pets));
-
     setAddress(venue.location?.address ?? "");
     setZip(venue.location?.zip ?? "");
     setCity(venue.location?.city ?? "");
@@ -104,7 +116,6 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
         ? String(venue.location.lng)
         : ""
     );
-
     return () => {
       if (hideTimerRef.current) {
         window.clearTimeout(hideTimerRef.current);
@@ -112,17 +123,25 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
       }
     };
   }, [open, venue, clearNotice]);
-
   React.useEffect(() => {
     if (!open) clearNotice();
   }, [open, clearNotice]);
-
   if (!open || !venue) return null;
 
+  /**
+   * Handles form submission for editing a venue.
+   * 1) Validates/normalizes inputs via buildCreateVenuePayload(...).
+   * 2) Calls updateVenue(venue.id, payload) on success.
+   * 3) Emits "venues:updated", shows success toast, then closes the modal.
+   * 4) Shows an error toast on failure.
+   *
+   * Prevents default submit behavior and uses the `busy` flag to avoid dupes.
+   *
+   * @param e - React form submit event.
+   */
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setNotice(null);
-
     const result = buildCreateVenuePayload({
       name,
       description,
@@ -141,12 +160,10 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
       lat,
       lng,
     }) as EditBuildResult;
-
     if (!result.ok) {
       showNotice(result.error);
       return;
     }
-
     const payload: UpdateVenueInput = result.payload;
     setBusy(true);
     try {
@@ -167,30 +184,30 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
     }
   }
 
+  /**
+   * Cancels the edit flow by clearing any active toast and closing the modal.
+   */
   function handleCancel() {
     clearNotice();
     onClose();
   }
-
   return (
     <div className="fixed inset-0 z-[100]">
-      {/* backdrop */}
+      {/* BACKDROP */}
       <button
         aria-label="Close modal"
         onClick={handleCancel}
         className="absolute inset-0 bg-black/50"
       />
-
-      {/* dialog */}
+      {/* DIALOG */}
       <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-[685px] -translate-x-1/2 -translate-y-1/2 rounded-[10px] bg-secondary p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] px-5 md:px-30 text-primary font-jakarta max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex-1 text-center">
             <h2 className="font-noto text-[35px] font-bold">Edit venue</h2>
           </div>
         </div>
-
         <form onSubmit={onSubmit} className="flex flex-col gap-3 text-sm">
-          {/* name */}
+          {/* TITLE */}
           <div className="flex flex-col w-full">
             <label htmlFor="title" className="font-jakarta font-bold text-xs">
               Title
@@ -203,11 +220,10 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
-          {/* description */}
+          {/* DESCRIPTION */}
           <div className="flex flex-col w-full">
             <label className="font-jakarta font-bold text-xs">
               Description
@@ -218,11 +234,10 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
               required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="min-h-[90px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 py-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="min-h-[90px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 py-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
-          {/* price */}
+          {/* PRICE */}
           <div className="flex flex-col w-full">
             <label htmlFor="price" className="font-jakarta font-bold text-xs">
               Price per night
@@ -235,11 +250,10 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
               required
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
-          {/* guests */}
+          {/* GUESTS */}
           <div className="flex flex-col w-full">
             <label htmlFor="guest" className="font-jakarta font-bold text-xs">
               Guests
@@ -252,20 +266,17 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
               required
               value={maxGuests}
               onChange={(e) => setMaxGuests(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
-          {/* images */}
+          {/* IMAGES */}
           <ImageRows rows={media} onChange={setMedia} max={4} />
-
-          {/* rating */}
+          {/* RATINGS */}
           <div className="flex flex-row gap-2 items-center">
             <h2 className="font-jakarta text-[15px] font-bold">Rating:</h2>
             <StarRating value={rating} onChange={setRating} />
           </div>
-
-          {/* amenities */}
+          {/* AMENITIES */}
           <div className="flex flex-col bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 py-2 text-[14px]">
             <h2 className="font-jakarta text-[15px] font-bold pb-2">
               Amenities:
@@ -291,8 +302,7 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
               onChange={setPets}
             />
           </div>
-
-          {/* location */}
+          {/* LOCATION */}
           <div className="flex flex-col w-full">
             <label htmlFor="address" className="font-jakarta font-bold text-xs">
               Address
@@ -304,10 +314,9 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
               placeholder="Address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
           <div className="flex flex-col w-full">
             <label htmlFor="zipCode" className="font-jakarta font-bold text-xs">
               Zip code
@@ -319,10 +328,9 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
               placeholder="Zip code"
               value={zip}
               onChange={(e) => setZip(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
           <div className="flex flex-col w-full">
             <label htmlFor="city" className="font-jakarta font-bold text-xs">
               City
@@ -334,10 +342,9 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
               placeholder="City"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
           <div className="flex flex-col w-full">
             <label htmlFor="country" className="font-jakarta font-bold text-xs">
               Country
@@ -349,10 +356,9 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
               placeholder="Country"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
           <div className="flex flex-col w-full">
             <label htmlFor="lat" className="font-jakarta font-bold text-xs">
               Latitude
@@ -364,10 +370,9 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
               placeholder="Latitude"
               value={lat}
               onChange={(e) => setLat(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
           <div className="flex flex-col w-full">
             <label htmlFor="lng" className="font-jakarta font-bold text-xs">
               Longitude
@@ -379,11 +384,10 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
               placeholder="Longitude"
               value={lng}
               onChange={(e) => setLng(e.target.value)}
-              className="h-[30px] min-w-0 bg-white/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
+              className="h-[30px] min-w-0 bg-primary/20 rounded-[5px] shadow-[0px_4px_4px_rgba(0,0,0,0.25)] backdrop-blur-[2px] px-2 text-[14px] text-primary placeholder:text-primary placeholder:font-jakarta outline-none"
             />
           </div>
-
-          {/* actions */}
+          {/* ACTIONS */}
           <div className="mt-2 flex w-full items-center justify-center gap-[30px]">
             <button
               type="submit"
@@ -404,7 +408,6 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
                 />
               </svg>
             </button>
-
             <button
               type="button"
               onClick={handleCancel}
@@ -429,8 +432,7 @@ export default function EditVenueModal({ open, onClose, venue }: Props) {
           </div>
         </form>
       </div>
-
-      {/* toast */}
+      {/* TOAST */}
       {notice && (
         <div
           className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-secondary text-primary font-jakarta px-4 py-2 rounded z-[200] shadow-[0_10px_30px_rgba(0,0,0,0.35)]"

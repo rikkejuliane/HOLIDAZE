@@ -1,4 +1,3 @@
-// src/utils/venues/buildCreateVenuePayload.ts
 import type { CreateVenueInput } from "@/utils/api/venues";
 
 type Args = {
@@ -20,6 +19,27 @@ type Args = {
   lng: string;
 };
 
+/**
+ * Build a valid `CreateVenueInput` from raw form values with basic validation.
+ *
+ * - Trims text fields.
+ * - Validates:
+ *   - `name` and `description` are required (non-empty).
+ *   - `price` is a finite number > 0.
+ *   - `maxGuests` is an integer > 0.
+ *   - `lat`/`lng` are either blank or finite numbers.
+ * - Normalizes:
+ *   - `media`: trims, drops empty URLs, caps to 4, sets empty `alt` → `null`.
+ *   - `location`: empty strings → `null` (except `lat`/`lng`, see below).
+ *   - `lat`/`lng`: blank inputs remain “unset” internally but are serialized as `0`
+ *     to satisfy API schema expectations.
+ * - Returns a discriminated union:
+ *   - `{ ok: true, payload }` on success
+ *   - `{ ok: false, error }` with a user-friendly message on failure
+ *
+ * @param args Raw form values (see `Args`).
+ * @returns Result union containing either the payload or a validation error.
+ */
 export function buildCreateVenuePayload(
   args: Args
 ): { ok: true; payload: CreateVenueInput } | { ok: false; error: string } {
@@ -71,6 +91,5 @@ export function buildCreateVenuePayload(
       lng: lngNum ?? 0,
     },
   };
-
   return { ok: true, payload };
 }

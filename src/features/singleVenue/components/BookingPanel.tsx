@@ -12,6 +12,12 @@ import { ApiError } from "@/utils/api/client";
 
 type Booking = { dateFrom: string; dateTo: string };
 
+/** Returns the number of whole nights between two dates.
+ * Normalizes both dates to midnight and rounds positive differences.
+ * @param a Check-in date.
+ * @param b Check-out date.
+ * @returns Number of nights (0 if invalid order or missing dates).
+ */
 function daysBetween(a?: Date, b?: Date) {
   if (!a || !b) return 0;
   const A = new Date(a);
@@ -22,6 +28,10 @@ function daysBetween(a?: Date, b?: Date) {
   return ms > 0 ? Math.round(ms / 86400000) : 0;
 }
 
+/** Formats a number as USD for UI display.
+ * @param n Amount to format.
+ * @returns "$1,234.56" style string, or "—" when n ≤ 0.
+ */
 function fmtMoney(n: number) {
   return n > 0
     ? `$${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
@@ -30,6 +40,12 @@ function fmtMoney(n: number) {
     : "—";
 }
 
+/** Converts a checkout (exclusive) Date to an API-friendly inclusive `dateTo`.
+ * Subtracts one day from the checkout date and sets time to 23:59:59.999.
+ * Useful when the backend expects the *last occupied night* as `dateTo`.
+ * @param checkout The exclusive checkout Date chosen by the user.
+ * @returns ISO string for the inclusive end-of-stay moment.
+ */
 function toInclusiveDateTo(checkout: Date): string {
   const d = new Date(checkout);
   d.setDate(d.getDate() - 1);
@@ -37,6 +53,11 @@ function toInclusiveDateTo(checkout: Date): string {
   return d.toISOString();
 }
 
+/** Extracts a user-friendly error message from various error shapes.
+ * Handles ApiError, generic Error, and objects with a `message` field.
+ * @param err Unknown error value.
+ * @returns Safe string to show in a toast/notice.
+ */
 function getErrorMessage(err: unknown): string {
   if (err instanceof ApiError) return err.message;
   if (err instanceof Error) return err.message;
@@ -47,6 +68,30 @@ function getErrorMessage(err: unknown): string {
   return "Could not complete booking. Please try again.";
 }
 
+/** BookingPanel — date/guest selection, price summary, and booking flow.
+ * Renders date + guests inputs, computes totals (nightly, cleaning, tax),
+ * and gates booking by auth and owner checks. Confirms via modal before
+ * calling the booking API.
+ *
+ * @param venueId Venue identifier for booking API calls.
+ * @param venueName Venue display name (used in the modal).
+ * @param venueImg Optional thumbnail { url, alt } for the modal header.
+ * @param nightlyPrice Price per night.
+ * @param maxGuests Max allowed guests for this venue.
+ * @param existingBookings Optional list of existing bookings to disable dates.
+ * @param cleaningFee Flat fee added to total (default 25).
+ * @param taxRate Tax multiplier applied to (base + cleaning) (default 0.1).
+ * @param ownerName The venue owner’s profile name (prevents self-booking).
+ * @param viewerName Optional current user name; falls back to session.
+ * @returns JSX.Element
+ *
+ * @remarks
+ * - If unauthenticated, redirects to `/auth` preserving current search (start, end, guests) via `next` param.
+ * - Owners cannot book their own venue (shows a toast).
+ * - Opens `BookingConfirmationModal`; on confirm, calls `createBooking` with
+ *   ISO `dateFrom` and inclusive `dateTo` (via `toInclusiveDateTo`).
+ * - After a successful booking, closes the modal and refreshes the page.
+ */
 export default function BookingPanel({
   venueId,
   venueName,
@@ -72,15 +117,12 @@ export default function BookingPanel({
 }) {
   const router = useRouter();
   const sp = useSearchParams();
-
   const [range, setRange] = useState<{ start?: Date; end?: Date }>({});
   const [guests, setGuests] = useState<number>(1);
   const [isSubmitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [wasConfirmed, setWasConfirmed] = useState(false);
-
   const [authed, setAuthed] = useState<boolean | null>(null);
-
   const [storedViewerName, setStoredViewerName] = useState<string | null>(null);
   useEffect(() => {
     setAuthed(isAuthenticated());
@@ -88,14 +130,11 @@ export default function BookingPanel({
       setStoredViewerName(getUsername());
     }
   }, [viewerName]);
-
-  // toast
   const [notice, setNotice] = useState<string | null>(null);
   const showNotice = useCallback((msg: string) => {
     setNotice(msg);
     window.setTimeout(() => setNotice(null), 4000);
   }, []);
-
   const nights = useMemo(() => daysBetween(range.start, range.end), [range]);
   const base = useMemo(() => nights * nightlyPrice, [nights, nightlyPrice]);
   const taxes = useMemo(
@@ -106,7 +145,6 @@ export default function BookingPanel({
     () => (nights > 0 ? base + cleaningFee + taxes : 0),
     [nights, base, cleaningFee, taxes]
   );
-
   const startLabel =
     range.start &&
     range.start.toLocaleDateString(undefined, {
@@ -121,23 +159,18 @@ export default function BookingPanel({
       month: "short",
       year: "numeric",
     });
-
   const canBookBase =
     !!range.start &&
     !!range.end &&
     nights > 0 &&
     guests >= 1 &&
     guests <= Math.max(1, maxGuests);
-
   const effectiveViewerName = viewerName ?? storedViewerName;
-
   const isOwner =
     !!effectiveViewerName &&
     !!ownerName &&
     effectiveViewerName.trim().toLowerCase() === ownerName.trim().toLowerCase();
-
   const canBook = canBookBase && !isOwner;
-
   const handleCTA = useCallback(async () => {
     if (!isAuthenticated()) {
       const params = new URLSearchParams(sp?.toString() ?? "");
@@ -148,13 +181,10 @@ export default function BookingPanel({
       router.push(`/auth?next=/venues/${venueId}?${params.toString()}`);
       return;
     }
-
-    // block owners
     if (isOwner) {
       showNotice("You can’t book your own venue.");
       return;
     }
-
     if (!canBook || !range.start || !range.end) {
       showNotice("Please select valid dates and guests to continue.");
       return;
@@ -171,14 +201,12 @@ export default function BookingPanel({
     isOwner,
     showNotice,
   ]);
-
   return (
     <div className="flex flex-col pt-2.5 font-jakarta">
       <div className="flex flex-row flex-wrap-reverse gap-2 sm:gap-0 justify-between items-start pb-2">
         <h3 className="font-noto font-bold text-xl text-primary">
           ${nightlyPrice} / per night
         </h3>
-
         {authed === null ? (
           <div className="h-[20px] w-[88px]" aria-hidden />
         ) : authed ? (
@@ -229,15 +257,13 @@ export default function BookingPanel({
           </a>
         )}
       </div>
-
-      {/* Dates */}
+      {/* DATES */}
       <DateInputsWithCalendar
         existingBookings={existingBookings}
         minNights={1}
         onRangeChange={setRange}
       />
-
-      {/* Guests */}
+      {/* GUESTS */}
       <div className="relative mt-2.5">
         <label
           htmlFor="guests"
@@ -251,8 +277,7 @@ export default function BookingPanel({
           onChange={(n) => Number.isFinite(n) && setGuests(n)}
         />
       </div>
-
-      {/* Summary */}
+      {/* SUMMARY */}
       <BookingSummary
         nightlyPrice={nightlyPrice}
         start={range.start}
@@ -260,8 +285,7 @@ export default function BookingPanel({
         cleaningFee={cleaningFee}
         taxRate={taxRate}
       />
-
-      {/* Confirmation Modal */}
+      {/* CONFIRMATION MODAL */}
       <BookingConfirmationModal
         open={showConfirm}
         onClose={() => {
@@ -291,13 +315,10 @@ export default function BookingPanel({
         }}
         onConfirm={async () => {
           if (!range.start || !range.end) return;
-
-          // extra safety
           if (isOwner) {
             showNotice("You can’t book your own venue.");
             return;
           }
-
           setSubmitting(true);
           try {
             await createBooking({
@@ -320,8 +341,7 @@ export default function BookingPanel({
         }}
         viewBookingHref="/profile"
       />
-
-      {/* Toast */}
+      {/* TOAST */}
       {notice && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 bg-secondary text-primary text-jakarta px-4 py-2 rounded z-50">
           {notice}

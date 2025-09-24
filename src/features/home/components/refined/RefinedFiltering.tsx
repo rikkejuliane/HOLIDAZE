@@ -9,6 +9,15 @@ import {
   type AmenityKey,
 } from "@/utils/venues/amenities";
 
+/**
+ * useOutsideClose hook.
+ *
+ * Adds listeners that call `onClose` when the user clicks outside the
+ * referenced element or presses the Escape key.
+ *
+ * @param onClose - Callback to invoke when the popover/menu should close.
+ * @returns A ref to attach to the element you want to monitor.
+ */
 function useOutsideClose(onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -29,10 +38,26 @@ function useOutsideClose(onClose: () => void) {
   return ref;
 }
 
+/**
+ * RefinedFiltering component.
+ *
+ * Controls for sorting and filtering the home listings.
+ *
+ * Features:
+ * - **Sort by price** (highest/lowest): writes a `sort` query param, resets `page=1`,
+ *   and navigates to `#listings-grid`. Closes when an option is chosen.
+ * - **Amenities filter** (wifi, parking, breakfast, pets): buffered selection in a popover,
+ *   serializes via `serializeAmenitiesParam`, updates the URL, resets `page=1`, and anchors
+ *   to `#listings-grid`. Supports Clear and Apply.
+ * - **Clear all**: removes relevant query params via `clearAllFiltersIn`, then anchors to
+ *   `#listings-grid`.
+ * - Popovers close on outside click or Escape (via `useOutsideClose`).
+ *
+ * @returns The filtering toolbar UI for the listings page.
+ */
 export default function RefinedFiltering() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const sort = searchParams.get("sort");
   const [openSort, setOpenSort] = useState(false);
   const sortWrapRef = useOutsideClose(() => setOpenSort(false));
@@ -52,22 +77,18 @@ export default function RefinedFiltering() {
       ? "SORT BY: LOWEST PRICE"
       : sort === "price:desc"
       ? "SORT BY: HIGHEST PRICE"
-      : "SORT BY: HIGHEST PRICE"; 
+      : "SORT BY: HIGHEST PRICE";
 
   const amenitiesParam = searchParams.get("amenities") ?? "";
-
   const amenitiesFromUrl = useMemo(
     () => parseAmenitiesParam(amenitiesParam),
     [amenitiesParam]
   );
-
   const [openAmenities, setOpenAmenities] = useState(false);
   const amenitiesWrapRef = useOutsideClose(() => setOpenAmenities(false));
-
   const [pendingAmenities, setPendingAmenities] = useState<Set<AmenityKey>>(
     new Set(amenitiesFromUrl)
   );
-
   useEffect(() => {
     if (!openAmenities) {
       setPendingAmenities(new Set(amenitiesFromUrl));
@@ -156,25 +177,25 @@ export default function RefinedFiltering() {
                 id="sort-menu"
                 role="menu"
                 aria-labelledby="sort-btn"
-                className="absolute left-0 top-full mt-2 z-50 w-[240px] border border-white/10 bg-background/80 backdrop-blur-xl p-3 shadow-lg text-primary">
+                className="absolute left-0 top-full mt-2 z-50 w-[240px] border border-primary/10 bg-background/80 backdrop-blur-xl p-3 shadow-lg text-primary">
                 <button
                   role="menuitemradio"
                   aria-checked={sort === "price:desc"}
                   onClick={() => applySort("price:desc")}
-                  className="flex w-full items-center px-2 py-2 hover:bg-white/10 text-left font-jakarta text-sm">
+                  className="flex w-full items-center px-2 py-2 hover:bg-primary/10 text-left font-jakarta text-sm">
                   HIGHEST PRICE
                 </button>
                 <button
                   role="menuitemradio"
                   aria-checked={sort === "price:asc"}
                   onClick={() => applySort("price:asc")}
-                  className="flex w-full items-center px-2 py-2 hover:bg-white/10 text-left font-jakarta text-sm">
+                  className="flex w-full items-center px-2 py-2 hover:bg-primary/10 text-left font-jakarta text-sm">
                   LOWEST PRICE
                 </button>
                 <button
                   role="menuitem"
                   onClick={() => applySort(undefined)}
-                  className="mt-1 flex w-full items-center px-2 py-2 hover:bg-white/10 text-left opacity-80 font-jakarta text-sm">
+                  className="mt-1 flex w-full items-center px-2 py-2 hover:bg-primary/10 text-left opacity-80 font-jakarta text-sm">
                   Clear
                 </button>
               </div>
@@ -211,16 +232,14 @@ export default function RefinedFiltering() {
                 />
               </svg>
             </button>
-
             {openAmenities && (
               <div
                 id="amenities-menu"
                 role="dialog"
                 aria-modal="false"
-                className="absolute left-0 top-full mt-2 z-50 w-[150px] border border-white/10 bg-background/95 sm:bg-background/80 sm:backdrop-blur-xl p-3 shadow-lg text-primary">
+                className="absolute left-0 top-full mt-2 z-50 w-[150px] border border-primary/10 bg-background/95 sm:bg-background/80 sm:backdrop-blur-xl p-3 shadow-lg text-primary">
                 <fieldset className="font-jakarta text-[15px]">
                   <legend className="sr-only">Amenities</legend>
-
                   <ul className="space-y-1">
                     {(
                       ["wifi", "parking", "breakfast", "pets"] as AmenityKey[]
@@ -230,7 +249,7 @@ export default function RefinedFiltering() {
                           <span className="uppercase">{k}</span>
                           <input
                             type="checkbox"
-                            className="h-4 w-4 rounded-sm border border-white/40 accent-[#1f2937] "
+                            className="h-4 w-4 rounded-sm border border-primary/40 accent-[#1f2937] "
                             checked={pendingAmenities.has(k)}
                             onChange={() => toggleAmenityBuffered(k)}
                           />
@@ -238,15 +257,13 @@ export default function RefinedFiltering() {
                       </li>
                     ))}
                   </ul>
-
                   <div className="mt-2 flex items-center justify-between">
                     <button
                       type="button"
-                      className="mt-1 flex items-center py-2 hover:bg-white/10 text-left opacity-80 font-jakarta text-sm"
+                      className="mt-1 flex items-center py-2 hover:bg-primary/10 text-left opacity-80 font-jakarta text-sm"
                       onClick={() => clearAmenitiesBuffered(true)}>
                       Clear
                     </button>
-
                     <button
                       type="button"
                       onClick={applyAmenities}

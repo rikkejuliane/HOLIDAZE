@@ -2,6 +2,14 @@ import type { ListMeta } from "@/types/venue";
 
 export const UI_PAGE_SIZE = 8;
 
+/**
+ * Builds pagination metadata for UI controls.
+ *
+ * @param total - Total number of items.
+ * @param currentPage - Current page number (1-based).
+ * @param pageSize - Number of items per page (default: `UI_PAGE_SIZE`).
+ * @returns Pagination metadata including `currentPage`, `pageCount`, `totalCount`, `isFirstPage`, `isLastPage`, `previousPage`, and `nextPage`.
+ */
 export function buildMeta(
   total: number,
   currentPage: number,
