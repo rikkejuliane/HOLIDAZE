@@ -4,6 +4,10 @@ import { getVenueById } from "@/utils/api/venues";
 import Link from "next/link";
 import Image from "next/image";
 import MediaMapPanel from "@/features/singleVenue/components/MediaMapPanel";
+import {
+  extractCoordsFromVenue,
+  extractCityCountry,
+} from "@/utils/map/helpers";
 import BookingPanel from "@/features/singleVenue/components/BookingPanel";
 import FavoriteHeartWithToast from "@/components/FavoriteHeartWithToast";
 import { cookies } from "next/headers";
@@ -28,6 +32,11 @@ export default async function VenueDetailPage({ params }: Props) {
     venue = await getVenueById(id, { owner: true, bookings: true });
   } catch {}
   if (!venue) return notFound();
+
+  // ✅ NEW: derive coords + city/country exactly like homepage
+  const coords = extractCoordsFromVenue(venue); // [lng, lat] | null
+  const { city, country } = extractCityCountry(venue);
+
   const cookieStore = await cookies();
   const isLoggedIn = Boolean(cookieStore.get("token")?.value);
   const rawUsername = cookieStore.get("username")?.value;
@@ -42,10 +51,12 @@ export default async function VenueDetailPage({ params }: Props) {
           {/* MAP AND IMAGES */}
           <MediaMapPanel
             media={venue.media}
-            owner={venue.owner}
+            owner={{ email: venue.owner?.email }}
             location={{
-              lat: venue.location?.lat,
-              lng: venue.location?.lng,
+              lat: coords ? coords[1] : null,
+              lng: coords ? coords[0] : null,
+              city,
+              country,
             }}
           />
         </div>

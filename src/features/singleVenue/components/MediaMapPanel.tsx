@@ -7,6 +7,8 @@ import Image from "next/image";
 import { geocodeToLngLat } from "@/utils/map/helpers";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
+const STYLE_URL =
+  process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL || "mapbox://styles/mapbox/dark-v11";
 
 type MediaItem = { url?: string | null; alt?: string | null };
 type Owner = { email?: string | null };
@@ -22,6 +24,10 @@ type Props = {
   location?: Location | null;
   placeholderSrc?: string;
 };
+
+// Typed response for direct Mapbox fetch (no 'any')
+type MapboxFeature = { center?: [number, number] };
+type MapboxGeocodeResponse = { features?: MapboxFeature[] };
 
 /**
  * MediaMapPanel
@@ -41,6 +47,10 @@ type Props = {
  *   - `process.env.NEXT_PUBLIC_MAPBOX_TOKEN` (required)
  *   - `process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL` (optional, defaults to dark-v11)
  * - Coordinates at (0,0) are treated as invalid.
+ * - Geocoding runs as soon as props are available (not only after you
+ *   switch to the MAP tab). We first try the shared helper (no `types`),
+ *   then fall back to a direct Mapbox fetch if needed. Map updates if derived
+ *   coords arrive later.
  *
  * Accessibility
  * - Photo nav buttons have aria-labels.
@@ -67,6 +77,7 @@ export default function MediaMapPanel({
   const [idx, setIdx] = useState(0);
   const canPrevNext = images.length > 1;
   const currSrc = hasImages ? images[idx] : placeholderSrc;
+
   const lat = location?.lat ?? null;
   const lng = location?.lng ?? null;
   const hasCoords =
@@ -75,69 +86,100 @@ export default function MediaMapPanel({
     Number.isFinite(lat) &&
     Number.isFinite(lng) &&
     (lat !== 0 || lng !== 0);
+
+  // Keys like homepage: "City, Country" → City → Country (dedupe + city===country guard)
   const placeKeys = useMemo(() => {
-    const city = (location?.city ?? "").trim();
-    const country = (location?.country ?? "").trim();
-    const keys: { q: string; types?: string }[] = [];
-    if (city && country) {
-      keys.push({
-        q: `${city}, ${country}`,
-        types: "place,locality,region,country",
-      });
-    } else if (city) {
-      keys.push({ q: city, types: "place,locality,region" });
-    }
-    if (country) {
-      keys.push({ q: country, types: "country" });
-    }
-    return keys;
+    const c = (location?.city ?? "").trim();
+    const co = (location?.country ?? "").trim();
+    const keys: string[] = [];
+    if (c && co) {
+      if (c.toLowerCase() === co.toLowerCase()) {
+        keys.push(c, co);
+      } else {
+        keys.push(`${c}, ${co}`, c, co);
+      }
+    } else if (c) keys.push(c);
+    else if (co) keys.push(co);
+    return Array.from(new Set(keys)).filter(Boolean);
   }, [location?.city, location?.country]);
+
   const geoCacheRef = useRef<Map<string, [number, number]>>(new Map());
   const [derived, setDerived] = useState<[number, number] | null>(null);
+
+  // Prefetch geocode (don’t wait for MAP tab)
   useEffect(() => {
     let alive = true;
     (async () => {
-      if (
-        mode !== "map" ||
-        hasCoords ||
-        !placeKeys.length ||
-        !mapboxgl.accessToken
-      )
+      if (hasCoords || !placeKeys.length || !mapboxgl.accessToken) {
+        setDerived(null);
         return;
-      for (const { q, types } of placeKeys) {
-        const coords = await geocodeToLngLat(
-          q,
-          geoCacheRef.current,
-          mapboxgl.accessToken as string,
-          types
-        );
-        if (!alive) return;
-        if (coords) {
-          setDerived(coords);
-          break;
+      }
+
+      // Pass 1: helper (no types), mirrors homepage
+      for (const q of placeKeys) {
+        try {
+          const coords = await geocodeToLngLat(
+            q,
+            geoCacheRef.current,
+            mapboxgl.accessToken as string
+          );
+          if (!alive) return;
+          if (coords) {
+            setDerived(coords);
+            return;
+          }
+        } catch {
+          /* ignore and try next */
         }
       }
+
+      // Pass 2: direct Mapbox fetch (typed)
+      for (const q of placeKeys) {
+        try {
+          const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+            q
+          )}.json?access_token=${mapboxgl.accessToken}`;
+          const r = await fetch(url);
+          if (!alive) return;
+          if (!r.ok) continue;
+          const json: MapboxGeocodeResponse = await r.json();
+          const coords = json.features?.[0]?.center ?? null;
+          if (coords && coords.length === 2) {
+            setDerived(coords as [number, number]);
+            return;
+          }
+        } catch {
+          /* ignore and try next */
+        }
+      }
+
+      setDerived(null);
     })();
     return () => {
       alive = false;
     };
-  }, [mode, hasCoords, placeKeys]);
-  const showMap = hasCoords || !!derived;
+  }, [hasCoords, placeKeys]);
+
+  const noToken = !mapboxgl.accessToken;
+  const showMap = (hasCoords || !!derived) && !noToken;
+
   const mapNodeRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
+
+  // Create map when MAP tab is active and we have a center
   useEffect(() => {
     if (mode !== "map") return;
     if (!showMap) return;
     if (mapRef.current || !mapNodeRef.current) return;
-    const center: [number, number] = (hasCoords
+
+    const center: [number, number] = hasCoords
       ? [lng as number, lat as number]
-      : (derived as [number, number])) ?? [10, 59];
+      : (derived as [number, number]);
+
     const map = new mapboxgl.Map({
       container: mapNodeRef.current,
-      style:
-        process.env.NEXT_PUBLIC_MAPBOX_STYLE_URL ||
-        "mapbox://styles/mapbox/dark-v11",
+      style: STYLE_URL,
       center,
       zoom: 13,
       attributionControl: false,
@@ -146,16 +188,19 @@ export default function MediaMapPanel({
       new mapboxgl.NavigationControl({ visualizePitch: true }),
       "top-right"
     );
+
     const el = document.createElement("div");
     el.className = "w-3 h-3 rounded-full ring-2 ring-primary/50";
     (el.style as CSSStyleDeclaration).backgroundColor =
       "var(--color-imperialRed, #e63946)";
-    const markerLngLat: [number, number] = center;
+
     const marker = new mapboxgl.Marker({ element: el, anchor: "center" })
-      .setLngLat(markerLngLat)
+      .setLngLat(center)
       .addTo(map);
+
     mapRef.current = map;
     markerRef.current = marker;
+
     return () => {
       try {
         marker.remove();
@@ -167,6 +212,23 @@ export default function MediaMapPanel({
       mapRef.current = null;
     };
   }, [mode, showMap, hasCoords, lat, lng, derived]);
+
+  // If derived coords arrive after map mount, update smoothly
+  useEffect(() => {
+    if (mode !== "map") return;
+    const map = mapRef.current;
+    const marker = markerRef.current;
+    if (!map || !marker) return;
+
+    const center: [number, number] | null = hasCoords
+      ? [lng as number, lat as number]
+      : derived;
+
+    if (!center) return;
+
+    marker.setLngLat(center);
+    map.easeTo({ center, zoom: Math.max(map.getZoom(), 13), duration: 400 });
+  }, [mode, hasCoords, lat, lng, derived]);
 
   /**
    * prev
@@ -187,6 +249,14 @@ export default function MediaMapPanel({
     if (!canPrevNext) return;
     setIdx((i) => (i + 1) % images.length);
   }
+
+  const reason =
+    noToken
+      ? "Map is unavailable — missing or restricted Mapbox token."
+      : !placeKeys.length && !hasCoords
+      ? "No city/country available to locate this venue."
+      : "We couldn’t locate this venue on the map.";
+
   return (
     <div className="relative w-full md:w-[720px] h-[56vw] md:h-[680px] min-h-[260px] overflow-hidden object-fit">
       {/* TABS */}
@@ -280,7 +350,7 @@ export default function MediaMapPanel({
           <div className="flex h-full w-full items-center justify-center bg-black/20 text-center px-8">
             <div className="max-w-xs">
               <p className="text-sm text-primary/80">
-                We couldn’t locate this venue on the map.
+                {reason}
               </p>
               {owner?.email ? (
                 <a
