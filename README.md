@@ -13,7 +13,6 @@
 8. [Other](#other-📌)
 
 
-
 ## Project Overview 🌍
 **Holidaze** is a responsive and intuitive booking site where users can discover places to stay, check availability, and make bookings with ease.
 
@@ -22,7 +21,6 @@ Customers can manage their profiles, track upcoming trips, and securely log in/o
 The application combines clean design, accessibility, and robust API integration to create a seamless booking experience. It is built with **Next.js, React, TypeScript,** and **Tailwind CSS,** using the official Noroff Holidaze API.
 
 This project was developed as part of my **Project Exam 2** at Noroff, showcasing my skills in modern frontend development, API consumption, and responsive UI/UX.
-
 
 
 ## Demo 🎥
@@ -102,49 +100,49 @@ This project was developed as part of my **Project Exam 2** at Noroff, showcasin
 
 
 
-## Installation ⚙️
-Click the link to access the project: 🔗 [Holidaze](https://holidaze-rikkejuliane.netlify.app/)
+## Installation ⚙️  
+Click the link to access the project: 🔗 [Holidaze](https://holidaze-rikkejuliane.netlify.app/)  
 
-**Clone + install:** 
+**Clone + install:**  
 ```bash
 git clone https://github.com/rikkejuliane/holidaze.git
 cd holidaze
 npm install
 ```
 
-**Install dependencies:**
-Ensure you have Node.js installed. Then, run:
+**Install dependencies:**  
+Ensure you have Node.js installed. Then, run:  
 ```bash
 npm install
 ```
 
-**Environment Setup:**
-Copy the example environment file:
+**Environment Setup:**  
+Copy the example environment file:  
 ```bash
 cp .env.local.example .env.local
 ```
 
-Open the newly created .env.local file in your editor and replace the placeholder values with your real credentials:
+Open the newly created .env.local file in your editor and replace the placeholder values with your real credentials:  
 ```bash
-# Noroff API key (replace with your own from Noroff API docs)
-NEXT_PUBLIC_NOROFF_API_KEY=your-api-key-here
+# Noroff API key (replace with your own from Noroff API docs)  
+NEXT_PUBLIC_NOROFF_API_KEY=your-api-key-here  
 
-# Mapbox access token (replace with your own from mapbox.com)
-NEXT_PUBLIC_MAPBOX_TOKEN=your-mapbox-access-token-here
+# Mapbox access token (replace with your own from mapbox.com)  
+NEXT_PUBLIC_MAPBOX_TOKEN=your-mapbox-access-token-here  
 
-# Mapbox style URL (replace with your own style URL, or use the provided one)
-NEXT_PUBLIC_MAPBOX_STYLE_URL=mapbox://styles/your-username/your-style-id
+# Mapbox style URL (replace with your own style URL, or use the provided one)  
+NEXT_PUBLIC_MAPBOX_STYLE_URL=mapbox://styles/your-username/your-style-id  
 ```
 
-👉 You can get your API key here: [Noroff API Key Documentation](https://docs.noroff.dev/docs/v2)  
-👉 You can get your Mapbox token here: [Mapbox Account Tokens](https://docs.mapbox.com/help/dive-deeper/access-tokens/)  
+👉 You can get your API key here: [Noroff API Key Documentation](https://docs.noroff.dev/docs/v2)    
+👉 You can get your Mapbox token here: [Mapbox Account Tokens](https://docs.mapbox.com/help/dive-deeper/access-tokens/)    
 
-**Run locally:**
+**Run locally:**  
 ```bash
 npm run dev
 ```
 
-**Open the project:**
+**Open the project:**  
 ```bash
 http://localhost:3000
 ```
