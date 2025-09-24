@@ -24,12 +24,15 @@ This project was developed as part of my **Project Exam 2** at Noroff, showcasin
 
 
 ## Demo 🎥
-> Live demos will be added here when deployments are ready.
+**Home / Explore:**  
+![Home Demo](https://github.com/user-attachments/assets/f82dedb7-c9ad-44c1-8124-83231e786e8b)  
 
-- **Home / Explore:** _TBD_
-- **Venue page:** _TBD_
-- **Profile (Bookings / Favorites / My Venues):** _TBD_
-- **Auth:** _TBD_
+**Auth:**   
+![Auth demo](https://github.com/user-attachments/assets/4ffaaad9-6647-4e8f-b8ed-4dd70730f573)
+
+**Profile:**  
+![Profile](https://github.com/user-attachments/assets/583f10df-3269-449d-b257-8835150d9eb2)
+
 
 
 ## User Stories 👤 
