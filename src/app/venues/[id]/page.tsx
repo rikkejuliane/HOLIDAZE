@@ -32,11 +32,8 @@ export default async function VenueDetailPage({ params }: Props) {
     venue = await getVenueById(id, { owner: true, bookings: true });
   } catch {}
   if (!venue) return notFound();
-
-  // ✅ NEW: derive coords + city/country exactly like homepage
-  const coords = extractCoordsFromVenue(venue); // [lng, lat] | null
+  const coords = extractCoordsFromVenue(venue);
   const { city, country } = extractCityCountry(venue);
-
   const cookieStore = await cookies();
   const isLoggedIn = Boolean(cookieStore.get("token")?.value);
   const rawUsername = cookieStore.get("username")?.value;

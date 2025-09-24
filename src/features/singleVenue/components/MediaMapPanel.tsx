@@ -24,8 +24,6 @@ type Props = {
   location?: Location | null;
   placeholderSrc?: string;
 };
-
-// Typed response for direct Mapbox fetch (no 'any')
 type MapboxFeature = { center?: [number, number] };
 type MapboxGeocodeResponse = { features?: MapboxFeature[] };
 
@@ -86,8 +84,6 @@ export default function MediaMapPanel({
     Number.isFinite(lat) &&
     Number.isFinite(lng) &&
     (lat !== 0 || lng !== 0);
-
-  // Keys like homepage: "City, Country" → City → Country (dedupe + city===country guard)
   const placeKeys = useMemo(() => {
     const c = (location?.city ?? "").trim();
     const co = (location?.country ?? "").trim();
@@ -105,8 +101,6 @@ export default function MediaMapPanel({
 
   const geoCacheRef = useRef<Map<string, [number, number]>>(new Map());
   const [derived, setDerived] = useState<[number, number] | null>(null);
-
-  // Prefetch geocode (don’t wait for MAP tab)
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -114,8 +108,6 @@ export default function MediaMapPanel({
         setDerived(null);
         return;
       }
-
-      // Pass 1: helper (no types), mirrors homepage
       for (const q of placeKeys) {
         try {
           const coords = await geocodeToLngLat(
@@ -128,12 +120,8 @@ export default function MediaMapPanel({
             setDerived(coords);
             return;
           }
-        } catch {
-          /* ignore and try next */
-        }
+        } catch {}
       }
-
-      // Pass 2: direct Mapbox fetch (typed)
       for (const q of placeKeys) {
         try {
           const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
@@ -148,35 +136,26 @@ export default function MediaMapPanel({
             setDerived(coords as [number, number]);
             return;
           }
-        } catch {
-          /* ignore and try next */
-        }
+        } catch {}
       }
-
       setDerived(null);
     })();
     return () => {
       alive = false;
     };
   }, [hasCoords, placeKeys]);
-
   const noToken = !mapboxgl.accessToken;
   const showMap = (hasCoords || !!derived) && !noToken;
-
   const mapNodeRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
-
-  // Create map when MAP tab is active and we have a center
   useEffect(() => {
     if (mode !== "map") return;
     if (!showMap) return;
     if (mapRef.current || !mapNodeRef.current) return;
-
     const center: [number, number] = hasCoords
       ? [lng as number, lat as number]
       : (derived as [number, number]);
-
     const map = new mapboxgl.Map({
       container: mapNodeRef.current,
       style: STYLE_URL,
@@ -188,19 +167,15 @@ export default function MediaMapPanel({
       new mapboxgl.NavigationControl({ visualizePitch: true }),
       "top-right"
     );
-
     const el = document.createElement("div");
     el.className = "w-3 h-3 rounded-full ring-2 ring-primary/50";
     (el.style as CSSStyleDeclaration).backgroundColor =
       "var(--color-imperialRed, #e63946)";
-
     const marker = new mapboxgl.Marker({ element: el, anchor: "center" })
       .setLngLat(center)
       .addTo(map);
-
     mapRef.current = map;
     markerRef.current = marker;
-
     return () => {
       try {
         marker.remove();
@@ -212,14 +187,11 @@ export default function MediaMapPanel({
       mapRef.current = null;
     };
   }, [mode, showMap, hasCoords, lat, lng, derived]);
-
-  // If derived coords arrive after map mount, update smoothly
   useEffect(() => {
     if (mode !== "map") return;
     const map = mapRef.current;
     const marker = markerRef.current;
     if (!map || !marker) return;
-
     const center: [number, number] | null = hasCoords
       ? [lng as number, lat as number]
       : derived;
@@ -250,12 +222,11 @@ export default function MediaMapPanel({
     setIdx((i) => (i + 1) % images.length);
   }
 
-  const reason =
-    noToken
-      ? "Map is unavailable — missing or restricted Mapbox token."
-      : !placeKeys.length && !hasCoords
-      ? "No city/country available to locate this venue."
-      : "We couldn’t locate this venue on the map.";
+  const reason = noToken
+    ? "Map is unavailable — missing or restricted Mapbox token."
+    : !placeKeys.length && !hasCoords
+    ? "No city/country available to locate this venue."
+    : "We couldn’t locate this venue on the map.";
 
   return (
     <div className="relative w-full md:w-[720px] h-[56vw] md:h-[680px] min-h-[260px] overflow-hidden object-fit">
@@ -349,9 +320,7 @@ export default function MediaMapPanel({
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-black/20 text-center px-8">
             <div className="max-w-xs">
-              <p className="text-sm text-primary/80">
-                {reason}
-              </p>
+              <p className="text-sm text-primary/80">{reason}</p>
               {owner?.email ? (
                 <a
                   className="mt-2 inline-block underline text-primary"
