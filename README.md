@@ -3,17 +3,17 @@
 
 
 ## Table of Contents 📚  
-1. [Project Overview](#project-overview-🌍)   
-2. [Demo](#demo-🎥)  
-3. [User Stories](#user-stories-👤)  
-4. [Key Features](#key-features-✨)  
+1. [Project Overview](#project-overview-)   
+2. [Demo](#demo-)  
+3. [User Stories](#user-stories-)  
+4. [Key Features](#key-features-)  
 5. [Tech Stack](#tech-stack)  
-6. [Installation](#installation-⚙️)  
-7. [Contact](#contact-me-🙋🏽‍♀️)  
-8. [Other](#other-📌)
+6. [Installation](#installation-)  
+7. [Contact](#contact-me-)  
+8. [Other](#other-)
 
 
-## Project Overview 🌍
+## Project Overview  🌍
 **Holidaze** is a responsive and intuitive booking site where users can discover places to stay, check availability, and make bookings with ease.
 
 Customers can manage their profiles, track upcoming trips, and securely log in/out, while venue managers have full control over their listings—creating, updating, or deleting venues and viewing all bookings.
@@ -23,7 +23,7 @@ The application combines clean design, accessibility, and robust API integration
 This project was developed as part of my **Project Exam 2** at Noroff, showcasing my skills in modern frontend development, API consumption, and responsive UI/UX.
 
 
-## Demo 🎥
+## Demo  🎥
 **Home / Explore:**  
 ![Home Demo](https://github.com/user-attachments/assets/f82dedb7-c9ad-44c1-8124-83231e786e8b)  
 
@@ -34,7 +34,7 @@ This project was developed as part of my **Project Exam 2** at Noroff, showcasin
 ![Profile Demo](https://github.com/user-attachments/assets/583f10df-3269-449d-b257-8835150d9eb2) 
 
 
-## User Stories 👤 
+## User Stories  👤 
 **All Users**
 - View a list of venues
 - Search for a specific venue
@@ -55,7 +55,7 @@ This project was developed as part of my **Project Exam 2** at Noroff, showcasin
 
 
 
-## Key Features ✨
+## Key Features  ✨
 - **Venue browsing & search**
   - Pagination, keyword search, amenity, guests count, date-range & price filters. 
   - Junk listing filtering and minimum content checks.
@@ -86,7 +86,7 @@ This project was developed as part of my **Project Exam 2** at Noroff, showcasin
 
 
 
-## Tech Stack
+## Tech Stack  💻
 - Next.js (App Router)
 - React 19
 - TypeScript
@@ -100,9 +100,7 @@ This project was developed as part of my **Project Exam 2** at Noroff, showcasin
 - Noroff API (v2)
 
 
-
-
-## Installation ⚙️  
+## Installation  ⚙️  
 Click the link to access the project: 🔗 [Holidaze](https://holidaze-rikkejuliane.netlify.app/)  
 
 **Clone + install:**  
@@ -150,14 +148,14 @@ http://localhost:3000
 ```
 
 
-## Contact me 🙋🏽‍♀️  
+## Contact me  🙋🏽‍♀️  
 Don’t hesitate to reach out to me or connect with me on social media if you have any questions, collaboration ideas, or an exciting new project in mind. I’m always open to new opportunities!   
 🩷 [Instagram](https://www.instagram.com/rikkejuliane/)  
 💙 [Linkedin](https://www.linkedin.com/in/rikkejuliane/)  
 
 ---
 
-## Other 📌  
+## Other  📌  
 **Gantt Chart:** [View the timeline](https://github.com/users/rikkejuliane/projects/5/views/4)  
 **Figma wireframes:** [View wireframes](https://www.figma.com/design/wX4OlYFlvdmTgCCV09ryv0/HOLIDAZE?node-id=0-1)  
 **GitHub Kanban Board:** [View the board](https://github.com/users/rikkejuliane/projects/5/views/1)    
