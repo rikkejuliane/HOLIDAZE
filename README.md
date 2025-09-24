@@ -1,8 +1,7 @@
 FIRST DRAFT:
 # Holidaze — Rikkejuliane  
-_A modern front-end for an accommodation booking platform (Noroff FED exam)_
+<img width="1000" alt="Logo for holidaze" src="https://github.com/user-attachments/assets/4997a9e6-47e7-4a69-8e4f-ecb99f2229dc" />
 
-<img src="https://github.com/user-attachments/assets/ce8c56d8-4e2b-49e8-8c0e-43a505886284" alt="Holidaze logo placeholder" width="160" />
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
